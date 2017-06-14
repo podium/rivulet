@@ -1,0 +1,6 @@
+%{"gen_stage": {:hex, :gen_stage, "0.11.0", "943bdfa85c75fa624e0a36a9d135baad20a523be040178f5a215444b45c66ea4", [:mix], []},
+  "gen_state_machine": {:hex, :gen_state_machine, "2.0.0", "f3bc7d961e4cd9f37944b379137e25fd063feffc42800bed69197fd1b78b3151", [:mix], []},
+  "kafka_ex": {:hex, :kafka_ex, "0.6.5", "01c160cbfbe67f6dd60da446b7e7e43f3e51ceb943478f9f7ac425ac0f925b18", [:mix], []},
+  "libring": {:hex, :libring, "1.0.2", "95986f0aad553a340f34b898d146474c7a76fdf6e608ad9e0626e07514d8cdf4", [:mix], []},
+  "poison": {:hex, :poison, "3.1.0", "d9eb636610e096f86f25d9a46f35a9facac35609a7591b3be3326e99a0484665", [:mix], []},
+  "swarm": {:hex, :swarm, "3.0.5", "c54ead44ca5f879959899f325f0e6b904e1a219faecb24ca4e55aad1fe38fecc", [:mix], [{:gen_state_machine, "~> 2.0", [hex: :gen_state_machine, optional: false]}, {:libring, "~> 1.0", [hex: :libring, optional: false]}]}}

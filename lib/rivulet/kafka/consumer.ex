@@ -1,4 +1,4 @@
-defmodule KafkaSource do
+defmodule Rivulet.Kafka.Consumer do
   use GenStage
 
   defmodule State do
@@ -14,14 +14,19 @@ defmodule KafkaSource do
   when is_binary(topic)
   and topic != ""
   and is_integer(partition) do
-    GenStage.start_link(__MODULE__, {topic, partition})
+    GenStage.start_link(__MODULE__, {topic, partition},
+                        name: registry_name(topic, partition))
   end
 
   def start_link(topic, partition, offset)
   when is_binary(topic) and topic != ""
   and is_integer(partition) do
-    GenStage.start_link(__MODULE__, {topic, partition, offset})
+    GenStage.start_link(__MODULE__, {topic, partition, offset},
+                        name: registry_name(topic, partition))
   end
+
+  def registry_name(topic, partition) when is_binary(topic) and is_integer(partition),
+    do: {:via, Registry, {Rivulet.Registry, "Kafka.#{topic}.#{inspect partition}"}}
 
   def stream(pid) do
     Stream.resource(
@@ -57,6 +62,7 @@ defmodule KafkaSource do
     queued =
       topic
       |> fetch(partition, offset)
+      |> IO.inspect
       |> messages
 
     state = %State{
@@ -71,10 +77,11 @@ defmodule KafkaSource do
   def handle_call({:pull, count}, _from, %State{} = state) do
     {events, %State{} = state} = pull_data(count, state)
 
-    {:reply, events, [], state}
+    {:reply, events, state}
   end
 
   def handle_demand(demand, %State{} = state) do
+    IO.inspect("Handling demand")
     {events, %State{} = state} = pull_data(demand, state)
 
     {:noreply, events, state}
@@ -84,21 +91,22 @@ defmodule KafkaSource do
 
   @spec pull_data(pos_integer, State.t) :: {[event], State.t}
   def pull_data(count, %State{queued: []} = state) do
+    IO.inspect("Pulling from kafka")
     messages =
       state.topic
       |> fetch(state.partition, nil)
+      |> IO.inspect
       |> messages
+      |> IO.inspect
 
-    events = Enum.take(messages, count)
-    queued = Enum.drop(messages, count)
+    {events, queued} = Enum.split(messages, count)
 
     {events, %State{state | queued: queued}}
   end
 
 
   def pull_data(count, %State{queued: queued} = state) do
-    events = Enum.take(queued, count)
-    queued = Enum.drop(queued, count)
+    {events, queued} = Enum.split(queued, count)
 
     {events, %State{state | queued: queued}}
   end
