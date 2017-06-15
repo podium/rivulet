@@ -15,9 +15,9 @@ defmodule Rivulet.EventPrinter do
     {:consumer, state, subscribe_to: [{{:via, Registry, {Rivulet.Registry, "Kafka.#{topic}.#{inspect partition}"}}, max_demand: 10}]}
   end
 
-  def handle_events(_events, _from, %State{count: 100}) do
-    #Enum.map(events, &IO.inspect/1)
+  def handle_events(events, _from, %State{count: 100}) do
     IO.inspect("Batch of 100 completed")
+    Enum.map(events, &IO.inspect/1)
 
     {:noreply, [], %State{count: 0}}
   end

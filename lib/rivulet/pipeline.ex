@@ -6,7 +6,8 @@ defmodule Rivulet.Pipeline do
   @type rivulet_args :: Supervisor.options
   @type extra_args :: [term]
 
-  @spec start_link(Partition.topic, module, )
+  @spec start_link(Partition.topic, module, rivulet_args, [term])
+  :: Supervisor.on_start
   def start_link(topic, child_module, rivulet_args, extra_args \\ [])
   when is_binary(topic)
   and is_list(rivulet_args)
