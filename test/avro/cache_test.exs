@@ -1,7 +1,11 @@
 defmodule Rivulet.Avro.Cache.Test do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   @test_module Rivulet.Avro.Cache
+
+  # Note that the Cache functions accepta an optional argument which is the name
+  # of the cache. We use it here to allow concurrent testing, but in normal
+  # usage it shouldn't be provided.
 
   setup do
     name = :"cache_#{:erlang.unique_integer}"
