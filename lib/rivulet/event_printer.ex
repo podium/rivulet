@@ -1,6 +1,8 @@
 defmodule Rivulet.EventPrinter do
   use GenStage
 
+  require Logger
+
   defmodule State do
     defstruct [count: 0]
   end
@@ -16,7 +18,7 @@ defmodule Rivulet.EventPrinter do
   end
 
   def handle_events(events, _from, %State{count: 100}) do
-    IO.inspect("Batch of 100 completed")
+    Logger.debug("Batch of 100 completed")
     Enum.map(events, &IO.inspect/1)
 
     {:noreply, [], %State{count: 0}}
