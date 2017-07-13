@@ -23,7 +23,7 @@ defmodule Rivulet.Avro do
     end
   end
 
-  @spec encode(bitstring, schema_id) :: avro_message
+  @spec encode(bitstring, schema_id) :: avro_message | {:error, Registry.Reason}
   def encode(msg, schema_id) when is_integer(schema_id) do
     with {:ok, schema} <- schema(schema_id) do
       encode(msg, schema_id, schema)
