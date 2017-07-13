@@ -36,18 +36,4 @@ defmodule Rivulet.Avro.Registry do
       {:error, _} = err -> err
     end
   end
-
-  def schema do
-    """
-{
-     "type": "record",
-     "namespace": "com.example",
-     "name": "FullName",
-     "fields": [
-       { "name": "first", "type": "string" },
-       { "name": "last", "type": "string" }
-     ]
-} 
-  """
-  end
 end
