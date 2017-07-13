@@ -5,14 +5,14 @@ defmodule Rivulet.EventPrinter do
     defstruct [count: 0]
   end
 
-  def start_link(topic, partition) do
-    GenStage.start_link(__MODULE__, {topic, partition})
+  def start_link() do
+    GenStage.start_link(__MODULE__, [])
   end
 
-  def init({topic, partition}) do
+  def init(_) do
     state = %State{}
 
-    {:consumer, state, subscribe_to: [{{:via, Registry, {Rivulet.Registry, "Kafka.#{topic}.#{inspect partition}"}}, max_demand: 10}]}
+    {:consumer, state}
   end
 
   def handle_events(events, _from, %State{count: 100}) do
@@ -22,8 +22,8 @@ defmodule Rivulet.EventPrinter do
     {:noreply, [], %State{count: 0}}
   end
 
-  def handle_events(_events, _from, %State{count: count} = state) do
-    #Enum.map(events, &IO.inspect/1)
+  def handle_events(events, _from, %State{count: count} = state) do
+    Enum.map(events, &IO.inspect/1)
 
     {:noreply, [], %State{state | count: count + 1}}
   end

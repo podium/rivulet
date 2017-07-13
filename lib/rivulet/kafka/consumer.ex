@@ -77,11 +77,10 @@ defmodule Rivulet.Kafka.Consumer do
   def handle_call({:pull, count}, _from, %State{} = state) do
     {events, %State{} = state} = pull_data(count, state)
 
-    {:reply, events, state}
+    {:reply, events, events, state}
   end
 
   def handle_demand(demand, %State{} = state) do
-    IO.inspect("Handling demand")
     {events, %State{} = state} = pull_data(demand, state)
 
     {:noreply, events, state}
@@ -91,13 +90,10 @@ defmodule Rivulet.Kafka.Consumer do
 
   @spec pull_data(pos_integer, State.t) :: {[event], State.t}
   def pull_data(count, %State{queued: []} = state) do
-    IO.inspect("Pulling from kafka")
     messages =
       state.topic
       |> fetch(state.partition, nil)
-      |> IO.inspect
       |> messages
-      |> IO.inspect
 
     {events, queued} = Enum.split(messages, count)
 

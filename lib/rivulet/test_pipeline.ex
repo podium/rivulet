@@ -1,19 +1,24 @@
 defmodule Rivulet.TestPipeline do
-  use Supervisor
-
   def start_link(topic, partition) do
-    Supervisor.start_link(__MODULE__, {topic, partition})
+    with {:ok, kafka} <- Rivulet.Kafka.Consumer.start_link(topic, partition) do
+      starting(topic, kafka)
+    end
   end
 
-  def init({topic, partition}) do
-    children =
-      [
-        worker(Rivulet.Kafka.Producer, [topic, partition, 5]),
-        worker(Rivulet.EventPrinter, [topic, partition])
-      ]
+  def start_link(topic, partition, offset) do
+    with {:ok, kafka} <- Rivulet.Kafka.Consumer.start_link(topic, partition, offset) do
+      starting(topic, kafka)
+    end
+  end
 
-    options = [strategy: :one_for_all]
+  defp starting(topic, kafka) do
+    with {:ok, deserializer} <- Rivulet.Avro.Deserializer.start_link(topic),
+         {:ok, printer} <- Rivulet.EventPrinter.start_link do
 
-    supervise(children, options)
+        GenStage.sync_subscribe(deserializer, to: kafka)
+        GenStage.sync_subscribe(printer, to: deserializer)
+
+        {:ok, kafka}
+    end
   end
 end
