@@ -18,7 +18,7 @@ defmodule Rivulet.Measurement do
     topic = Application.get_env(:rivulet, :stats_log, "stats")
     message = Message.latency(key, microseconds)
 
-    Publisher.publish(topic, :random, :avro, message)
+    Publisher.publish(topic, :random, :avro, "key", message)
 
     :ok
   end
@@ -56,6 +56,6 @@ defmodule Rivulet.Measurement do
   def utilization(resource, utilization_class, value)
   when utilization_class in @utilization_classes do
     message = Message.utilization(resource, utilization_class, value)
-    Publisher.publish("stats", :random, :avro, message)
+    Publisher.publish("stats", :random, :avro, "key", message)
   end
 end

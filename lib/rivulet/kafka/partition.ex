@@ -2,6 +2,7 @@ defmodule Rivulet.Kafka.Partition do
   @type count :: non_neg_integer
   @type partition :: non_neg_integer
   @type topic :: String.t
+  @type offset :: non_neg_integer
 
   @spec partition_count(topic)
   :: {:ok, count}

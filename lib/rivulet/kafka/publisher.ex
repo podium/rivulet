@@ -4,32 +4,42 @@ defmodule Rivulet.Kafka.Publisher do
 
   @type partition_strategy :: :random | {:key, binary} | integer
   @type encoding_strategy :: :avro | :raw | :json
+  @type key :: bitstring
 
-  @spec publish(Partition.topic, partition_strategy, encoding_strategy, binary)
+  @spec publish(Partition.topic, partition_strategy, encoding_strategy, key, bitstring)
   :: :ok
-  | {:error, :topic_not_found}
-  def publish(topic, :random, encoding_strategy, message) do
+  | {:error, :schema_not_found}
+  def publish(topic, :random, encoding_strategy, key, message) do
     with {:ok, partition} <- Partition.random_partition(topic) do
-      publish(topic, partition, encoding_strategy, message)
+      publish(topic, partition, encoding_strategy, key, message)
     end
   end
 
-  def publish(topic, {:key, key}, encoding_strategy, message) when is_binary(key) do
-    with {:ok, partition} <- Partition.hashed_partition(topic, key) do
-      publish(topic, partition, encoding_strategy, message)
+  def publish(topic, {:key, hashing_key}, encoding_strategy, key, message) when is_binary(hashing_key) do
+    with {:ok, partition} <- Partition.hashed_partition(topic, hashing_key) do
+      publish(topic, partition, encoding_strategy, key, message)
     end
   end
 
-  def publish(topic, partition, encoding_strategy, message) when is_integer(partition) do
-    msg =
-      case encoding_strategy do
-        :raw -> message
-        :json -> Poison.encode!(message)
-        :avro ->
-          schema = Avro.schema_for(topic)
-          Avro.encode(message, schema)
-      end
+  def publish(topic, partition, :raw, key, message) when is_integer(partition) do
+    KafkaEx.produce(topic, partition, message, key: key)
+  end
 
-    KafkaEx.produce(topic, partition, msg)
+  def publish(topic, partition, :json, key, message) when is_integer(partition) do
+    with {:ok, k} <- Poison.encode(key),
+         {:ok, msg} <- Poison.encode(message) do
+      publish(topic, partition, :raw, k, msg)
+    end
+  end
+
+  def publish(topic, partition, :avro, key, message) when is_integer(partition) do
+    with %{key: key_schema, value: value_schema} <- Avro.schema_for(topic),
+         {:ok, k} <- Avro.encode(key, key_schema),
+         {:ok, msg} <- Avro.encode(message, value_schema) do
+      publish(topic, partition, :raw, k, msg)
+    else
+      {:error, _} = err -> err
+      nil -> {:error, :schema_not_found}
+    end
   end
 end

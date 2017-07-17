@@ -3,12 +3,13 @@ defmodule Rivulet.Avro do
   @type schema_id :: pos_integer
   @type schema :: term
 
-  alias Rivulet.Avro.{Cache, Registry}
-  alias Rivulet.Kafka.Partition
+  alias Rivulet.Avro.{Cache, Registry, Schema}
 
   defmodule DeserializationError do
     defexception [:message]
   end
+
+  defdelegate schema_for(partition), to: Registry
 
   @spec decode(avro_message) :: {:ok, term} | {:error, Registry.reason}
   def decode(msg) do
@@ -23,17 +24,17 @@ defmodule Rivulet.Avro do
     end
   end
 
-  @spec encode(bitstring, schema_id) :: avro_message | {:error, Registry.Reason}
+  @spec encode(bitstring, schema_id | Schema.t) :: {:ok, avro_message } | {:error, Registry.Reason}
   def encode(msg, schema_id) when is_integer(schema_id) do
     with {:ok, schema} <- schema(schema_id) do
       encode(msg, schema_id, schema)
     end
   end
 
-  @spec encode(bitstring, schema_id, schema) :: avro_message
+  @spec encode(bitstring, schema_id, schema) :: {:ok, avro_message}
   def encode(msg, schema_id, schema) do
     msg = :eavro.encode(schema, msg)
-    <<0, schema_id :: size(32), msg :: binary>>
+    {:ok, <<0, schema_id :: size(32), msg :: binary>>}
   end
 
   @spec schema_id(avro_message) :: pos_integer | no_return
@@ -47,11 +48,6 @@ defmodule Rivulet.Avro do
 
   def schema_id(_) do
     raise DeserializationError, "Avro message wasn't encoded in the confluent style"
-  end
-
-  @spec schema_for(Partition.topic) :: schema | nil
-  def schema_for(_topic) do
-    raise "Function not implemented yet!"
   end
 
   @spec message(avro_message) :: bitstring
