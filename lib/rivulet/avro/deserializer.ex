@@ -3,6 +3,7 @@ defmodule Rivulet.Avro.Deserializer do
   require Logger
 
   alias Rivulet.Avro
+  alias Rivulet.Kafka.Partition
 
   defmodule State do
     defstruct [topic: "", partition: -1]
@@ -12,12 +13,40 @@ defmodule Rivulet.Avro.Deserializer do
     }
   end
 
+  @spec start_link(Partition.topic, Partition.partition)
+ :: GenServer.on_start
   def start_link(topic, partition) do
-    GenStage.start_link(__MODULE__, {topic, partition})
+    GenStage.start_link(__MODULE__, {topic, partition, []})
   end
 
-  def init({topic, partition}) do
+  @spec start_link(Partition.topic, Partition.partition, GenStage.stage | [GenStage.stage])
+  :: GenServer.on_start
+  def start_link(topic, partition, {:global, _} = parent) do
+    start_link(topic, partition, [parent])
+  end
+
+  def start_link(topic, partition, {:via, _, _} = parent) do
+    start_link(topic, partition, [parent])
+  end
+
+  def start_link(topic, partition, {atom, node} = parent) when is_atom(atom) and is_atom(node) do
+    start_link(topic, partition, [parent])
+  end
+
+  def start_link(topic, partition, parent) when is_pid(parent) or is_atom(parent) do
+    start_link(topic, partition, [parent])
+  end
+
+  def start_link(topic, partition, parents) when is_list(parents) do
+    GenStage.start_link(__MODULE__, {topic, partition, parents})
+  end
+
+  def init({topic, partition, []}) do
     {:producer_consumer, %State{topic: topic, partition: partition}}
+  end
+
+  def init({topic, partition, parents}) do
+    {:producer_consumer, %State{topic: topic, partition: partition}, subscribe_to: parents}
   end
 
   def handle_events(events, _from, %State{topic: topic, partition: partition} = state) do
@@ -37,6 +66,7 @@ defmodule Rivulet.Avro.Deserializer do
   :: term
   | {:error, :avro_decoding_failed, Avro.avro_message}
   defp decode_value(msg, topic, partition, offset) when is_binary(msg) do
+    IO.inspect(msg)
     case Avro.decode(msg) do
       {:ok, new_value} -> new_value
       {:error, reason} ->

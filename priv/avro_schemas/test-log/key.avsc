@@ -1,0 +1,12 @@
+{
+	"type": "record",
+	"name": "Key",
+	"namespace": "com.example.fullname",
+	"fields": [
+		{
+			"name": "id",
+			"type": "int"
+		}
+	],
+	"connect.name": "raw.postgres.review_rocket.public.users.Key"
+}

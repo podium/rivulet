@@ -14,19 +14,14 @@ defmodule Rivulet.Kafka.Consumer do
   when is_binary(topic)
   and topic != ""
   and is_integer(partition) do
-    GenStage.start_link(__MODULE__, {topic, partition},
-                        name: registry_name(topic, partition))
+    GenStage.start_link(__MODULE__, {topic, partition})
   end
 
   def start_link(topic, partition, offset)
   when is_binary(topic) and topic != ""
   and is_integer(partition) do
-    GenStage.start_link(__MODULE__, {topic, partition, offset},
-                        name: registry_name(topic, partition))
+    GenStage.start_link(__MODULE__, {topic, partition, offset})
   end
-
-  def registry_name(topic, partition) when is_binary(topic) and is_integer(partition),
-    do: {:via, Registry, {Rivulet.Registry, "Kafka.#{topic}.#{inspect partition}"}}
 
   def stream(pid) do
     Stream.resource(
@@ -62,7 +57,6 @@ defmodule Rivulet.Kafka.Consumer do
     queued =
       topic
       |> fetch(partition, offset)
-      |> IO.inspect
       |> messages
 
     state = %State{

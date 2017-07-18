@@ -11,7 +11,8 @@ defmodule Rivulet.Avro do
 
   defdelegate schema_for(partition), to: Registry
 
-  @spec decode(avro_message) :: {:ok, term} | {:error, Registry.reason}
+  @spec decode(avro_message)
+  :: {:ok, term} | {:error, Registry.reason}
   def decode(msg) do
     schema_resp =
       msg
@@ -19,12 +20,17 @@ defmodule Rivulet.Avro do
       |> schema
 
     case schema_resp do
-      {:ok, schema} -> {:ok, :eavro.decode(schema, message(msg))}
+      {:ok, %Schema{schema: schema}} -> {:ok, :eavro.decode(schema, message(msg))}
       {:error, _reason} = err -> err
     end
   end
 
-  @spec encode(bitstring, schema_id | Schema.t) :: {:ok, avro_message } | {:error, Registry.Reason}
+  @spec encode(bitstring, schema_id | Schema.t)
+  :: {:ok, avro_message } | {:error, Registry.Reason}
+  def encode(msg, %Schema{schema_id: schema_id, schema: schema}) do
+    encode(msg, schema_id, schema)
+  end
+
   def encode(msg, schema_id) when is_integer(schema_id) do
     with {:ok, schema} <- schema(schema_id) do
       encode(msg, schema_id, schema)

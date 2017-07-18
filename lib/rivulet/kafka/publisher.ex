@@ -5,10 +5,12 @@ defmodule Rivulet.Kafka.Publisher do
   @type partition_strategy :: :random | {:key, binary} | integer
   @type encoding_strategy :: :avro | :raw | :json
   @type key :: bitstring
+  @type value :: bitstring
 
-  @spec publish(Partition.topic, partition_strategy, encoding_strategy, key, bitstring)
+  @spec publish(Partition.topic, partition_strategy, encoding_strategy, key, value)
   :: :ok
   | {:error, :schema_not_found}
+  | {:error, term}
   def publish(topic, :random, encoding_strategy, key, message) do
     with {:ok, partition} <- Partition.random_partition(topic) do
       publish(topic, partition, encoding_strategy, key, message)
@@ -38,7 +40,7 @@ defmodule Rivulet.Kafka.Publisher do
          {:ok, msg} <- Avro.encode(message, value_schema) do
       publish(topic, partition, :raw, k, msg)
     else
-      {:error, _} = err -> err
+      {:error, reason} -> {:error, reason}
       nil -> {:error, :schema_not_found}
     end
   end
