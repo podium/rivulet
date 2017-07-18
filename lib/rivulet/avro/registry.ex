@@ -8,13 +8,12 @@ defmodule Rivulet.Avro.Registry do
   @type subject :: String.t
 
   def process_url(path) do
-    %URI{} = uri = Application.get_env(:rivulet, :avro_schema_registry_uri) |> IO.inspect
+    %URI{} = uri = Application.get_env(:rivulet, :avro_schema_registry_uri)
     uri = %URI{uri | path: path}
 
     uri
     |> URI.to_string
     |> URI.encode
-    |> IO.inspect
   end
 
   @spec process_response_body(Poison.t) :: term
