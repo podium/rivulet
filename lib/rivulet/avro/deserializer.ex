@@ -3,7 +3,7 @@ defmodule Rivulet.Avro.Deserializer do
   require Logger
 
   alias Rivulet.Avro
-  alias Rivulet.Kafka.Partition
+  alias Rivulet.Kafka.{Message, Partition}
 
   defmodule State do
     defstruct [topic: "", partition: -1]
@@ -50,27 +50,28 @@ defmodule Rivulet.Avro.Deserializer do
   end
 
   def handle_events(events, _from, %State{topic: topic, partition: partition} = state) do
+    Logger.debug("Deserializing events")
     decoded_events =
       events
-      |> Enum.map(fn(%KafkaEx.Protocol.Fetch.Message{} = msg) ->
-           %KafkaEx.Protocol.Fetch.Message{msg | key: decode_value(msg.key, topic, partition, msg.offset)}
+      |> Enum.map(fn(%Message{} = msg) ->
+           %Message{msg | decoded_key: decode_value(msg.raw_key, topic, partition, msg.offset)}
          end)
-      |> Enum.map(fn(%KafkaEx.Protocol.Fetch.Message{} = msg) ->
-           %KafkaEx.Protocol.Fetch.Message{msg | value: decode_value(msg.value, topic, partition, msg.offset)}
+      |> Enum.map(fn(%Message{} = msg) ->
+           %Message{msg | decoded_value: decode_value(msg.raw_value, topic, partition, msg.offset)}
          end)
 
     {:noreply, decoded_events, state}
   end
 
   @spec decode_value(Avro.avro_message, Partition.topic, Partition.partition | -1, Partition.offset)
-  :: term
+  :: Avro.schema
   | {:error, :avro_decoding_failed, Avro.avro_message}
   defp decode_value(msg, topic, partition, offset) when is_binary(msg) do
     case Avro.decode(msg) do
       {:ok, new_value} -> new_value
       {:error, reason} ->
         Logger.error("[TOPIC: #{topic}][PARTITION: #{partition}][OFFSET: #{offset}] failed to decode for reason: #{inspect reason}")
-        %KafkaEx.Protocol.Fetch.Message{msg | value: {:error, :avro_decoding_failed, msg}}
+        {:error, :avro_decoding_failed, msg}
     end
   end
 end

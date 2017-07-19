@@ -34,12 +34,12 @@ defmodule Rivulet.Avro.Registry.Test do
   end
 
   describe "process_response_body" do
-    test "fails if schema isn't wrapped in a schema key" do
-      assert {:error, :no_schema_provided} = @test_module.process_response_body(@schema)
-    end
-
     test "returns an ok tuple on success" do
       assert {:ok, _} = @test_module.process_response_body(%{schema: @schema} |> Poison.encode!)
+    end
+
+    test "returns an error tuple on failure" do
+      assert {:error, _} = @test_module.process_response_body("wat")
     end
   end
 end

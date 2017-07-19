@@ -58,6 +58,7 @@ defmodule Rivulet.Kafka.Consumer do
       topic
       |> fetch(partition, offset)
       |> messages
+      |> Enum.map(&Rivulet.Kafka.Message.from_wire_message/1)
 
     state = %State{
       topic: topic,
@@ -88,6 +89,7 @@ defmodule Rivulet.Kafka.Consumer do
       state.topic
       |> fetch(state.partition, nil)
       |> messages
+      |> Enum.map(&Rivulet.Kafka.Message.from_wire_message/1)
 
     {events, queued} = Enum.split(messages, count)
 

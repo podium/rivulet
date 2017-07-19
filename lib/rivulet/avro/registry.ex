@@ -40,7 +40,7 @@ defmodule Rivulet.Avro.Registry do
       {:error, _} = err -> err
     end
   catch
-    :exit, {:badarg, nil} -> {:error, :no_schema_provided}
+    :exit, {:badarg, nil} -> {:error, :schema_not_found}
   end
 
   @spec get_version(subject, version_id) :: {:ok, Schema.t} | {:error, term}
@@ -59,7 +59,7 @@ defmodule Rivulet.Avro.Registry do
       {:error, _} = err -> err
     end
   catch
-    :exit, {:badarg, nil} -> {:error, :no_schema_provided}
+    :exit, {:badarg, nil} -> {:error, :schema_not_found}
   end
 
   @spec schema_for(Partition.topic) :: %{key: Schema.t, value: Schema.t} | {:error, term}
@@ -73,10 +73,13 @@ defmodule Rivulet.Avro.Registry do
   @spec schema_for(Partition.topic, :key | :value) :: {:ok, Schema.t} | {:error, term}
   def schema_for(topic, k_or_v) when is_binary(topic) and k_or_v == :key or k_or_v == :value do
     subject = "#{topic}-#{k_or_v}"
-    with {:ok, %HTTPoison.Response{body: {:ok, json}}} when is_list(json) and length(json) > 0 <- get("/subjects/#{subject}/versions") do
-      id = List.last(json)
 
-      get_version(subject, id)
+    case get("/subjects/#{subject}/versions") do
+      {:ok, %HTTPoison.Response{status_code: status, body: {:ok, json}}} when is_list(json) and length(json) > 0 and status <= 299 ->
+        id = List.last(json)
+        get_version(subject, id)
+      {:ok, %HTTPoison.Response{} = resp} -> {:error, resp}
+      {:error, _} = err -> err
     end
   end
 end

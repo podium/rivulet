@@ -7,8 +7,10 @@ defmodule Rivulet.Kafka.Publisher do
   @type key :: bitstring
   @type value :: bitstring
 
+  @type produce_return :: nil | :ok | {:ok, integer} | {:error, :closed} | {:error, :inet.posix} | {:error, any} | iodata | :leader_not_available
+
   @spec publish(Partition.topic, partition_strategy, encoding_strategy, key, value)
-  :: :ok
+  :: produce_return
   | {:error, :schema_not_found}
   | {:error, term}
   def publish(topic, :random, encoding_strategy, key, message) do
@@ -41,7 +43,6 @@ defmodule Rivulet.Kafka.Publisher do
       publish(topic, partition, :raw, k, msg)
     else
       {:error, reason} -> {:error, reason}
-      nil -> {:error, :schema_not_found}
     end
   end
 end

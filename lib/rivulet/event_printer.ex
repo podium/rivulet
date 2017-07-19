@@ -55,12 +55,12 @@ defmodule Rivulet.EventPrinter do
     Logger.debug("Batch of 100 completed")
     Enum.map(events, &IO.inspect/1)
 
-    {:noreply, [], %State{count: 0}}
+    {:noreply, events, %State{count: 0}}
   end
 
   def handle_events(events, _from, %State{count: count} = state) do
     Enum.map(events, &IO.inspect/1)
 
-    {:noreply, [], %State{state | count: count + 1}}
+    {:noreply, events, %State{state | count: count + 1}}
   end
 end

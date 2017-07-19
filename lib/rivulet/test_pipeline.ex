@@ -23,10 +23,12 @@ defmodule Rivulet.TestPipeline do
     {:ok, {}}
   end
 
+  @spec starting(Partition.topic, Partition.partition, GenStage.stage) :: :ok | no_return
   defp starting(topic, partition, kafka) do
-    with {:ok, deserializer} <- Rivulet.Avro.Deserializer.start_link(topic, partition, kafka),
-         {:ok, printer} <- Rivulet.EventPrinter.start_link(deserializer),
-         {:ok, _consumer} <- Rivulet.Pipeline.Consumer.start_link(printer) do
+    with {:ok, printer1} <- Rivulet.EventPrinter.start_link(kafka),
+         {:ok, deserializer} <- Rivulet.Avro.Deserializer.start_link(topic, partition, printer1),
+         {:ok, printer2} <- Rivulet.EventPrinter.start_link(deserializer),
+         {:ok, _consumer} <- Rivulet.Pipeline.Consumer.start_link(printer2) do
       :ok
     end
   end
