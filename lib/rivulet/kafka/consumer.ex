@@ -1,87 +1,50 @@
 defmodule Rivulet.Kafka.Consumer do
   use GenStage
 
-  defmodule State do
-    defstruct [:topic, :partition, :queued]
-    @type t :: %__MODULE__{}
-  end
+  alias Rivulet.Kafka.{Message, Partition}
+  require Logger
 
-  @type event :: term
+  defmodule State do
+    @enforce_keys [:partition, :queued]
+    defstruct [:partition, :queued, :offset]
+    @type t :: %__MODULE__{
+      partition: Partition.t,
+      queued: [Message.t],
+      offset: nil | non_neg_integer
+    }
+  end
 
   # Public API
 
-  def start_link(topic, partition)
-  when is_binary(topic)
-  and topic != ""
-  and is_integer(partition) do
-    GenStage.start_link(__MODULE__, {topic, partition},
-                        name: registry_name(topic, partition))
+  def start_link(%Partition{} = partition) do
+    GenStage.start_link(__MODULE__, {partition, nil})
   end
 
-  def start_link(topic, partition, offset)
-  when is_binary(topic) and topic != ""
-  and is_integer(partition) do
-    GenStage.start_link(__MODULE__, {topic, partition, offset},
-                        name: registry_name(topic, partition))
-  end
-
-  def registry_name(topic, partition) when is_binary(topic) and is_integer(partition),
-    do: {:via, Registry, {Rivulet.Registry, "Kafka.#{topic}.#{inspect partition}"}}
-
-  def stream(pid) do
-    Stream.resource(
-      fn -> pid end,
-      fn pid ->
-        resp = GenServer.call(pid, {:pull, 1})
-        {resp, pid}
-      end,
-      fn _pid -> :ok end
-    )
+  def start_link(%Partition{} = partition, offset) when is_integer(offset) do
+    GenStage.start_link(__MODULE__, {partition, offset})
   end
 
   # Callback Functions
 
-  def init({topic, partition})
-  when is_binary(topic)
-  and topic != ""
-  and is_integer(partition) do
+  def init({%Partition{} = partition, offset}) do
+    Logger.debug("Staring Kafka streamer for: #{partition.topic}:#{partition.partition} from offset: #{offset}")
+
     state = %State{
-      topic: topic,
       partition: partition,
-      queued: []
+      queued: [],
+      offset: offset
     }
 
     {:producer, state}
-  end
-
-  def init({topic, partition, offset})
-  when is_binary(topic)
-  and topic != ""
-  and is_integer(partition)
-  and is_integer(offset) do
-    queued =
-      topic
-      |> fetch(partition, offset)
-      |> IO.inspect
-      |> messages
-
-    state = %State{
-      topic: topic,
-      partition: partition,
-      queued: queued
-    }
-
-    {:producer, state}
-  end
-
-  def handle_call({:pull, count}, _from, %State{} = state) do
-    {events, %State{} = state} = pull_data(count, state)
-
-    {:reply, events, state}
   end
 
   def handle_demand(demand, %State{} = state) do
-    IO.inspect("Handling demand")
+    {events, %State{} = state} = pull_data(demand, state)
+
+    {:noreply, events, state}
+  end
+
+  def handle_info({:poll, demand}, %State{} = state) do
     {events, %State{} = state} = pull_data(demand, state)
 
     {:noreply, events, state}
@@ -89,17 +52,22 @@ defmodule Rivulet.Kafka.Consumer do
 
   # Implementation functions
 
-  @spec pull_data(pos_integer, State.t) :: {[event], State.t}
-  def pull_data(count, %State{queued: []} = state) do
-    IO.inspect("Pulling from kafka")
+  @spec pull_data(pos_integer, State.t) :: {[Message.t], State.t}
+  def pull_data(count, %State{queued: [], offset: offset} = state) do
     messages =
-      state.topic
-      |> fetch(state.partition, nil)
-      |> IO.inspect
+      state.partition
+      |> fetch(offset)
       |> messages
-      |> IO.inspect
+      |> Enum.map(&Message.from_wire_message/1)
+      |> Enum.sort(fn(%Message{} = a, %Message{} = b) ->
+           a.offset >= b.offset
+         end)
 
     {events, queued} = Enum.split(messages, count)
+
+    delivered_count = length(events)
+
+    if delivered_count < count, do: :timer.send_after(:timer.seconds(1), {:poll, count - delivered_count})
 
     {events, %State{state | queued: queued}}
   end
@@ -108,6 +76,10 @@ defmodule Rivulet.Kafka.Consumer do
   def pull_data(count, %State{queued: queued} = state) do
     {events, queued} = Enum.split(queued, count)
 
+    delivered_count = length(events)
+
+    if delivered_count < count, do: :timer.send_after(:timer.seconds(1), {:poll, count - delivered_count})
+
     {events, %State{state | queued: queued}}
   end
 
@@ -115,11 +87,11 @@ defmodule Rivulet.Kafka.Consumer do
     messages
   end
 
-  defp fetch(topic, partition, nil) do
+  defp fetch(%Partition{topic: topic, partition: partition}, nil) do
     KafkaEx.fetch(topic, partition)
   end
 
-  defp fetch(topic, partition, offset) do
+  defp fetch(%Partition{topic: topic, partition: partition}, offset) do
     KafkaEx.fetch(topic, partition, offset: offset)
   end
 end

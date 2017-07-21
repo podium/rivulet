@@ -1,7 +1,15 @@
 defmodule Rivulet.Kafka.Partition do
   @type count :: non_neg_integer
-  @type partition :: non_neg_integer
+  @type partition_number :: non_neg_integer
   @type topic :: String.t
+  @type offset :: non_neg_integer
+
+  @enforce_keys [:topic, :partition]
+  defstruct [:topic, :partition]
+  @type t :: %__MODULE__{
+    topic: topic,
+    partition: partition_number
+  }
 
   @spec partition_count(topic)
   :: {:ok, count}
@@ -13,7 +21,7 @@ defmodule Rivulet.Kafka.Partition do
   end
 
   @spec random_partition(topic)
-  :: {:ok, partition}
+  :: {:ok, partition_number}
   | {:error, :topic_not_found}
   def random_partition(topic) when is_binary(topic) do
     with {:ok, count} <- partition_count(topic) do
@@ -22,7 +30,7 @@ defmodule Rivulet.Kafka.Partition do
   end
 
   @spec hashed_partition(topic, binary)
-  :: {:ok, partition}
+  :: {:ok, partition_number}
   | {:error, :topic_not_found}
   def hashed_partition(topic, key) when is_binary(topic) and is_binary(key) do
     with {:ok, count} <- partition_count(topic) do
