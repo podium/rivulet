@@ -1,4 +1,9 @@
 defmodule Rivulet.Avro do
+  @typedoc """
+  An avro message with 40 bytes of metadata plus the actual message. The first
+  byte of metadata is a magic byte specifying metadata version (currently 0).
+  The remaining metadata is the Schema ID as returned by the Schema Registry.
+  """
   @type avro_message :: <<_ :: 40, _ :: _*1>>
   @type schema_id :: pos_integer
   @type schema :: term

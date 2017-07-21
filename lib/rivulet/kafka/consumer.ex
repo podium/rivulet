@@ -11,8 +11,6 @@ defmodule Rivulet.Kafka.Consumer do
     }
   end
 
-  @type event :: term
-
   # Public API
 
   def start_link(%Partition{} = partition) do

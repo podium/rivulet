@@ -5,7 +5,12 @@ defmodule Rivulet.Kafka.Publisher do
   @type partition_strategy :: :random | {:key, binary} | integer
   @type encoding_strategy :: :avro | :raw | :json
   @type key :: bitstring
-  @type value :: bitstring
+  @typedoc """
+  If the encoding_strategy is :raw, the function takes a bitstring. If another
+  encoding strategy is specified, the function accepts whatever structures the
+  underlying encoding accepts.
+  """
+  @type value :: bitstring | term
 
   @type produce_return :: nil | :ok | {:ok, integer} | {:error, :closed} | {:error, :inet.posix} | {:error, any} | iodata | :leader_not_available
 
