@@ -51,8 +51,8 @@ defmodule Rivulet.EventPrinter do
     {:producer_consumer, state}
   end
 
-  def handle_events(events, _from, %State{count: 100}) do
-    Logger.debug("Batch of 100 completed")
+  def handle_events(events, _from, %State{count: count = 100}) do
+    Logger.debug("Batch of #{inspect count} completed")
     Enum.map(events, &IO.inspect/1)
 
     {:noreply, events, %State{count: 0}}

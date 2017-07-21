@@ -30,7 +30,7 @@ defmodule Rivulet.Avro.Registry.Test do
       assert is_binary(url)
     end
 
-    test "is based on the base_uri and the passed in path" do
+    test "uses Application.get_env and the given path" do
       assert "http://localhost:65000/hello" = @test_module.process_url("/hello")
     end
   end

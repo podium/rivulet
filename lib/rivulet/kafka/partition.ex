@@ -8,7 +8,7 @@ defmodule Rivulet.Kafka.Partition do
   defstruct [:topic, :partition]
   @type t :: %__MODULE__{
     topic: topic,
-    partition: partition
+    partition: partition_number
   }
 
   @spec partition_count(topic)
