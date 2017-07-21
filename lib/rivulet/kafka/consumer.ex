@@ -1,47 +1,32 @@
 defmodule Rivulet.Kafka.Consumer do
   use GenStage
 
+  alias Rivulet.Kafka.{Message, Partition}
+
   defmodule State do
-    defstruct [:topic, :partition, :queued]
-    @type t :: %__MODULE__{}
+    defstruct [:partition, :queued]
+    @type t :: %__MODULE__{
+      partition: Partition.t,
+      queued: [Message.t]
+    }
   end
 
   @type event :: term
 
   # Public API
 
-  def start_link(topic, partition)
-  when is_binary(topic)
-  and topic != ""
-  and is_integer(partition) do
-    GenStage.start_link(__MODULE__, {topic, partition})
+  def start_link(%Partition{} = partition) do
+    GenStage.start_link(__MODULE__, {partition})
   end
 
-  def start_link(topic, partition, offset)
-  when is_binary(topic) and topic != ""
-  and is_integer(partition) do
-    GenStage.start_link(__MODULE__, {topic, partition, offset})
-  end
-
-  def stream(pid) do
-    Stream.resource(
-      fn -> pid end,
-      fn pid ->
-        resp = GenServer.call(pid, {:pull, 1})
-        {resp, pid}
-      end,
-      fn _pid -> :ok end
-    )
+  def start_link(%Partition{} = partition, offset) when is_integer(offset) do
+    GenStage.start_link(__MODULE__, {partition, offset})
   end
 
   # Callback Functions
 
-  def init({topic, partition})
-  when is_binary(topic)
-  and topic != ""
-  and is_integer(partition) do
+  def init({%Partition{} = partition}) do
     state = %State{
-      topic: topic,
       partition: partition,
       queued: []
     }
@@ -49,30 +34,22 @@ defmodule Rivulet.Kafka.Consumer do
     {:producer, state}
   end
 
-  def init({topic, partition, offset})
-  when is_binary(topic)
-  and topic != ""
-  and is_integer(partition)
-  and is_integer(offset) do
+  def init({%Partition{} = partition, offset}) when is_integer(offset) do
     queued =
-      topic
-      |> fetch(partition, offset)
+      partition
+      |> fetch(offset)
       |> messages
-      |> Enum.map(&Rivulet.Kafka.Message.from_wire_message/1)
+      |> Enum.map(&Message.from_wire_message/1)
+      |> Enum.sort(fn(%Message{} = a, %Message{} = b) ->
+           a.offset >= b.offset
+         end)
 
     state = %State{
-      topic: topic,
       partition: partition,
       queued: queued
     }
 
     {:producer, state}
-  end
-
-  def handle_call({:pull, count}, _from, %State{} = state) do
-    {events, %State{} = state} = pull_data(count, state)
-
-    {:reply, events, events, state}
   end
 
   def handle_demand(demand, %State{} = state) do
@@ -86,10 +63,13 @@ defmodule Rivulet.Kafka.Consumer do
   @spec pull_data(pos_integer, State.t) :: {[event], State.t}
   def pull_data(count, %State{queued: []} = state) do
     messages =
-      state.topic
-      |> fetch(state.partition, nil)
+      state.partition
+      |> fetch(nil)
       |> messages
-      |> Enum.map(&Rivulet.Kafka.Message.from_wire_message/1)
+      |> Enum.map(&Message.from_wire_message/1)
+      |> Enum.sort(fn(%Message{} = a, %Message{} = b) ->
+           a.offset >= b.offset
+         end)
 
     {events, queued} = Enum.split(messages, count)
 
@@ -107,11 +87,11 @@ defmodule Rivulet.Kafka.Consumer do
     messages
   end
 
-  defp fetch(topic, partition, nil) do
+  defp fetch(%Partition{topic: topic, partition: partition}, nil) do
     KafkaEx.fetch(topic, partition)
   end
 
-  defp fetch(topic, partition, offset) do
+  defp fetch(%Partition{topic: topic, partition: partition}, offset) do
     KafkaEx.fetch(topic, partition, offset: offset)
   end
 end

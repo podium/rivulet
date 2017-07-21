@@ -11,7 +11,7 @@ defmodule Rivulet.Avro do
     defexception [:message]
   end
 
-  defdelegate schema_for(partition), to: Registry
+  defdelegate schema_for(topic), to: Registry
 
   @spec decode(avro_message)
   :: {:ok, decoded_message} | {:error, Registry.reason}

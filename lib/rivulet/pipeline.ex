@@ -24,7 +24,8 @@ defmodule Rivulet.Pipeline do
 
   defp children(topic, range, child_module, extra_args) do
     Enum.map(range, fn(partition) ->
-      supervisor(child_module, [topic, partition] ++ extra_args, id: "#{child_module}.#{topic}.#{inspect partition}")
+      partition = %Partition{topic: topic, partition: partition}
+      supervisor(child_module, [partition] ++ extra_args, id: "#{child_module}.#{topic}.#{inspect partition}")
     end)
   end
 

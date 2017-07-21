@@ -28,38 +28,49 @@ defmodule Rivulet.Avro.Registry do
 
   @spec get_schema(Avro.schema_id) :: {:ok, Schema.t} | {:error, term}
   def get_schema(schema_id) do
-    with {:ok, %HTTPoison.Response{body: {:ok, json}}} <- get("/schemas/ids/#{schema_id}") do
-      schema =
-        json
-        |> Map.get("schema")
-        |> :eavro.parse_schema
-
-      {:ok, %Schema{schema_id: schema_id, schema: schema}}
-    else
-      {:ok, %HTTPoison.Response{body: {:error, _reason} = err}} -> err
+    case get("/schemas/ids/#{schema_id}") do
+      {:ok, resp} -> handle_get_schema_response(resp, schema_id)
       {:error, _} = err -> err
     end
+  end
+
+  @doc false
+  def handle_get_schema_response(%HTTPoison.Response{body: {:ok, json}, status_code: status}, schema_id) when status <= 299 do
+    schema =
+      json
+      |> Map.get("schema")
+      |> :eavro.parse_schema
+
+    {:ok, %Schema{schema_id: schema_id, schema: schema}}
   catch
     :exit, {:badarg, nil} -> {:error, :schema_not_found}
   end
 
+  def handle_get_schema_response(%HTTPoison.Response{body: {:ok, json}, status_code: status}, _) when status >= 300 do
+    {:error, json["message"]}
+  end
+
+  def handle_get_schema_response(%HTTPoison.Response{body: {:error, _} = err}, _) do
+    err
+  end
+
   @spec get_version(subject, version_id) :: {:ok, Schema.t} | {:error, term}
   def get_version(subject, version_id) do
-    with {:ok, %HTTPoison.Response{body: {:ok, json}}} <- get("/subjects/#{subject}/versions/#{version_id}") do
-      schema =
-        json
-        |> Map.get("schema")
-        |> :eavro.parse_schema
-
-      schema_id = json["id"]
-
-      {:ok, %Schema{schema_id: schema_id, schema: schema}}
-    else
-      {:ok, %HTTPoison.Response{body: {:error, _reason} = err}} -> err
+    case get("/subjects/#{subject}/versions/#{version_id}") do
+      {:ok, resp} ->
+        handle_get_version_response(resp)
       {:error, _} = err -> err
     end
-  catch
-    :exit, {:badarg, nil} -> {:error, :schema_not_found}
+  end
+
+  @doc false
+  def handle_get_version_response(%HTTPoison.Response{body: {:ok, json}} = resp) do
+    schema_id = json["id"]
+    handle_get_schema_response(resp, schema_id)
+  end
+
+  def handle_get_version_response(%HTTPoison.Response{} = resp) do
+    handle_get_schema_response(resp, nil)
   end
 
   @spec schema_for(Partition.topic) :: %{key: Schema.t, value: Schema.t} | {:error, term}

@@ -6,71 +6,71 @@ defmodule Rivulet.Avro.Deserializer do
   alias Rivulet.Kafka.{Message, Partition}
 
   defmodule State do
-    defstruct [topic: "", partition: -1]
+    @enforce_keys [:partition]
+    defstruct [:partition]
     @type t :: %__MODULE__{
-      topic: String.t,
-      partition: integer
+      partition: Partition.t
     }
   end
 
-  @spec start_link(Partition.topic, Partition.partition)
+  @spec start_link(Partition.t)
  :: GenServer.on_start
-  def start_link(topic, partition) do
-    GenStage.start_link(__MODULE__, {topic, partition, []})
+  def start_link(%Partition{} = partition) do
+    GenStage.start_link(__MODULE__, {partition, []})
   end
 
-  @spec start_link(Partition.topic, Partition.partition, GenStage.stage | [GenStage.stage])
+  @spec start_link(Partition.t, GenStage.stage | [GenStage.stage])
   :: GenServer.on_start
-  def start_link(topic, partition, {:global, _} = parent) do
-    start_link(topic, partition, [parent])
+  def start_link(%Partition{} = partition, {:global, _} = parent) do
+    start_link(partition, [parent])
   end
 
-  def start_link(topic, partition, {:via, _, _} = parent) do
-    start_link(topic, partition, [parent])
+  def start_link(%Partition{} = partition, {:via, _, _} = parent) do
+    start_link(partition, [parent])
   end
 
-  def start_link(topic, partition, {atom, node} = parent) when is_atom(atom) and is_atom(node) do
-    start_link(topic, partition, [parent])
+  def start_link(%Partition{} = partition, {atom, node} = parent) when is_atom(atom) and is_atom(node) do
+    start_link(partition, [parent])
   end
 
-  def start_link(topic, partition, parent) when is_pid(parent) or is_atom(parent) do
-    start_link(topic, partition, [parent])
+  def start_link(%Partition{} = partition, parent) when is_pid(parent) or is_atom(parent) do
+    start_link(partition, [parent])
   end
 
-  def start_link(topic, partition, parents) when is_list(parents) do
-    GenStage.start_link(__MODULE__, {topic, partition, parents})
+  def start_link(%Partition{} = partition, parents) when is_list(parents) do
+    GenStage.start_link(__MODULE__, {partition, parents})
   end
 
-  def init({topic, partition, []}) do
-    {:producer_consumer, %State{topic: topic, partition: partition}}
+  def init({%Partition{} = partition, []}) do
+    {:producer_consumer, %State{partition: partition}}
   end
 
-  def init({topic, partition, parents}) do
-    {:producer_consumer, %State{topic: topic, partition: partition}, subscribe_to: parents}
+  def init({%Partition{} = partition, parents}) do
+    {:producer_consumer, %State{partition: partition}, subscribe_to: parents}
   end
 
-  def handle_events(events, _from, %State{topic: topic, partition: partition} = state) do
+  def handle_events(events, _from, %State{partition: partition} = state) do
     Logger.debug("Deserializing events")
     decoded_events =
       events
       |> Enum.map(fn(%Message{} = msg) ->
-           %Message{msg | decoded_key: decode_value(msg.raw_key, topic, partition, msg.offset)}
+           %Message{msg | decoded_key: decode_value(msg.raw_key, partition, msg.offset)}
          end)
       |> Enum.map(fn(%Message{} = msg) ->
-           %Message{msg | decoded_value: decode_value(msg.raw_value, topic, partition, msg.offset)}
+           %Message{msg | decoded_value: decode_value(msg.raw_value, partition, msg.offset)}
          end)
 
     {:noreply, decoded_events, state}
   end
 
-  @spec decode_value(Avro.avro_message, Partition.topic, Partition.partition | -1, Partition.offset)
+  @spec decode_value(Avro.avro_message, Partition.t, Partition.offset)
   :: Avro.schema
   | {:error, :avro_decoding_failed, Avro.avro_message}
-  defp decode_value(msg, topic, partition, offset) when is_binary(msg) do
+  defp decode_value(msg, %Partition{} = partition, offset) when is_binary(msg) do
     case Avro.decode(msg) do
       {:ok, new_value} -> new_value
       {:error, reason} ->
-        Logger.error("[TOPIC: #{topic}][PARTITION: #{partition}][OFFSET: #{offset}] failed to decode for reason: #{inspect reason}")
+        Logger.error("[TOPIC: #{partition.topic}][PARTITION: #{partition.partition}][OFFSET: #{offset}] failed to decode for reason: #{inspect reason}")
         {:error, :avro_decoding_failed, msg}
     end
   end
