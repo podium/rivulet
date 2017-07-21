@@ -8,7 +8,11 @@ defmodule Rivulet.Avro.Registry do
   @type subject :: String.t
 
   def process_url(path) do
-    %URI{} = uri = Application.get_env(:rivulet, :avro_schema_registry_uri)
+    %URI{} = uri =
+      :rivulet
+      |> Application.get_env(:avro_schema_registry_uri)
+      |> URI.parse
+
     uri = %URI{uri | path: path}
 
     uri
