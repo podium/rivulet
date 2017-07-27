@@ -1,6 +1,8 @@
 defmodule Rivulet.Avro.Cache do
   use GenServer
 
+  alias Rivulet.Avro
+
   defmodule State do
     defstruct [tid: nil]
   end
@@ -25,13 +27,13 @@ defmodule Rivulet.Avro.Cache do
     GenServer.stop(cache)
   end
 
-  @spec put(cache_name, FireHydrant.Avro.schema_id, FireHydrant.Avro.schema) :: true
+  @spec put(cache_name, Avro.schema_id, Avro.schema) :: true
   def put(name \\ :avro_cache, schema_id, schema) do
     :ets.insert(name, {schema_id, schema})
     name
   end
 
-  @spec get(cache_name, FireHydrant.Avro.schema_id) :: FireHydrant.Avro.schema | nil | :no_cache
+  @spec get(cache_name, Avro.schema_id) :: Avro.schema | nil | :no_cache
   def get(cache_name \\ :avro_cache, schema_id) do
     case :ets.lookup(cache_name, schema_id) do
       [] -> nil
