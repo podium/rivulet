@@ -4,7 +4,7 @@ defmodule Rivulet.Kafka.Publisher do
 
   @type partition_strategy :: :random | {:key, binary} | integer
   @type encoding_strategy :: :avro | :raw | :json
-  @type key :: bitstring
+  @type key :: bitstring | Avro.decoded_message
   @typedoc """
   If the encoding_strategy is :raw, the function takes a bitstring. If another
   encoding strategy is specified, the function accepts whatever structures the

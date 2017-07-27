@@ -7,6 +7,5 @@
 			"name": "id",
 			"type": "int"
 		}
-	],
-	"connect.name": "raw.postgres.review_rocket.public.users.Key"
+	]
 }

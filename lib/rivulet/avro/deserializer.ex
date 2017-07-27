@@ -51,13 +51,15 @@ defmodule Rivulet.Avro.Deserializer do
 
   def handle_events(events, _from, %State{partition: partition} = state) do
     Logger.debug("Deserializing events")
+    %{key: key_schema, value: value_schema} = Avro.schema_for(partition.topic)
+
     decoded_events =
       events
       |> Enum.map(fn(%Message{} = msg) ->
-           %Message{msg | decoded_key: decode_value(msg.raw_key, partition, msg.offset)}
+           %Message{msg | decoded_key: decode_value(msg.raw_key, partition, msg.offset), key_schema: key_schema}
          end)
       |> Enum.map(fn(%Message{} = msg) ->
-           %Message{msg | decoded_value: decode_value(msg.raw_value, partition, msg.offset)}
+           %Message{msg | decoded_value: decode_value(msg.raw_value, partition, msg.offset), value_schema: value_schema}
          end)
 
     {:noreply, decoded_events, state}
