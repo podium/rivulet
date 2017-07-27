@@ -3,9 +3,6 @@ FROM elixir:1.4
 RUN mix local.hex --force
 RUN mix local.rebar --force
 
-COPY .ssh /root/.ssh
-RUN chmod 400 /root/.ssh/*
-
 WORKDIR /app
 
 COPY mix.exs /app/

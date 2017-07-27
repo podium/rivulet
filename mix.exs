@@ -25,7 +25,7 @@ defmodule Rivulet.Mixfile do
   defp deps do
     [{:kafka_ex, "~> 0.6.5"},
      {:dialyxir, "~> 0.5.0", only: [:dev, :test], runtime: false},
-     {:eavro, git: "git@github.com:podium/eavro", ref: "fix-complex-primitives", manager: :rebar},
+     {:eavro, git: "https://github.com/podium/eavro", ref: "fix-complex-primitives", manager: :rebar},
      {:httpoison, "~> 0.12.0"},
      {:gen_stage, "~> 0.11.0"},
      {:poison, "~> 3.1.0"}]
