@@ -1,4 +1,6 @@
 defmodule Rivulet.Kafka.Message do
+  alias Rivulet.Avro
+
   defstruct attributes: 0, crc: nil, offset: nil, raw_key: nil, raw_value: nil, decoded_key: nil, decoded_value: nil, key_schema: nil, value_schema: nil
   @type t :: %__MODULE__{
     attributes: non_neg_integer,

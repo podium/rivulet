@@ -1,11 +1,13 @@
 defmodule Rivulet.Avro.Registry do
   alias Rivulet.Avro
   alias Rivulet.Avro.Schema
+  alias Rivulet.Kafka.Partition
 
   use HTTPoison.Base
 
   @type version_id :: String.t
   @type subject :: String.t
+  @type json :: String.t
 
   def process_url(path) do
     %URI{} = uri =
@@ -20,12 +22,12 @@ defmodule Rivulet.Avro.Registry do
     |> URI.encode
   end
 
-  @spec process_response_body(Poison.t) :: term
+  @spec process_response_body(json) :: term
   def process_response_body(body) do
     Poison.decode(body)
   end
 
-  @spec create_schema(subject, Poison.t) :: {:ok, Schema.t} | {:error, term}
+  @spec create_schema(subject, json) :: {:ok, Schema.t} | {:error, term}
   def create_schema(subject, schema) when is_binary(subject) and is_binary(schema) do
     post("/subjects/#{subject}/versions", %{schema: schema} |> Poison.encode!, [{"Content-Type", "application/vnd.schemaregistry.v1+json"}])
   end

@@ -1,4 +1,6 @@
 defmodule Rivulet.Avro.Schema do
+  alias Rivulet.Avro
+
   @enforce_keys [:schema_id, :schema]
   defstruct [:schema_id, :schema]
   @type t :: %__MODULE__{

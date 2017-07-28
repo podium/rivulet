@@ -6,7 +6,7 @@ defmodule Rivulet.Pipeline.Consumer do
     GenStage.start_link(__MODULE__, [])
   end
 
-  @spec start_link(GenServer.stage | [GenStage.stage]) :: GenServer.on_start
+  @spec start_link(GenStage.stage | [GenStage.stage]) :: GenServer.on_start
   def start_link({:global, _} = parent) do
     start_link([parent])
   end

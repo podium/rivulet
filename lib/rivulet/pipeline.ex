@@ -3,7 +3,7 @@ defmodule Rivulet.Pipeline do
 
   alias Rivulet.Kafka.Partition
 
-  @callback init(Partition.t, GenStage.t) :: :ok | {:error, term}
+  @callback init(Partition.t, GenStage.stage) :: :ok | {:error, term}
 
   defmacro __using__(_) do
     quote do

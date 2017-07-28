@@ -19,7 +19,7 @@ defmodule Rivulet.Avro do
   defdelegate schema_for(topic), to: Registry
 
   @spec decode(avro_message)
-  :: {:ok, decoded_message} | {:error, Registry.reason}
+  :: {:ok, decoded_message} | {:error, term}
   def decode(msg) do
     schema_resp =
       msg
@@ -56,7 +56,7 @@ defmodule Rivulet.Avro do
   end
 
   @spec encode(term, schema_id | Schema.t)
-  :: {:ok, avro_message } | {:error, Registry.Reason}
+  :: {:ok, avro_message } | {:error, term}
   def encode(msg, %Schema{schema_id: schema_id, schema: schema}) do
     encode(msg, schema_id, schema)
   end
@@ -103,7 +103,7 @@ defmodule Rivulet.Avro do
     message
   end
 
-  @spec schema(schema_id) :: {:ok, Schema.t} | {:error, Registry.reason}
+  @spec schema(schema_id) :: {:ok, Schema.t} | {:error, term}
   def schema(schema_id) do
     cached = Cache.get(schema_id)
 
