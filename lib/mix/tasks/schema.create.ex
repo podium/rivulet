@@ -4,11 +4,13 @@ defmodule Mix.Tasks.Schema.Create do
   alias Rivulet.Avro.Registry
   require Logger
 
+  @shortdoc "POST a k/v schema from priv/avro_schemas to the registry"
+
   def run([topic]) do
     Application.ensure_all_started(:httpoison)
     Application.ensure_all_started(:logger)
 
-    schemas_dir = Path.join([File.cwd!(), "priv", "avro_schemas"])
+    schemas_dir = Path.join(["priv", "avro_schemas"])
     key_schema = File.read!(Path.join([schemas_dir, topic, "key.avsc"]))
     value_schema = File.read!(Path.join([schemas_dir, topic, "value.avsc"]))
 
