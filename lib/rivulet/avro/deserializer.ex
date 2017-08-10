@@ -56,10 +56,12 @@ defmodule Rivulet.Avro.Deserializer do
     decoded_events =
       events
       |> Enum.map(fn(%Message{} = msg) ->
-           %Message{msg | decoded_key: decode_value(msg.raw_key, partition, msg.offset), key_schema: key_schema}
+           decoded_key = decode_value(msg.raw_key, partition, msg.offset)
+           %Message{msg | decoded_key: decoded_key, key_schema: key_schema}
          end)
       |> Enum.map(fn(%Message{} = msg) ->
-           %Message{msg | decoded_value: decode_value(msg.raw_value, partition, msg.offset), value_schema: value_schema}
+           decoded_value = decode_value(msg.raw_value, partition, msg.offset)
+           %Message{msg | decoded_value: decoded_value, value_schema: value_schema}
          end)
 
     {:noreply, decoded_events, state}

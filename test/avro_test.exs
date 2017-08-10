@@ -1,7 +1,60 @@
+defmodule Rivulet.Avro.Test.Macros do
+  defmacro test_deserialize(schema, encode, decoded) do
+    quote do
+      test "decode #{inspect unquote(encode)} using #{inspect unquote(schema)}" do
+        schema =
+          case unquote(schema) do
+            {:ok, schema} -> schema
+            schema -> schema
+          end
+
+        encoded = :eavro.encode(schema, unquote(encode))
+
+        assert :eavro.decode(schema, encoded) == unquote(decoded)
+      end
+    end
+  end
+end
 defmodule Rivulet.Avro.Test do
   use ExUnit.Case
 
   @test_module Rivulet.Avro
+
+  @record_schema_json """
+  {
+    "type": "record",
+    "name": "human",
+    "namespace": "mynamespace",
+    "fields": [
+      { "name": "myfield", "type": "string" },
+      { "name": "age", "type": "int" },
+    ]
+  }
+  """
+
+  @null_integer_union_schema_json """
+  ["null", "int"]
+  """
+
+  @null_record_union_schema_json """
+  ["null", #{@record_schema_json}]
+  """
+
+  @enum_schema_json """
+  {"type": "enum", "name": "Suit", "symbols": ["SPADES", "HEARTS", "DIAMONDS", "CLUBS"]}
+  """
+
+  @array_schema_json """
+  {"type": "array", "items": "string"}
+  """
+
+  @map_schema_json """
+  {"type": "map", "values": "string"}
+  """
+
+  @fixed_schema_json """
+  {"type": "fixed", "name": "md5", "size": 16}
+  """
 
   alias Rivulet.Avro.Schema
 
@@ -60,6 +113,40 @@ defmodule Rivulet.Avro.Test do
         |> @test_module.decode!(schema.schema)
     end
   end
+
+  describe "decode primitive types" do
+    require __MODULE__.Macros
+    import __MODULE__.Macros
+
+    test_deserialize(:null, :null, {"", ""})
+    test_deserialize(:boolean, true, {true, ""})
+    test_deserialize(:int, 1, {1, ""})
+    test_deserialize(:long, 1, {1, ""})
+    test_deserialize(:float, 1.0, {1.0, ""})
+    test_deserialize(:double, 1.0, {1.0, ""})
+    test_deserialize(:bytes, <<1, 2, 3, 4, 5>>, {<<1, 2, 3, 4, 5>>, ""})
+    test_deserialize(:string, "Hello", {"Hello", ""})
+  end
+
+  describe "decode complex types" do
+    require __MODULE__.Macros
+    import __MODULE__.Macros
+
+    test_deserialize(:eavro.parse_schema(@record_schema_json), ["Cody Poll", 30], {["Cody Poll", 30], ""})
+    test_deserialize(:eavro.parse_schema(@null_integer_union_schema_json), {:int, 30}, {{:int, 30}, ""})
+    test_deserialize(:eavro.parse_schema(@null_integer_union_schema_json), :null, {:null, ""})
+    test_deserialize(
+      :eavro.parse_schema(@null_record_union_schema_json),
+      {:eavro.parse_schema(@record_schema_json), ["Cody Poll", 30]},
+      {{{:avro_record, :human, [{"myfield", :string}, {"age", :int}]}, ["Cody Poll", 30]}, ""}
+    )
+    test_deserialize(:eavro.parse_schema(@null_record_union_schema_json), :null, {:null, ""})
+    test_deserialize(:eavro.parse_schema(@enum_schema_json), :SPADES, {:SPADES, ""})
+    test_deserialize(:eavro.parse_schema(@array_schema_json), ["hello", "world"], {[["hello", "world"]], ""})
+    test_deserialize(:eavro.parse_schema(@map_schema_json), [{"Hello", "world"}, {"it's", "me"}], {[[{"Hello", "world"}, {"it's", "me"}]], ""})
+    test_deserialize(:eavro.parse_schema(@fixed_schema_json), "aaaaaaaaaaaaaaaa", {"aaaaaaaaaaaaaaaa", ""})
+  end
+
 
   def get_schema(_) do
     schema =
