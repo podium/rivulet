@@ -27,7 +27,7 @@ defmodule Rivulet.Kafka.Consumer do
   # Callback Functions
 
   def init({%Partition{} = partition, offset}) do
-    Logger.debug("Staring Kafka streamer for: #{partition.topic}:#{partition.partition} from offset: #{offset}")
+    Logger.debug("Starting Kafka streamer for: #{partition.topic}:#{partition.partition} from offset: #{offset}")
 
     state = %State{
       partition: partition,
