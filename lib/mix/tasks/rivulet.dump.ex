@@ -1,7 +1,6 @@
 defmodule Mix.Tasks.Rivulet.Dump do
   use Mix.Task
 
-  @shortdoc "plz 2 halp?"
   def run(_) do
     Application.ensure_all_started(:kafka_ex)
 

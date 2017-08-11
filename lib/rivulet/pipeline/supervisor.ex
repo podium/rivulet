@@ -2,6 +2,7 @@ defmodule Rivulet.Pipeline.Supervisor do
   use Supervisor
 
   alias Rivulet.Kafka.Partition
+  require Logger
 
   @type extra_args :: [term]
 
@@ -15,10 +16,14 @@ defmodule Rivulet.Pipeline.Supervisor do
   end
 
   def init({topic, child_module, extra_args}) when is_binary(topic) do
+    Logger.debug("Getting partition count for #{topic}")
+
     {:ok, partition_count} = Rivulet.Kafka.Partition.partition_count(topic)
 
+    Logger.debug("#{topic} has #{partition_count} partitions")
+
     topic
-    |> children(partition_count |> range, child_module, extra_args)
+    |> children(range(partition_count), child_module, extra_args)
     |> supervise([strategy: :one_for_one])
   end
 

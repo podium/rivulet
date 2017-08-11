@@ -1,6 +1,8 @@
 defmodule Rivulet.Pipeline.Consumer do
   use GenStage
 
+  require Logger
+
   @spec start_link() :: GenServer.on_start
   def start_link() do
     GenStage.start_link(__MODULE__, [])
@@ -28,14 +30,17 @@ defmodule Rivulet.Pipeline.Consumer do
   end
 
   def init({sources}) do
+    Logger.info("Starting #{__MODULE__} with sources: #{inspect sources}")
     {:consumer, {}, subscribe_to: sources}
   end
 
   def init(_) do
+    Logger.info("Starting #{__MODULE__} without any sources")
     {:consumer, {}}
   end
 
-  def handle_events(_events, _from, state) do
+  def handle_events(events, _from, state) do
+    Logger.debug("[#{__MODULE__}][:handle_events] Received #{length(events)} events")
     {:noreply, [], state}
   end
 end
