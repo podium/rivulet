@@ -70,7 +70,7 @@ defmodule Rivulet.Avro do
   @spec encode(bitstring, schema_id, schema) :: {:ok, avro_message}
   def encode(msg, schema_id, schema) do
     msg = :eavro.encode(schema, msg)
-    {:ok, <<0, schema_id :: size(32), msg :: binary>>}
+    {:ok, wrap(msg, schema_id)}
   end
 
   @spec encode!(term, schema_id | Schema.t) :: avro_message | no_return
@@ -115,5 +115,9 @@ defmodule Rivulet.Avro do
         {:ok, schema}
       end
     end
+  end
+
+  def wrap(msg, schema_id) do
+    <<0, schema_id :: size(32), msg :: binary>>
   end
 end
