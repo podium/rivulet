@@ -20,6 +20,7 @@ COPY priv/ /app/priv/
 COPY test/ /app/test/
 COPY codeship-services.yml /app/
 COPY codeship-steps.yml /app/
+COPY dialyzer.ignore-warnings /app/
 
 RUN MIX_ENV=${MIX_ENV} mix compile
 
