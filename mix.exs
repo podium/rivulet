@@ -9,13 +9,13 @@ defmodule Rivulet.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps(),
-     dialyzer: [plt_add_deps: :apps_direct],
+     dialyzer: [plt_add_deps: :app_direct, ignore_warnings: "dialyzer.ignore-warnings"],
      aliases: aliases()]
   end
 
   def application do
     if Mix.env == :test do
-      [applications: [:mix, :logger, :kafka_ex, :eavro, :httpoison, :gen_stage, :poison, :hackney, :meck, :hamcrest],
+      [applications: [:mix, :logger, :kafka_ex, :eavro, :httpoison, :gen_stage, :poison, :hackney, :meck],
        mod: {Rivulet.Application, []}]
     else
       [applications: [:mix, :logger, :kafka_ex, :eavro, :httpoison, :gen_stage, :poison, :hackney],
