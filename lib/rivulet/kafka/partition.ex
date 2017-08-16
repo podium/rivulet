@@ -38,20 +38,15 @@ defmodule Rivulet.Kafka.Partition do
     end
   end
 
-  @spec find_topic(topic)
-  :: (KafkaEx.Protocol.Metadata.TopicMetadata.t -> boolean)
-  defp find_topic(topic) do
-    fn
-      (%{topic: ^topic}) -> true
-      (_) -> false
-    end
-  end
-
   @spec topic_metadata(topic)
   :: {:ok, KafkaEx.Protocol.Metadata.TopicMetadata}
   | {:error, :topic_not_found, topic}
   def topic_metadata(topic) when is_binary(topic) do
-    topic_finder = find_topic(topic)
+    topic_finder =
+      fn
+        (%{topic: ^topic}) -> true
+        (_) -> false
+      end
 
     found_topic = Enum.find(KafkaEx.metadata.topic_metadatas, topic_finder)
 

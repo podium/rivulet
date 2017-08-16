@@ -1,4 +1,9 @@
 defmodule Rivulet.FilterNil do
+  @moduledoc """
+  This stage filters out kafka messages which have a value of `nil`. Sometimes
+  you want such messages, so this can't just go in the Rivulet.Kafka.Consumer or
+  Rivulet.Avro.Deserializer. It needs to be opt-in functionality, not opt-out.
+  """
   use GenStage
   require Logger
 
