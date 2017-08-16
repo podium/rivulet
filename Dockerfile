@@ -14,6 +14,8 @@ ENV MIX_ENV test
 RUN mix deps.get
 RUN mix deps.compile
 
+RUN mix dialyzer --plt
+
 COPY bin/ /app/bin/
 COPY lib/ /app/lib/
 COPY priv/ /app/priv/
