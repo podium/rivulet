@@ -67,7 +67,7 @@ defmodule Rivulet.Avro.Deserializer do
     {:noreply, decoded_events, state}
   end
 
-  @spec decode_value(Avro.avro_message, Partition.t, Partition.offset)
+  @spec decode_value(Avro.avro_message | nil, Partition.t, Partition.offset)
   :: Avro.schema
   | {:error, :avro_decoding_failed, Avro.avro_message}
   defp decode_value(msg, %Partition{} = partition, offset) when is_binary(msg) do
