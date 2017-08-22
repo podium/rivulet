@@ -11,8 +11,8 @@ defmodule Rivulet.TestPipeline do
 
   @spec init(Partition.t, GenStage.stage) :: :ok | no_return
   def init(%Partition{} = partition, kafka) do
-    with {:ok, deserializer} <- Rivulet.Avro.Deserializer.start_link(partition, kafka),
-         {:ok, printer} <- Rivulet.EventPrinter.start_link(deserializer),
+    with {:ok, deserializer} <- Rivulet.Avro.Stage.Deserializer.start_link(partition, kafka),
+         {:ok, printer} <- Rivulet.Stage.EventPrinter.start_link(deserializer),
          {:ok, _consumer} <- Rivulet.Pipeline.Consumer.start_link(printer) do
       :ok
     end

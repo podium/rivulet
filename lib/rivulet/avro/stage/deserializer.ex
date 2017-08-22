@@ -1,4 +1,4 @@
-defmodule Rivulet.Avro.Deserializer do
+defmodule Rivulet.Avro.Stage.Deserializer do
   use GenStage
   require Logger
 
