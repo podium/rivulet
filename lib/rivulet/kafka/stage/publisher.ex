@@ -23,6 +23,8 @@ defmodule Rivulet.Kafka.Stage.Publisher do
 
   defmodule State do
     defstruct []
+
+    @type t :: %__MODULE__{}
   end
 
   @spec start_link() :: GenServer.on_start
