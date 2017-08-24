@@ -14,6 +14,7 @@ ENV MIX_ENV test
 RUN mix deps.get
 RUN mix deps.compile
 
+COPY dialyzer.ignore-warnings /app/
 RUN mix dialyzer --plt
 
 COPY bin/ /app/bin/
@@ -22,7 +23,6 @@ COPY priv/ /app/priv/
 COPY test/ /app/test/
 COPY codeship-services.yml /app/
 COPY codeship-steps.yml /app/
-COPY dialyzer.ignore-warnings /app/
 
 RUN MIX_ENV=${MIX_ENV} mix compile
 
