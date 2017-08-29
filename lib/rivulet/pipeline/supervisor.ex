@@ -44,7 +44,7 @@ defmodule Rivulet.Pipeline.Supervisor do
       {:error, :topic_not_found, _} ->
         interval = retry_interval()
 
-        Logger.error("Could not find topic: #{topic}. Retrying in #{interval} ms")
+        Logger.error("#{__MODULE__}.partition_count/1 could not find topic: #{topic}. Retrying in #{interval} ms")
 
         :timer.sleep(interval)
 

@@ -50,12 +50,17 @@ defmodule Rivulet.FilterNil do
   end
 
   def handle_events(events, _from, %State{} = state) do
-    events =
+    filtered_events =
       Enum.reject(events, fn
         (%Message{raw_value: nil}) -> true
         (%Message{}) -> false
       end)
 
-    {:noreply, events, state}
+    Logger.debug(fn ->
+      filtered_count = length(events) - length(filtered_events)
+      "#{__MODULE__} filtered out #{filtered_count} events"
+    end)
+
+    {:noreply, filtered_events, state}
   end
 end

@@ -1,4 +1,6 @@
 defmodule Rivulet.Kafka.Partition do
+  require Logger
+
   @type count :: non_neg_integer
   @type partition_number :: non_neg_integer
   @type topic :: String.t
@@ -51,8 +53,10 @@ defmodule Rivulet.Kafka.Partition do
     found_topic = Enum.find(KafkaEx.metadata.topic_metadatas, topic_finder)
 
     if found_topic do
+      Logger.debug("Found topic: #{found_topic}")
       {:ok, found_topic}
     else
+      Logger.error("Could not find topic: #{topic}")
       {:error, :topic_not_found, topic}
     end
   end
