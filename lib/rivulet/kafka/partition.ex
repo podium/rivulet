@@ -53,7 +53,7 @@ defmodule Rivulet.Kafka.Partition do
     found_topic = Enum.find(KafkaEx.metadata.topic_metadatas, topic_finder)
 
     if found_topic do
-      Logger.debug("Found topic: #{found_topic}")
+      Logger.debug("Found topic: #{topic}")
       {:ok, found_topic}
     else
       Logger.error("Could not find topic: #{topic}")
