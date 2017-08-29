@@ -18,7 +18,7 @@ defmodule Rivulet.Pipeline.Supervisor do
   def init({topic, child_module, extra_args}) when is_binary(topic) do
     Logger.debug("Getting partition count for #{topic}")
 
-    {:ok, partition_count} = Rivulet.Kafka.Partition.partition_count(topic)
+    {:ok, partition_count} = partition_count(topic)
 
     Logger.debug("#{topic} has #{partition_count} partitions")
 
@@ -36,5 +36,24 @@ defmodule Rivulet.Pipeline.Supervisor do
 
   defp range(count) when is_integer(count) do
     0..(count - 1)
+  end
+
+  defp partition_count(topic) do
+    case Rivulet.Kafka.Partition.partition_count(topic) do
+      {:ok, count} -> {:ok, count}
+      {:error, :topic_not_found, _} ->
+        interval = retry_interval()
+
+        Logger.error("Could not find topic: #{topic}. Retrying in #{interval} ms")
+
+        :timer.sleep(interval)
+
+        partition_count(topic)
+    end
+  end
+
+  # TODO: Add exponential backoff if this is insufficient.
+  defp retry_interval() do
+    :timer.seconds(10)
   end
 end
