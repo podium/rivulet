@@ -72,6 +72,19 @@ defmodule Rivulet.Kafka.Stage.Publisher do
   @spec handle_event(Message.t) :: ignored
   def handle_event(%Message{} = msg) do
     Logger.debug("Publishing #{inspect msg}")
-    Publisher.publish(msg.topic, msg.partition_strategy, msg.encoding_strategy, msg.key, msg.value)
+    case Publisher.publish(msg.topic, msg.partition_strategy, msg.encoding_strategy, msg.key, msg.value) do
+      nil ->
+        Logger.debug("Publish returned nil?")
+      :ok ->
+        Logger.debug("Publish Succeeded")
+      {:ok, _} ->
+        Logger.debug("Publish Succeeded")
+      {:error, reason} ->
+        Logger.error("Publish failed for reason: #{inspect reason}")
+      :leader_not_available ->
+        Logger.error("Publish failed - Leader not available")
+    end
+
+    msg
   end
 end
