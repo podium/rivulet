@@ -200,7 +200,7 @@ defmodule Rivulet.Pipeline.Batcher.Test do
       assert {:next_state, :idle, _} =
         @test_module.handle_event(:state_timeout, :timeout, :filling, data)
 
-      assert_receive ^events, "Did not receive events"
+      assert_receive {:events, ^events}, 500, "Did not receive events"
     end
   end
 
