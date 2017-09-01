@@ -75,18 +75,6 @@ defmodule Rivulet.Pipeline.Batcher do
     {:next_state, :idle, data}
   end
 
-  def handle_event(:enter, :filling, :filling, %Data{} = data) do
-    {:next_state, :filling, data}
-  end
-
-  def handle_event(:enter, _, :filling, %Data{} = data) do
-    {:next_state, :filling, data, [{:state_timeout, data.timeout, :timeout}]}
-  end
-
-  def handle_event(:enter, _, state, %Data{} = data) do
-    {:next_state, state, data}
-  end
-
   def terminate(_reason, _state, _data), do: :ok
 
   # Private Functions
