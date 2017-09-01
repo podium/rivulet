@@ -74,7 +74,7 @@ defmodule Rivulet.Kafka.Stage.Publisher do
     Logger.debug("Publishing #{inspect msg}")
     case Publisher.publish(msg.topic, msg.partition_strategy, msg.encoding_strategy, msg.key, msg.value) do
       nil ->
-        Logger.debug("Publish returned nil?")
+        Logger.debug("Publish returned nil")
       :ok ->
         Logger.debug("Publish Succeeded")
       {:ok, _} ->

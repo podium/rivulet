@@ -47,7 +47,7 @@ defmodule Rivulet.Avro.Registry do
     case get("/schemas/ids/#{schema_id}") do
       {:ok, resp} -> handle_get_schema_response(resp, schema_id)
       {:error, reason} = err ->
-        Logger.debug("Could not get schema: #{schema_id}. Probably couldn't connect to registry. Reason: #{inspect reason}")
+        Logger.error("Could not get schema: #{schema_id}. Probably couldn't connect to registry. Reason: #{inspect reason}")
         err
     end
   end
