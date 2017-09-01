@@ -1,9 +1,11 @@
 defmodule Rivulet.Avro.Registry do
+  use HTTPoison.Base
+
+  require Logger
+
   alias Rivulet.Avro
   alias Rivulet.Avro.Schema
   alias Rivulet.Kafka.Partition
-
-  use HTTPoison.Base
 
   @type version_id :: String.t
   @type subject :: String.t
@@ -17,9 +19,15 @@ defmodule Rivulet.Avro.Registry do
 
     uri = %URI{uri | path: path}
 
+
+    uri =
+      uri
+      |> URI.to_string
+      |> URI.encode
+
+    Logger.debug("Making request to Avro Schema Registry: #{uri}")
+
     uri
-    |> URI.to_string
-    |> URI.encode
   end
 
   @spec process_response_body(json) :: term
@@ -29,14 +37,18 @@ defmodule Rivulet.Avro.Registry do
 
   @spec create_schema(subject, json) :: {:ok, Schema.t} | {:error, term}
   def create_schema(subject, schema) when is_binary(subject) and is_binary(schema) do
+    Logger.debug("Attempting to create schema for subject: #{subject}")
     post("/subjects/#{subject}/versions", %{schema: schema} |> Poison.encode!, [{"Content-Type", "application/vnd.schemaregistry.v1+json"}])
   end
 
   @spec get_schema(Avro.schema_id) :: {:ok, Schema.t} | {:error, term}
   def get_schema(schema_id) do
+    Logger.debug("Attempting to get schema: #{schema_id}")
     case get("/schemas/ids/#{schema_id}") do
       {:ok, resp} -> handle_get_schema_response(resp, schema_id)
-      {:error, _} = err -> err
+      {:error, reason} = err ->
+        Logger.error("Could not get schema: #{schema_id}. Probably couldn't connect to registry. Reason: #{inspect reason}")
+        err
     end
   end
 
@@ -47,12 +59,17 @@ defmodule Rivulet.Avro.Registry do
       |> Map.get("schema")
       |> :eavro.parse_schema
 
+    Logger.debug("Successfully retrieved and parsed schema: #{schema_id} with status: #{status}")
+
     {:ok, %Schema{schema_id: schema_id, schema: schema}}
   catch
-    :exit, {:badarg, nil} -> {:error, :schema_not_found}
+    :exit, {:badarg, nil} ->
+      Logger.error("Connected to registry, but could not parse schema: #{schema_id} Status: #{status}")
+      {:error, :schema_not_found}
   end
 
   def handle_get_schema_response(%HTTPoison.Response{body: {:ok, json}, status_code: status}, _) when status >= 300 do
+    Logger.error("Connected to registry, but received status code: #{status}")
     {:error, json["message"]}
   end
 
