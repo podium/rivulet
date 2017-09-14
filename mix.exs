@@ -36,7 +36,7 @@ defmodule Rivulet.Mixfile do
      {:eavro, git: "https://github.com/podium/eavro", ref: "fix-complex-primitives", manager: :rebar},
      {:gen_stage, "~> 0.11.0"},
      {:httpoison, "~> 0.12.0"},
-     {:kafka_ex, "~> 0.6.5"},
+     {:kafka_ex, "~> 0.8.0"},
      {:meck, "~> 0.8.7", only: [:test]},
      {:poison, "~> 3.1.0"}]
   end

@@ -7,7 +7,7 @@
   "httpoison": {:hex, :httpoison, "0.12.0", "8fc3d791c5afe6beb0093680c667dd4ce712a49d89c38c3fe1a43100dd76cf90", [:mix], [{:hackney, "~> 1.8.0", [hex: :hackney, repo: "hexpm", optional: false]}], "hexpm"},
   "idna": {:hex, :idna, "5.0.2", "ac203208ada855d95dc591a764b6e87259cb0e2a364218f215ad662daa8cd6b4", [:rebar3], [{:unicode_util_compat, "0.2.0", [hex: :unicode_util_compat, repo: "hexpm", optional: false]}], "hexpm"},
   "jsx": {:hex, :jsx, "2.8.2", "7acc7d785b5abe8a6e9adbde926a24e481f29956dd8b4df49e3e4e7bcc92a018", [:mix, :rebar3], [], "hexpm"},
-  "kafka_ex": {:hex, :kafka_ex, "0.6.5", "01c160cbfbe67f6dd60da446b7e7e43f3e51ceb943478f9f7ac425ac0f925b18", [:mix], [], "hexpm"},
+  "kafka_ex": {:hex, :kafka_ex, "0.8.0", "9161968e6d5881375f0c9cac6fa7b73f25c492d2d318b15f15ea2bee897fb13d", [:mix], [], "hexpm"},
   "libring": {:hex, :libring, "1.0.2", "95986f0aad553a340f34b898d146474c7a76fdf6e608ad9e0626e07514d8cdf4", [:mix], []},
   "meck": {:hex, :meck, "0.8.7", "ebad16ca23f685b07aed3bc011efff65fbaf28881a8adf925428ef5472d390ee", [], [], "hexpm"},
   "metrics": {:hex, :metrics, "1.0.1", "25f094dea2cda98213cecc3aeff09e940299d950904393b2a29d191c346a8486", [:rebar3], [], "hexpm"},

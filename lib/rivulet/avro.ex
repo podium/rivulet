@@ -10,6 +10,8 @@ defmodule Rivulet.Avro do
   @type buffer :: binary
   @type decoded_message :: {term, buffer}
 
+  require Logger
+
   alias Rivulet.Avro.{Cache, Registry, Schema}
 
   defmodule DeserializationError do
@@ -108,8 +110,10 @@ defmodule Rivulet.Avro do
     cached = Cache.get(schema_id)
 
     if cached do
+      Logger.debug("Found #{inspect schema_id} in Avro Cache")
       {:ok, cached}
     else
+      Logger.debug("#{inspect schema_id} not found in Avro Cache - checking registry")
       with {:ok, %Schema{} = schema} <- Registry.get_schema(schema_id) do
         Cache.put(schema_id, schema)
         {:ok, schema}
