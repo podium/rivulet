@@ -1,4 +1,28 @@
 defmodule Rivulet.Kafka.Stage.OffsetCommitter do
+  @moduledoc """
+  A stage for committing offsets to kafka.
+
+  When dealing with job validation, there are 3 different meanings of "done".
+
+  1. You've received the job, and the messaging system doesn't need to worry
+    about it anymore. This implies that the application is confident in its
+    error-handling ability.
+  1. You've received the job, and it has been completely processed.
+  1. You've received the job, completely processed it, and all previous jobs
+     have also been processed completely.
+
+  If using offset tracking, Kafka pretty much forces you to do #3. This offset
+  committer assumes that's what you are doing.
+
+  Whenever a batch of events comes through, this stage looks for the
+  highest-numbered offset and commits that one. It will track what the highest
+  offset it has seen is, and will only commit if the batch includes a number
+  which is higher than the current state.
+
+  This means that the developer is responsible for ensuring that all messages
+  with a lower offset have been completely processed before sending down a
+  batch.
+  """
   use GenStage
 
   require Logger
@@ -16,8 +40,8 @@ defmodule Rivulet.Kafka.Stage.OffsetCommitter do
     }
   end
 
+  @typedoc "The second element of an error tuple. `{:error, reason}`"
   @type reason :: term
-  @type ignored :: term
 
   @spec start_link(Partition.t, GenStage.stage | [GenStage.stage]) :: GenServer.on_start
   def start_link(partition, sources \\ [])
@@ -73,7 +97,8 @@ defmodule Rivulet.Kafka.Stage.OffsetCommitter do
     end
   end
 
-  defp highest_offset(events, initial_offset) do
+  @doc false
+  def highest_offset(events, initial_offset) do
     Enum.reduce(events, initial_offset, fn
       (%{offset: offset}, nil) -> offset
       (%{offset: offset}, current_offset) when offset > current_offset -> offset
