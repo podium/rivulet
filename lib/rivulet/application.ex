@@ -41,6 +41,7 @@ defmodule Rivulet.Application do
        end)
 
     unless Mix.env == :test do
+      Logger.info("Starting KafkaEx")
       Application.ensure_all_started(:kafka_ex)
     end
   end
