@@ -1,5 +1,6 @@
 defmodule Rivulet.Application do
   use Application
+  require Logger
 
   def start(_, _) do
     import Supervisor.Spec
@@ -24,7 +25,7 @@ defmodule Rivulet.Application do
       if Keyword.get(dynamic_hosts) do
         hosts =
           case hosts = System.get_env("KAFKA_HOSTS") do
-            nil -> raise "KAFKA_HOSTS not set"
+            nil -> Logger.error("KAFKA_HOSTS not set")
             value -> kafka_hosts(value)
           end
 
