@@ -15,10 +15,10 @@ defmodule Rivulet.Mixfile do
 
   def application do
     if Mix.env == :test do
-      [applications: [:mix, :logger, :kafka_ex, :eavro, :httpoison, :gen_stage, :poison, :hackney, :meck],
+      [applications: [:mix, :logger, :eavro, :httpoison, :gen_stage, :poison, :hackney, :meck],
        mod: {Rivulet.Application, []}]
     else
-      [applications: [:mix, :logger, :kafka_ex, :eavro, :httpoison, :gen_stage, :poison, :hackney],
+      [applications: [:mix, :logger, :eavro, :httpoison, :gen_stage, :poison, :hackney],
        mod: {Rivulet.Application, []}]
     end
   end
