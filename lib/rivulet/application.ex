@@ -6,6 +6,7 @@ defmodule Rivulet.Application do
     import Supervisor.Spec
 
     configure_kafka()
+    configure_schema_registry()
 
     children = [
       supervisor(Registry, [:unique, Rivulet.Registry]),
@@ -43,6 +44,17 @@ defmodule Rivulet.Application do
     unless Mix.env == :test do
       Logger.info("Starting KafkaEx")
       Application.ensure_all_started(:kafka_ex)
+    end
+  end
+
+  defp configure_schema_registry() do
+    case Application.get_env(:rivulet, :avro_schema_registry_uri) do
+      {:system, var} ->
+        Application.put_env(:rivulet, :avro_schema_registry_uri, System.get_env(var))
+      val when is_binary(val) ->
+        :ok
+      any ->
+        Logger.warn("Got value: #{inspect any} for schema registry url")
     end
   end
 
