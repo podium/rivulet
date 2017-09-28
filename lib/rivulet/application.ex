@@ -34,9 +34,11 @@ defmodule Rivulet.Application do
         config
       end
 
-    Enum.each(config, fn({k, v}) ->
-      Application.put_env(:kafka_ex, k, v, persistent: true)
-    end)
+    config
+    |> Enum.reverse
+    |> Enum.each(fn({k, v}) ->
+         Application.put_env(:kafka_ex, k, v, persistent: true)
+       end)
 
     unless Mix.env == :test do
       Application.ensure_all_started(:kafka_ex)
