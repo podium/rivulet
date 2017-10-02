@@ -71,7 +71,6 @@ defmodule Rivulet.Kafka.Stage.OffsetCommitter.Test do
 
     test "passes state through if tracked is nil and no events" do
       mock KafkaEx, :offset_commit, fn(_, _) -> :ok end do
-        highest_offset = 10
         partition = %{topic: "fake-topic", partition: 0}
         initial_state = %@test_module.State{offset: nil, partition: partition}
 

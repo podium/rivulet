@@ -1,3 +1,3 @@
 - name: test
-  service: testing
+  service: rivulet
   command: /app/bin/test
