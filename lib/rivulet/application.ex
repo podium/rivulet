@@ -45,7 +45,7 @@ defmodule Rivulet.Application do
     Logger.debug("Kafka should be configured to: #{inspect config}")
     Logger.debug("Kafka config: #{inspect Application.get_all_env(:kafka_ex)}")
 
-    if System.get_env("MIX_ENV") != :test do
+    if System.get_env("MIX_ENV") != "test" do
       Logger.info("Starting KafkaEx")
       Application.ensure_all_started(:kafka_ex)
     else
