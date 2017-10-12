@@ -14,22 +14,27 @@ defmodule Mix.Tasks.Schema.Create do
     key_schema = File.read!(Path.join([schemas_dir, topic, "key.avsc"]))
     value_schema = File.read!(Path.join([schemas_dir, topic, "value.avsc"]))
 
-    create_schema(topic <> "-key", key_schema)
-    create_schema(topic <> "-value", value_schema)
+    with {:ok, _} <- create_schema(topic <> "-key", key_schema),
+         {:ok, _} <- create_schema(topic <> "-value", value_schema) do
+           :ok
+    else
+      {:error, _} -> System.halt(1)
+    end
   end
 
   def create_schema(subject, schema) do
     Logger.info("Creating schema for subjejct: #{subject}")
 
     case Registry.create_schema(subject, schema) do
-      {:ok, %HTTPoison.Response{status_code: code} = resp} when code >= 300 ->
+      {:ok, %HTTPoison.Response{status_code: code}} = resp when code >= 300 ->
         Logger.error("Could not create schema for #{subject} - failed: #{inspect resp}")
         resp
-      {:ok, %HTTPoison.Response{status_code: code} = resp} when code <= 299 ->
+      {:ok, %HTTPoison.Response{status_code: code}} = resp when code <= 299 ->
         Logger.info("Successfully created schema for #{subject}: #{inspect resp}")
         resp
       {:error, reason} ->
         Logger.error("Could not create schema for #{subject} - failed for reason: #{inspect reason}")
+        {:error, reason}
     end
   end
 end
