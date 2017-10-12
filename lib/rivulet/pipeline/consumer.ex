@@ -30,7 +30,7 @@ defmodule Rivulet.Pipeline.Consumer do
   end
 
   def init({sources}) do
-    Logger.info("Starting #{__MODULE__} with sources: #{inspect sources}")
+    Logger.debug("Starting #{__MODULE__} with sources: #{inspect sources}")
     {:consumer, {}, subscribe_to: sources}
   end
 
