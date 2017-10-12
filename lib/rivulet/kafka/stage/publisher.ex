@@ -3,20 +3,8 @@ defmodule Rivulet.Kafka.Stage.Publisher do
 
   require Logger
 
-  alias Rivulet.Kafka.{Partition, Publisher}
-
-  defmodule Message do
-    @enforce_keys [:topic, :partition_strategy, :encoding_strategy, :value]
-    defstruct [:topic, :partition_strategy, :encoding_strategy, :key, :value]
-
-    @type t :: %__MODULE__{
-      topic: Partition.topic,
-      partition_strategy: Publisher.partition_strategy,
-      encoding_strategy: Publisher.encoding_strategy,
-      key: Publisher.key,
-      value: Publisher.value
-    }
-  end
+  alias Rivulet.Kafka.Publisher
+  alias Rivulet.Kafka.Publish.Message
 
   @type ignored :: term
   @type reason :: term
