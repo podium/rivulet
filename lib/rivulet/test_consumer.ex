@@ -22,4 +22,8 @@ defmodule Rivulet.TestConsumer do
 
     {:async_commit, partition}
   end
+
+  def handle_call(_msg, _from, state) do
+    {:reply, {:error, :unknown_message}, state}
+  end
 end
