@@ -3,20 +3,8 @@ defmodule Rivulet.Kafka.Stage.Publisher do
 
   require Logger
 
-  alias Rivulet.Kafka.{Partition, Publisher}
-
-  defmodule Message do
-    @enforce_keys [:topic, :partition_strategy, :encoding_strategy, :value]
-    defstruct [:topic, :partition_strategy, :encoding_strategy, :key, :value]
-
-    @type t :: %__MODULE__{
-      topic: Partition.topic,
-      partition_strategy: Publisher.partition_strategy,
-      encoding_strategy: Publisher.encoding_strategy,
-      key: Publisher.key,
-      value: Publisher.value
-    }
-  end
+  alias Rivulet.Kafka.Publisher
+  alias Rivulet.Kafka.Publish.Message
 
   @type ignored :: term
   @type reason :: term
@@ -64,27 +52,8 @@ defmodule Rivulet.Kafka.Stage.Publisher do
   | {:noreply, [term], State.t, :hibernate}
   | {:stop, reason, State.t}
   def handle_events(events, _from, %State{} = state) do
-    Enum.map(events, &handle_event/1)
+    Publisher.publish(events)
 
     {:noreply, events, state}
-  end
-
-  @spec handle_event(Message.t) :: ignored
-  def handle_event(%Message{} = msg) do
-    Logger.debug("Publishing #{inspect msg}")
-    case Publisher.publish(msg.topic, msg.partition_strategy, msg.encoding_strategy, msg.key, msg.value) do
-      nil ->
-        Logger.debug("Publish returned nil")
-      :ok ->
-        Logger.debug("Publish Succeeded")
-      {:ok, _} ->
-        Logger.debug("Publish Succeeded")
-      {:error, reason} ->
-        Logger.error("Publish failed for reason: #{inspect reason}")
-      :leader_not_available ->
-        Logger.error("Publish failed - Leader not available")
-    end
-
-    msg
   end
 end
