@@ -143,7 +143,7 @@ defmodule Rivulet.Avro do
 
   @spec decode_value(avro_message | nil, Partition.t, Partition.offset)
   :: decoded_message
-  | {:error, :avro_decoding_failed, Avro.avro_message}
+  | {:error, :avro_decoding_failed, avro_message}
   defp decode_value(msg, %Partition{} = partition, offset) when is_binary(msg) do
     case decode(msg) do
       {:ok, new_value} -> new_value
