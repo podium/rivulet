@@ -6,7 +6,7 @@ defmodule Rivulet.Kafka.Publish.Message do
 
   @type t :: %__MODULE__{
     topic: Partition.topic,
-    partition: Partition.partition,
+    partition: Partition.partition_number,
     partition_strategy: Publisher.partition_strategy,
     encoding_strategy: Publisher.encoding_strategy,
     key: Publisher.key,
