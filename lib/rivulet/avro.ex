@@ -13,12 +13,28 @@ defmodule Rivulet.Avro do
   require Logger
 
   alias Rivulet.Avro.{Cache, Registry, Schema}
+  alias Rivulet.Kafka.{Message, Partition}
 
   defmodule DeserializationError do
     defexception [:message]
   end
 
   defdelegate schema_for(topic), to: Registry
+
+  @spec bulk_decode([Message.t], Partition.t) :: [Message.t]
+  def bulk_decode(messages, %Partition{} = partition) do
+    %{key: key_schema, value: value_schema} = schema_for(partition.topic)
+
+    messages
+    |> Enum.map(fn(%Message{} = msg) ->
+         decoded_key = decode_value(msg.raw_key, partition, msg.offset)
+         %Message{msg | decoded_key: decoded_key, key_schema: key_schema}
+       end)
+    |> Enum.map(fn(%Message{} = msg) ->
+         decoded_value = decode_value(msg.raw_value, partition, msg.offset)
+         %Message{msg | decoded_value: decoded_value, value_schema: value_schema}
+       end)
+  end
 
   @spec decode(avro_message)
   :: {:ok, decoded_message} | {:error, term}
@@ -123,5 +139,17 @@ defmodule Rivulet.Avro do
 
   def wrap(msg, schema_id) do
     <<0, schema_id :: size(32), msg :: binary>>
+  end
+
+  @spec decode_value(avro_message | nil, Partition.t, Partition.offset)
+  :: decoded_message
+  | {:error, :avro_decoding_failed, avro_message}
+  defp decode_value(msg, %Partition{} = partition, offset) when is_binary(msg) do
+    case decode(msg) do
+      {:ok, new_value} -> new_value
+      {:error, reason} ->
+        Logger.error("[TOPIC: #{partition.topic}][PARTITION: #{partition.partition}][OFFSET: #{offset}] failed to decode for reason: #{inspect reason}")
+        {:error, :avro_decoding_failed, msg}
+    end
   end
 end

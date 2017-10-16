@@ -14,6 +14,14 @@ defmodule Rivulet.Kafka.Message do
     decoded_value: term | nil
   }
 
+  def from_wire_message(messages) when is_list(messages) do
+    messages
+    |> Enum.map(&from_wire_message/1)
+    |> Enum.sort(fn(%__MODULE__{} = a, %__MODULE__{} = b) ->
+         a.offset <= b.offset
+       end)
+  end
+
   def from_wire_message(%KafkaEx.Protocol.Fetch.Message{} = msg) do
     %__MODULE__{
       attributes: msg.attributes,
