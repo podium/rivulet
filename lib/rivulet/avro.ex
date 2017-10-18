@@ -58,7 +58,7 @@ defmodule Rivulet.Avro do
   end
 
   def decode(msg, schema) do
-    {:ok, :eavro.decode(schema, message(msg))}
+    AvroEx.decode(schema, message(msg))
   end
 
   @spec decode!(avro_message) :: decoded_message | no_return
@@ -87,7 +87,7 @@ defmodule Rivulet.Avro do
 
   @spec encode(bitstring, schema_id, schema) :: {:ok, avro_message}
   def encode(msg, schema_id, schema) do
-    msg = :eavro.encode(schema, msg)
+    {:ok, msg} = AvroEx.encode(schema, msg)
     {:ok, wrap(msg, schema_id)}
   end
 

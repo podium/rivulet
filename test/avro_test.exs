@@ -1,16 +1,17 @@
 defmodule Rivulet.Avro.Test.Macros do
   defmacro test_deserialize(schema, encode, decoded) do
     quote do
-      test "decode #{inspect unquote(encode)} using #{inspect unquote(schema)}" do
+      test "decode #{:erlang.unique_integer}" do
         schema =
           case unquote(schema) do
             {:ok, schema} -> schema
             schema -> schema
           end
 
-        encoded = :eavro.encode(schema, unquote(encode))
+        {:ok, encoded} = AvroEx.encode(schema, unquote(encode))
+        {:ok, decoded} = AvroEx.decode(schema, encoded)
 
-        assert :eavro.decode(schema, encoded) == unquote(decoded)
+        assert decoded == unquote(decoded)
       end
     end
   end
@@ -22,12 +23,12 @@ defmodule Rivulet.Avro.Test do
 
   @record_schema_json """
   {
-    "type": "record",
+    "type" : "record",
     "name": "human",
     "namespace": "mynamespace",
     "fields": [
-      { "name": "myfield", "type": "string" },
-      { "name": "age", "type": "int" },
+      {"name": "myfield", "type": "string"},
+      { "name": "age", "type": "int"}
     ]
   }
   """
@@ -118,7 +119,8 @@ defmodule Rivulet.Avro.Test do
     require __MODULE__.Macros
     import __MODULE__.Macros
 
-    test_deserialize(:null, :null, {"", ""})
+    @tag :current
+    test_deserialize(AvroEx.parse_schema!("null"), nil, nil)
     test_deserialize(:boolean, true, {true, ""})
     test_deserialize(:int, 1, {1, ""})
     test_deserialize(:long, 1, {1, ""})
@@ -132,19 +134,19 @@ defmodule Rivulet.Avro.Test do
     require __MODULE__.Macros
     import __MODULE__.Macros
 
-    test_deserialize(:eavro.parse_schema(@record_schema_json), ["Cody Poll", 30], {["Cody Poll", 30], ""})
-    test_deserialize(:eavro.parse_schema(@null_integer_union_schema_json), {:int, 30}, {{:int, 30}, ""})
-    test_deserialize(:eavro.parse_schema(@null_integer_union_schema_json), :null, {:null, ""})
+    test_deserialize(AvroEx.parse_schema!(@record_schema_json), ["Cody Poll", 30], {["Cody Poll", 30], ""})
+    test_deserialize(AvroEx.parse_schema!(@null_integer_union_schema_json), {:int, 30}, {{:int, 30}, ""})
+    test_deserialize(AvroEx.parse_schema!(@null_integer_union_schema_json), :null, {:null, ""})
     test_deserialize(
-      :eavro.parse_schema(@null_record_union_schema_json),
-      {:eavro.parse_schema(@record_schema_json), ["Cody Poll", 30]},
+      AvroEx.parse_schema!(@null_record_union_schema_json),
+      {AvroEx.parse_schema!(@record_schema_json), ["Cody Poll", 30]},
       {{{:avro_record, :human, [{"myfield", :string}, {"age", :int}]}, ["Cody Poll", 30]}, ""}
     )
-    test_deserialize(:eavro.parse_schema(@null_record_union_schema_json), :null, {:null, ""})
-    test_deserialize(:eavro.parse_schema(@enum_schema_json), :SPADES, {:SPADES, ""})
-    test_deserialize(:eavro.parse_schema(@array_schema_json), ["hello", "world"], {[["hello", "world"]], ""})
-    test_deserialize(:eavro.parse_schema(@map_schema_json), [{"Hello", "world"}, {"it's", "me"}], {[[{"Hello", "world"}, {"it's", "me"}]], ""})
-    test_deserialize(:eavro.parse_schema(@fixed_schema_json), "aaaaaaaaaaaaaaaa", {"aaaaaaaaaaaaaaaa", ""})
+    test_deserialize(AvroEx.parse_schema!(@null_record_union_schema_json), :null, {:null, ""})
+    test_deserialize(AvroEx.parse_schema!(@enum_schema_json), :SPADES, {:SPADES, ""})
+    test_deserialize(AvroEx.parse_schema!(@array_schema_json), ["hello", "world"], {[["hello", "world"]], ""})
+    test_deserialize(AvroEx.parse_schema!(@map_schema_json), [{"Hello", "world"}, {"it's", "me"}], {[[{"Hello", "world"}, {"it's", "me"}]], ""})
+    test_deserialize(AvroEx.parse_schema!(@fixed_schema_json), "aaaaaaaaaaaaaaaa", {"aaaaaaaaaaaaaaaa", ""})
   end
 
 
@@ -153,7 +155,7 @@ defmodule Rivulet.Avro.Test do
       [File.cwd!(), "priv", "avro_schemas", "test-log", "value.avsc"]
       |> Path.join
       |> File.read!
-      |> :eavro.parse_schema
+      |> AvroEx.parse_schema!
 
     {:ok, %{schema: %Schema{schema: schema, schema_id: 404}}}
   end
