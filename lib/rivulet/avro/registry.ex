@@ -54,10 +54,10 @@ defmodule Rivulet.Avro.Registry do
 
   @doc false
   def handle_get_schema_response(%HTTPoison.Response{body: {:ok, json}, status_code: status}, schema_id) when status <= 299 do
-    schema =
+    {:ok, schema} =
       json
       |> Map.get("schema")
-      |> :eavro.parse_schema
+      |> AvroEx.parse_schema
 
     Logger.debug("Successfully retrieved and parsed schema: #{schema_id} with status: #{status}")
 
