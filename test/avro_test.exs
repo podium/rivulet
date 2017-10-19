@@ -1,5 +1,5 @@
 defmodule Rivulet.Avro.Test.Macros do
-  defmacro test_deserialize(schema, encode, decoded) do
+  defmacro test_deserialize(schema, encode) do
     quote do
       test "decode #{:erlang.unique_integer}" do
         schema =
@@ -11,7 +11,7 @@ defmodule Rivulet.Avro.Test.Macros do
         {:ok, encoded} = AvroEx.encode(schema, unquote(encode))
         {:ok, decoded} = AvroEx.decode(schema, encoded)
 
-        assert decoded == unquote(decoded)
+        assert decoded == unquote(encode)
       end
     end
   end
@@ -85,11 +85,11 @@ defmodule Rivulet.Avro.Test do
     setup [:get_schema]
 
     test "accepts a %Schema{}", %{schema: schema} do
-      @test_module.encode(["First", "Last"], schema)
+      @test_module.encode(%{"first" => "First", "last" => "Last"}, schema)
     end
 
     test "accepts a schema id + schema", %{schema: schema} do
-      @test_module.encode(["First", "Last"], schema.schema_id, schema.schema)
+      @test_module.encode(%{"first" => "First", "last" => "Last"}, schema.schema_id, schema.schema)
     end
   end
 
@@ -97,18 +97,18 @@ defmodule Rivulet.Avro.Test do
     setup [:get_schema]
 
     test "accepts a %Schema{}", %{schema: schema} do
-      msg = ["First", "Last"]
+      msg = %{"first" => "First", "last" => "Last"}
 
-      assert {^msg, ""} =
+      assert ^msg =
         msg
         |> @test_module.encode!(schema)
         |> @test_module.decode!(schema)
     end
 
     test "accepts a schema", %{schema: schema} do
-      msg = ["First", "Last"]
+      msg = %{"first" => "First", "last" => "Last"}
 
-      assert {^msg, ""} =
+      assert ^msg =
         msg
         |> @test_module.encode!(schema)
         |> @test_module.decode!(schema.schema)
@@ -120,33 +120,32 @@ defmodule Rivulet.Avro.Test do
     import __MODULE__.Macros
 
     @tag :current
-    test_deserialize(AvroEx.parse_schema!("null"), nil, nil)
-    test_deserialize(:boolean, true, {true, ""})
-    test_deserialize(:int, 1, {1, ""})
-    test_deserialize(:long, 1, {1, ""})
-    test_deserialize(:float, 1.0, {1.0, ""})
-    test_deserialize(:double, 1.0, {1.0, ""})
-    test_deserialize(:bytes, <<1, 2, 3, 4, 5>>, {<<1, 2, 3, 4, 5>>, ""})
-    test_deserialize(:string, "Hello", {"Hello", ""})
+    test_deserialize(AvroEx.parse_schema!(~S("null")), nil)
+    test_deserialize(AvroEx.parse_schema!(~S("boolean")), true)
+    test_deserialize(AvroEx.parse_schema!(~S("int")), 1)
+    test_deserialize(AvroEx.parse_schema!(~S("long")), 1)
+    test_deserialize(AvroEx.parse_schema!(~S("float")), 1.0)
+    test_deserialize(AvroEx.parse_schema!(~S("double")), 1.0)
+    test_deserialize(AvroEx.parse_schema!(~S("bytes")), <<1, 2, 3, 4, 5>>)
+    test_deserialize(AvroEx.parse_schema!(~S("string")), "Hello")
   end
 
   describe "decode complex types" do
     require __MODULE__.Macros
     import __MODULE__.Macros
 
-    test_deserialize(AvroEx.parse_schema!(@record_schema_json), ["Cody Poll", 30], {["Cody Poll", 30], ""})
-    test_deserialize(AvroEx.parse_schema!(@null_integer_union_schema_json), {:int, 30}, {{:int, 30}, ""})
-    test_deserialize(AvroEx.parse_schema!(@null_integer_union_schema_json), :null, {:null, ""})
+    test_deserialize(AvroEx.parse_schema!(@record_schema_json), %{"myfield" => "Cody Poll", "age" => 30})
+    test_deserialize(AvroEx.parse_schema!(@null_integer_union_schema_json), 30)
+    test_deserialize(AvroEx.parse_schema!(@null_integer_union_schema_json), nil)
     test_deserialize(
       AvroEx.parse_schema!(@null_record_union_schema_json),
-      {AvroEx.parse_schema!(@record_schema_json), ["Cody Poll", 30]},
-      {{{:avro_record, :human, [{"myfield", :string}, {"age", :int}]}, ["Cody Poll", 30]}, ""}
+      %{"myfield" => "Cody Poll", "age" => 30}
     )
-    test_deserialize(AvroEx.parse_schema!(@null_record_union_schema_json), :null, {:null, ""})
-    test_deserialize(AvroEx.parse_schema!(@enum_schema_json), :SPADES, {:SPADES, ""})
-    test_deserialize(AvroEx.parse_schema!(@array_schema_json), ["hello", "world"], {[["hello", "world"]], ""})
-    test_deserialize(AvroEx.parse_schema!(@map_schema_json), [{"Hello", "world"}, {"it's", "me"}], {[[{"Hello", "world"}, {"it's", "me"}]], ""})
-    test_deserialize(AvroEx.parse_schema!(@fixed_schema_json), "aaaaaaaaaaaaaaaa", {"aaaaaaaaaaaaaaaa", ""})
+    test_deserialize(AvroEx.parse_schema!(@null_record_union_schema_json), nil)
+    test_deserialize(AvroEx.parse_schema!(@enum_schema_json), "SPADES")
+    test_deserialize(AvroEx.parse_schema!(@array_schema_json), ["hello", "world"])
+    test_deserialize(AvroEx.parse_schema!(@map_schema_json), %{"Hello" => "world", "it's" => "me"})
+    test_deserialize(AvroEx.parse_schema!(@fixed_schema_json), "aaaaaaaaaaaaaaaa")
   end
 
 
