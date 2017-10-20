@@ -35,7 +35,7 @@ defmodule Rivulet.Mixfile do
     [{:dialyxir, "~> 0.5.0", only: [:dev, :test], runtime: false},
      {:avro_ex, "~> 0.1.0-beta.0"},
      {:gen_stage, "~> 0.11.0"},
-     {:httpoison, "~> 0.12.0"},
+     {:httpoison, ">= 0.12.0"},
      {:kafka_ex, "~> 0.8.0"},
      {:meck, "~> 0.8.7", only: [:test]},
      {:poison, "~> 2.2 or ~> 3.1.0"}]
