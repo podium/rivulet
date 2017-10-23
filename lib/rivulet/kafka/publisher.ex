@@ -151,8 +151,8 @@ defmodule Rivulet.Kafka.Publisher do
            %Message{message | encoding_strategy: :raw, key: k, value: v}
     else
       err ->
-        err
-        |> inspect
+        [inspect(err), inspect(key), inspect(value)]
+        |> Enum.join(" -- ")
         |> Logger.error
 
         nil
