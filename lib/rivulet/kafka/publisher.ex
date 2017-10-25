@@ -159,10 +159,6 @@ defmodule Rivulet.Kafka.Publisher do
     end
   end
 
-  def encode(%Message{encoding_strategy: :raw} = message) do
-    message
-  end
-
   @doc false
   defp remove_nil(nil), do: false
   defp remove_nil(_), do: true
