@@ -59,6 +59,8 @@ defmodule Rivulet.Application do
         Application.put_env(:rivulet, :avro_schema_registry_uri, System.get_env(var))
       val when is_binary(val) ->
         :ok
+      %URI{} ->
+        :ok
       any ->
         Logger.warn("Got value: #{inspect any} for schema registry url")
     end

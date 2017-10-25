@@ -7,8 +7,7 @@ defmodule Mix.Tasks.Schema.Create do
   @shortdoc "POST a k/v schema from priv/avro_schemas to the registry"
 
   def run([topic]) do
-    Application.ensure_all_started(:httpoison)
-    Application.ensure_all_started(:logger)
+    Application.ensure_all_started(:rivulet)
 
     schemas_dir = Path.join(["priv", "avro_schemas"])
     key_schema = File.read!(Path.join([schemas_dir, topic, "key.avsc"]))
