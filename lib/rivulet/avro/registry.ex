@@ -96,7 +96,7 @@ defmodule Rivulet.Avro.Registry do
     handle_get_schema_response(resp, nil)
   end
 
-  @spec schema_for(Partition.topic) :: {:ok, Schema.t} | {:error, term}
+  @spec schema_for(Partition.topic) :: {:ok, Schema.t} | {:error, term} # TODO: UPDATE partition topics to be subjects in typespec
   def schema_for(subject) when is_binary(subject) do
     case get("/subjects/#{subject}/versions") do
       {:ok, %HTTPoison.Response{status_code: status, body: {:ok, json}}} when is_list(json) and length(json) > 0 and status <= 299 ->
