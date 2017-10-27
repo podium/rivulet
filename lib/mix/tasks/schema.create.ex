@@ -25,9 +25,9 @@ defmodule Mix.Tasks.Schema.Create do
     Logger.info("Creating schema for subjejct: #{subject}")
 
     case Registry.create_schema(subject, schema) do
-      {:ok, %HTTPoison.Response{status_code: code}} = resp when code >= 300 ->
+      {:ok, %HTTPoison.Response{status_code: code} = resp} when code >= 300 ->
         Logger.error("Could not create schema for #{subject} - failed: #{inspect resp}")
-        resp
+        {:error, resp}
       {:ok, %HTTPoison.Response{status_code: code}} = resp when code <= 299 ->
         Logger.info("Successfully created schema for #{subject}: #{inspect resp}")
         resp
