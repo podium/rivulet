@@ -19,20 +19,51 @@ defmodule Rivulet.Avro do
     defexception [:message]
   end
 
-  defdelegate schema_for(topic), to: Registry
+  def schema_for_subject(subject) when is_binary(subject) do
+    cached = Cache.get(subject)
+
+    if cached do
+      Logger.debug("Found #{inspect subject} in Avro Cache")
+      {:ok, cached}
+    else
+      Logger.debug("#{inspect subject} not found in Avro Cache - checking registry")
+      with {:ok, id} <- Registry.schema_for(subject) do
+        Cache.put(subject, id)
+        {:ok, id}
+      end
+    end
+  end
 
   @spec bulk_decode([Message.t], Partition.t) :: [Message.t]
   def bulk_decode(messages, %Partition{} = partition) do
-    %{key: key_schema, value: value_schema} = schema_for(partition.topic)
-
     messages
     |> Enum.map(fn(%Message{} = msg) ->
-         decoded_key = decode_value(msg.raw_key, partition, msg.offset)
-         %Message{msg | decoded_key: decoded_key, key_schema: key_schema}
+         schema =
+           msg.raw_value
+           |> schema_id
+           |> schema
+
+         case decode(msg.raw_key) do
+           {:ok, decoded_key} ->
+             %Message{msg | decoded_key: decoded_key, key_schema: schema}
+           {:error, reason} ->
+             Logger.error("[TOPIC: #{partition.topic}][PARTITION: #{partition.partition}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
+             %Message{msg | decoded_key: {:error, :avro_decoding_failed, msg}, key_schema: schema}
+         end
        end)
     |> Enum.map(fn(%Message{} = msg) ->
-         decoded_value = decode_value(msg.raw_value, partition, msg.offset)
-         %Message{msg | decoded_value: decoded_value, value_schema: value_schema}
+         schema =
+           msg.raw_value
+           |> schema_id
+           |> schema
+
+         case decode(msg.raw_value) do
+           {:ok, decoded_value} ->
+             %Message{msg | decoded_value: decoded_value, value_schema: schema}
+           {:error, reason} ->
+             Logger.error("[TOPIC: #{partition.topic}][PARTITION: #{partition.partition}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
+             %Message{msg | decoded_value: {:error, :avro_decoding_failed, msg}, value_schema: schema}
+         end
        end)
   end
 
@@ -131,6 +162,7 @@ defmodule Rivulet.Avro do
       {:ok, cached}
     else
       Logger.debug("#{inspect schema_id} not found in Avro Cache - checking registry")
+
       with {:ok, %Schema{} = schema} <- Registry.get_schema(schema_id) do
         Cache.put(schema_id, schema)
         {:ok, schema}
@@ -140,17 +172,5 @@ defmodule Rivulet.Avro do
 
   def wrap(msg, schema_id) do
     <<0, schema_id :: size(32), msg :: binary>>
-  end
-
-  @spec decode_value(avro_message | nil, Partition.t, Partition.offset)
-  :: decoded_message
-  | {:error, :avro_decoding_failed, avro_message}
-  defp decode_value(msg, %Partition{} = partition, offset) when is_binary(msg) do
-    case decode(msg) do
-      {:ok, new_value} -> new_value
-      {:error, reason} ->
-        Logger.error("[TOPIC: #{partition.topic}][PARTITION: #{partition.partition}][OFFSET: #{offset}] failed to decode for reason: #{inspect reason}")
-        {:error, :avro_decoding_failed, msg}
-    end
   end
 end

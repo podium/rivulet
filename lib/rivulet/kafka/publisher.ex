@@ -46,11 +46,12 @@ defmodule Rivulet.Kafka.Publisher do
     end
   end
 
-  def publish(topic, partition, :avro, key, message) when is_integer(partition) do
-    with %{key: key_schema, value: value_schema} <- Avro.schema_for(topic),
+  def publish(topic, partition, :avro, key, value) when is_integer(partition) do
+    with {:ok, key_schema} <- Avro.schema_for_subject(topic <> "-key"),
+         {:ok, value_schema} <- Avro.schema_for_subject(topic <> "-value"),
          {:ok, k} <- Avro.encode(key, key_schema),
-         {:ok, msg} <- Avro.encode(message, value_schema) do
-      publish(topic, partition, :raw, k, msg)
+         {:ok, v} <- Avro.encode(value, value_schema) do
+      publish(topic, partition, :raw, k, v)
     else
       {:error, reason} -> {:error, reason}
     end
@@ -145,7 +146,8 @@ defmodule Rivulet.Kafka.Publisher do
   end
 
   def encode(%Message{encoding_strategy: :avro, key: key, value: value, topic: topic} = message) do
-    with %{key: key_schema, value: value_schema} <- Avro.schema_for(topic),
+    with {:ok, key_schema} <- Avro.schema_for_subject(topic <> "-key"),
+         {:ok, value_schema} <- Avro.schema_for_subject(topic <> "-value"),
          {:ok, k} <- Avro.encode(key, key_schema),
          {:ok, v} <- Avro.encode(value, value_schema) do
            %Message{message | encoding_strategy: :raw, key: k, value: v}

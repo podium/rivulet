@@ -96,18 +96,8 @@ defmodule Rivulet.Avro.Registry do
     handle_get_schema_response(resp, nil)
   end
 
-  @spec schema_for(Partition.topic) :: %{key: Schema.t, value: Schema.t} | {:error, term}
-  def schema_for(topic) when is_binary(topic) do
-    with {:ok, %Schema{} = key} <- schema_for(topic, :key),
-         {:ok, %Schema{} = value} <- schema_for(topic, :value) do
-      %{key: key, value: value}
-    end
-  end
-
-  @spec schema_for(Partition.topic, :key | :value) :: {:ok, Schema.t} | {:error, term}
-  def schema_for(topic, k_or_v) when is_binary(topic) and k_or_v == :key or k_or_v == :value do
-    subject = "#{topic}-#{k_or_v}"
-
+  @spec schema_for(Partition.topic) :: {:ok, Schema.t} | {:error, term} # TODO: UPDATE partition topics to be subjects in typespec
+  def schema_for(subject) when is_binary(subject) do
     case get("/subjects/#{subject}/versions") do
       {:ok, %HTTPoison.Response{status_code: status, body: {:ok, json}}} when is_list(json) and length(json) > 0 and status <= 299 ->
         id = List.last(json)
