@@ -22,6 +22,8 @@ defmodule Rivulet.Avro do
   def schema_for_subject(subject) when is_binary(subject) do
     cached = Cache.get(subject)
 
+  IO.inspect("Please reject this until this line is removed")
+
     if cached do
       Logger.debug("Found #{inspect subject} in Avro Cache")
       {:ok, cached}

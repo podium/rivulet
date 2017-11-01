@@ -17,7 +17,9 @@ defmodule Mix.Tasks.Schema.Create do
          {:ok, _} <- create_schema(topic <> "-value", value_schema) do
            :ok
     else
-      {:error, _} -> System.halt(1)
+      {:error, _} = err ->
+        IO.inspect("Failed for reason: #{inspect err}")
+        System.halt(1)
     end
   end
 
