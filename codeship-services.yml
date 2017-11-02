@@ -5,4 +5,4 @@ services:
     build: .
     environment:
       - MIX_ENV=test
-  cached: true
+    cached: true

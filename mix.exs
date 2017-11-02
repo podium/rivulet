@@ -15,7 +15,7 @@ defmodule Rivulet.Mixfile do
 
   def application do
     if Mix.env == :test do
-      [applications: [:mix, :logger, :httpoison, :gen_stage, :poison, :hackney, :meck],
+      [applications: [:mix, :logger, :httpoison, :poison, :hackney, :meck],
        mod: {Rivulet.Application, []}]
     else
       [applications: [:mix, :logger, :httpoison, :gen_stage, :poison, :hackney],
@@ -34,7 +34,6 @@ defmodule Rivulet.Mixfile do
   defp deps do
     [{:dialyxir, "~> 0.5.0", only: [:dev, :test], runtime: false},
      {:avro_ex, "~> 0.1.0-beta.0"},
-     {:gen_stage, "~> 0.11.0"},
      {:httpoison, ">= 0.12.0"},
      {:kafka_ex, "~> 0.8.0"},
      {:meck, "~> 0.8.7", only: [:test]},
