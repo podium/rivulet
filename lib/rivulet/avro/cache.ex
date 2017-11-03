@@ -2,6 +2,7 @@ defmodule Rivulet.Avro.Cache do
   use GenServer
 
   alias Rivulet.Avro
+  alias Rivulet.Kafka.Partition
 
   defmodule State do
     defstruct [tid: nil]
