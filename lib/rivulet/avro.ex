@@ -45,7 +45,7 @@ defmodule Rivulet.Avro do
 
          case decode(msg.raw_key) do
            {:ok, decoded_key} ->
-             %Message{msg | decoded_key: decoded_key, key_schema: schema}
+             %Message{msg | decoded_key: decoded_key, raw_key: nil}
            {:error, reason} ->
              Logger.error("[TOPIC: #{partition.topic}][PARTITION: #{partition.partition}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
              %Message{msg | decoded_key: {:error, :avro_decoding_failed, msg}, key_schema: schema}
@@ -59,7 +59,7 @@ defmodule Rivulet.Avro do
 
          case decode(msg.raw_value) do
            {:ok, decoded_value} ->
-             %Message{msg | decoded_value: decoded_value, value_schema: schema}
+             %Message{msg | decoded_value: decoded_value, raw_value: nil}
            {:error, reason} ->
              Logger.error("[TOPIC: #{partition.topic}][PARTITION: #{partition.partition}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
              %Message{msg | decoded_value: {:error, :avro_decoding_failed, msg}, value_schema: schema}

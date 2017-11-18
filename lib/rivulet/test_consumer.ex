@@ -1,14 +1,16 @@
 defmodule Rivulet.TestConsumer do
-  use KafkaEx.GenConsumer
+  require Record
 
   alias Rivulet.Kafka.{Message, Partition}
   alias Rivulet.Avro
+
+  defrecord :kafka_message, extract(:kafka_message, from_lib: "brod/include/brod.hrl")
 
   def init(topic, partition) do
     {:ok, %Partition{topic: topic, partition: partition}}
   end
 
-  def handle_message_set(messages, %Partition{} = partition) do
+  def handle_message(messages, %Partition{} = partition) do
     messages
     |> Message.from_wire_message
     |> Enum.reject(fn
