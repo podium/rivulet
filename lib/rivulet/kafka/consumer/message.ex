@@ -1,4 +1,4 @@
-defmodule Rivulet.Kafka.Message do
+defmodule Rivulet.Kafka.Consumer.Message do
   alias Rivulet.Avro
 
   require Record

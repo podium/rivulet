@@ -31,7 +31,7 @@ defmodule Rivulet.Application do
           value -> kafka_hosts(value)
         end
       else
-        Application.get_env(:rivulet, :hosts)
+        Application.get_env(:rivulet, :kafka_brokers)
       end
 
     # config
@@ -44,7 +44,7 @@ defmodule Rivulet.Application do
     # Logger.debug("Kafka config: #{inspect Application.get_all_env(:kafka_ex)}")
 
     if System.get_env("MIX_ENV") != "test" do
-      :brod.start_client(kafka_hosts, :rivulet_brod_client, [])
+      :ok = :brod.start_client(kafka_hosts, :rivulet_brod_client, _client_config=[auto_start_producers: true])
     else
       Logger.info("Test Environment detected - not starting :brod")
     end
@@ -69,9 +69,9 @@ defmodule Rivulet.Application do
     |> Enum.map(fn(host_string) ->
          case String.split(host_string, ":") do
            [host, port] ->
-             {host, String.to_integer(port)}
+             {String.to_atom(host), String.to_integer(port)}
            [host] ->
-             {host, 9092}
+             {String.to_atom(host), 9092}
          end
        end)
   end

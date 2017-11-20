@@ -13,7 +13,8 @@ defmodule Rivulet.Avro do
   require Logger
 
   alias Rivulet.Avro.{Cache, Registry, Schema}
-  alias Rivulet.Kafka.{Message, Partition}
+  alias Rivulet.Kafka.Partition
+  alias Rivulet.Kafka.Consumer.Message
 
   defmodule DeserializationError do
     defexception [:message]

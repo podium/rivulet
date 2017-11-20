@@ -1,4 +1,4 @@
-defmodule Rivulet.Kafka.Publish.Message do
+defmodule Rivulet.Kafka.Publisher.Message do
   @enforce_keys [:topic, :partition_strategy, :encoding_strategy, :value]
   defstruct [:topic, :partition, :partition_strategy, :encoding_strategy, :key, :value]
 

@@ -1,7 +1,8 @@
 defmodule Rivulet.TestConsumer do
   require Record
 
-  alias Rivulet.Kafka.{Message, Partition}
+  alias Rivulet.Kafka.Partition
+  alias Rivulet.Kafka.Consumer.Message
   alias Rivulet.Avro
 
 

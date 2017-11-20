@@ -1,5 +1,5 @@
 defmodule Rivulet.Kafka.Publisher do
-  alias Rivulet.Kafka.Publish.Message
+  alias Rivulet.Kafka.Publisher.Message
   alias Rivulet.Kafka.Partition
   alias Rivulet.Avro
 
@@ -33,7 +33,11 @@ defmodule Rivulet.Kafka.Publisher do
     end
   end
 
-  def publish(topic, partition, :raw, key, message) when is_integer(partition) do
+  def publish(topic, partition, :raw, nil, message) when is_integer(partition) do
+    publish(topic, partition, :raw, "", message)
+  end
+
+  def publish(topic, partition, :raw, key, message) when is_integer(partition) and is_binary(key) do
     :brod.produce(:rivulet_brod_client, topic, partition, key, message)
   end
 
@@ -153,7 +157,10 @@ defmodule Rivulet.Kafka.Publisher do
   defp remove_nil(nil), do: false
   defp remove_nil(_), do: true
 
-  defp to_brod_message(%Message{} = msg) do
-    {msg.key, msg.value}
+  defp to_brod_message(%Message{key: key, value: value}) when is_nil(key) do
+    {"", value}
+  end
+  defp to_brod_message(%Message{key: key, value: value}) when is_binary(key) do
+    {key, value}
   end
 end
