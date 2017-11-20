@@ -4,7 +4,6 @@ defmodule Rivulet.TestConsumer do
   alias Rivulet.Kafka.{Message, Partition}
   alias Rivulet.Avro
 
-  defrecord :kafka_message, extract(:kafka_message, from_lib: "brod/include/brod.hrl")
 
   def init(topic, partition) do
     {:ok, %Partition{topic: topic, partition: partition}}

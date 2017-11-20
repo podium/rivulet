@@ -14,6 +14,7 @@ defmodule Rivulet.Application do
       #supervisor(KafkaEx.ConsumerGroup, [Rivulet.TestConsumer, "rivulet", ["firehose"], [heartbeat_interval: :timer.seconds(1), commit_interval: 1000]])
     ]
 
+
     opts = [strategy: :one_for_one]
 
     Supervisor.start_link(children, opts)
@@ -23,33 +24,29 @@ defmodule Rivulet.Application do
     Logger.debug("Configuring Kafka")
     config = Application.get_all_env(:rivulet)
 
-    config =
+    kafka_hosts =
       if Keyword.get(config, :dynamic_hosts) do
-        hosts =
-          case System.get_env("KAFKA_HOSTS") do
-            nil -> Logger.error("KAFKA_HOSTS not set")
-            value -> kafka_hosts(value)
-          end
-
-        Keyword.put(config, :brokers, hosts)
+        case System.get_env("KAFKA_HOSTS") do
+          nil -> Logger.error("KAFKA_HOSTS not set")
+          value -> kafka_hosts(value)
+        end
       else
-        config
+        Application.get_env(:rivulet, :hosts)
       end
 
-    config
-    |> Enum.reverse
-    |> Enum.each(fn({k, v}) ->
-         Application.put_env(:kafka_ex, k, v, persistent: true)
-       end)
+    # config
+    # |> Enum.reverse
+    # |> Enum.each(fn({k, v}) ->
+    #      # Application.put_env(:kafka_ex, k, v, persistent: true)
+    #    end)
 
-    Logger.debug("Kafka should be configured to: #{inspect config}")
-    Logger.debug("Kafka config: #{inspect Application.get_all_env(:kafka_ex)}")
+    # Logger.debug("Kafka should be configured to: #{inspect config}")
+    # Logger.debug("Kafka config: #{inspect Application.get_all_env(:kafka_ex)}")
 
     if System.get_env("MIX_ENV") != "test" do
-      Logger.info("Starting KafkaEx")
-      Application.ensure_all_started(:kafka_ex)
+      :brod.start_client(kafka_hosts, :rivulet_brod_client, [])
     else
-      Logger.info("Test Environment detected - not starting :kafka_ex")
+      Logger.info("Test Environment detected - not starting :brod")
     end
   end
 

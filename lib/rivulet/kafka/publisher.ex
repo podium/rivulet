@@ -3,8 +3,6 @@ defmodule Rivulet.Kafka.Publisher do
   alias Rivulet.Kafka.Partition
   alias Rivulet.Avro
 
-  alias KafkaEx.Protocol.Produce.Request, as: ProduceRequest
-
   require Logger
 
   @type partition_strategy :: :random | {:key, binary} | integer
@@ -36,7 +34,7 @@ defmodule Rivulet.Kafka.Publisher do
   end
 
   def publish(topic, partition, :raw, key, message) when is_integer(partition) do
-    KafkaEx.produce(topic, partition, message, key: key)
+    :brod.produce(:rivulet_brod_client, topic, partition, key, message)
   end
 
   def publish(topic, partition, :json, key, message) when is_integer(partition) do
@@ -63,17 +61,7 @@ defmodule Rivulet.Kafka.Publisher do
     messages
     |> group_messages
     |> Enum.map(fn({{topic, partition}, msgs}) ->
-      request =
-        %ProduceRequest{
-          topic: topic,
-          partition: partition,
-          required_acks: 0,
-          timeout: 100,
-          compression: :none,
-          messages: Enum.map(msgs, &to_kafka_ex/1)
-        }
-
-      KafkaEx.produce(request)
+      :brod.produce(:rivulet_brod_client, topic, partition, _key = "", Enum.map(msgs, &to_brod_message/1))
     end)
   end
 
@@ -165,7 +153,7 @@ defmodule Rivulet.Kafka.Publisher do
   defp remove_nil(nil), do: false
   defp remove_nil(_), do: true
 
-  defp to_kafka_ex(%Message{} = msg) do
-    %KafkaEx.Protocol.Produce.Message{key: msg.key, value: msg.value}
+  defp to_brod_message(%Message{} = msg) do
+    {msg.key, msg.value}
   end
 end
