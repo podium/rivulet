@@ -1,26 +1,28 @@
 defmodule Rivulet.TestConsumer do
-  use KafkaEx.GenConsumer
-
-  alias Rivulet.Kafka.{Message, Partition}
+  alias Rivulet.Kafka.Consumer.Message
+  alias Rivulet.Kafka.Partition
   alias Rivulet.Avro
 
-  def init(topic, partition) do
-    {:ok, %Partition{topic: topic, partition: partition}}
+  def start_link(%Rivulet.Consumer.Config{} = config) do
+    Rivulet.Consumer.start_link(__MODULE__, config)
   end
 
-  def handle_message_set(messages, %Partition{} = partition) do
-    messages
-    |> Message.from_wire_message
-    |> Enum.reject(fn
-         (%Message{raw_value: nil}) -> true
-         (%Message{}) -> false
-       end)
-    |> Avro.bulk_decode(partition)
-    |> Enum.each(fn(%Message{decoded_key: k, decoded_value: v}) ->
-         IO.inspect("#{inspect k} = #{inspect v}")
-       end)
+  def init(_) do
+    {:ok, {}}
+  end
 
-    {:async_commit, partition}
+  def handle_messages(%Partition{topic: topic}, messages, state) when is_list(messages) do
+    messages
+    |> Enum.reject(fn
+      (%Message{raw_value: nil}) -> true
+      (%Message{}) -> false
+    end)
+    |> Avro.bulk_decode(topic)
+    |> Enum.each(fn(%Message{decoded_key: k, decoded_value: v}) ->
+      IO.inspect("#{inspect k} = #{inspect v}")
+    end)
+
+    {:ok, :ack, state}
   end
 
   def handle_call(_msg, _from, state) do

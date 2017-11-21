@@ -8,10 +8,23 @@ defmodule Rivulet.Application do
     configure_kafka()
     configure_schema_registry()
 
+    _test_consumer_config =
+      %Rivulet.Consumer.Config{
+        client_id: :rivulet_brod_client,
+        consumer_group_name: "consumer_group_name",
+        topics: ["firehose"],
+        group_config: [
+          offset_commit_policy: :commit_to_kafka_v2,
+          offset_commit_interval_seconds: 5
+        ],
+        consumer_config: [begin_offset: :earliest],
+        message_type: :message_set
+      }
+
     children = [
       supervisor(Registry, [:unique, Rivulet.Registry]),
-      worker(Rivulet.Avro.Cache, [])
-      #supervisor(KafkaEx.ConsumerGroup, [Rivulet.TestConsumer, "rivulet", ["firehose"], [heartbeat_interval: :timer.seconds(1), commit_interval: 1000]])
+      worker(Rivulet.Avro.Cache, []),
+      #worker(Rivulet.TestConsumer, [test_consumer_config])
     ]
 
     opts = [strategy: :one_for_one]
@@ -23,33 +36,20 @@ defmodule Rivulet.Application do
     Logger.debug("Configuring Kafka")
     config = Application.get_all_env(:rivulet)
 
-    config =
+    kafka_hosts =
       if Keyword.get(config, :dynamic_hosts) do
-        hosts =
-          case System.get_env("KAFKA_HOSTS") do
-            nil -> Logger.error("KAFKA_HOSTS not set")
-            value -> kafka_hosts(value)
-          end
-
-        Keyword.put(config, :brokers, hosts)
+        case System.get_env("KAFKA_HOSTS") do
+          nil -> Logger.error("KAFKA_HOSTS not set")
+          value -> kafka_hosts(value)
+        end
       else
-        config
+        Application.get_env(:rivulet, :kafka_brokers)
       end
 
-    config
-    |> Enum.reverse
-    |> Enum.each(fn({k, v}) ->
-         Application.put_env(:kafka_ex, k, v, persistent: true)
-       end)
-
-    Logger.debug("Kafka should be configured to: #{inspect config}")
-    Logger.debug("Kafka config: #{inspect Application.get_all_env(:kafka_ex)}")
-
     if System.get_env("MIX_ENV") != "test" do
-      Logger.info("Starting KafkaEx")
-      Application.ensure_all_started(:kafka_ex)
+      :ok = :brod.start_client(kafka_hosts, :rivulet_brod_client, _client_config=[auto_start_producers: true])
     else
-      Logger.info("Test Environment detected - not starting :kafka_ex")
+      Logger.info("Test Environment detected - not starting :brod")
     end
   end
 
@@ -72,9 +72,9 @@ defmodule Rivulet.Application do
     |> Enum.map(fn(host_string) ->
          case String.split(host_string, ":") do
            [host, port] ->
-             {host, String.to_integer(port)}
+             {String.to_atom(host), String.to_integer(port)}
            [host] ->
-             {host, 9092}
+             {String.to_atom(host), 9092}
          end
        end)
   end

@@ -1,7 +1,7 @@
 defmodule Rivulet.Kafka.Publisher.Test do
   use ExUnit.Case
 
-  alias Rivulet.Kafka.Publish.Message
+  alias Rivulet.Kafka.Publisher.Message
 
   @test_module Rivulet.Kafka.Publisher
 

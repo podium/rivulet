@@ -1,3 +1,5 @@
-- name: test
+- type: parallel
   service: rivulet
-  command: /app/bin/test
+  steps:
+    - command: mix test --no-start
+    - command: mix dialyzer --halt-exit-status

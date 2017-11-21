@@ -13,7 +13,8 @@ defmodule Rivulet.Avro do
   require Logger
 
   alias Rivulet.Avro.{Cache, Registry, Schema}
-  alias Rivulet.Kafka.{Message, Partition}
+  alias Rivulet.Kafka.Partition
+  alias Rivulet.Kafka.Consumer.Message
 
   defmodule DeserializationError do
     defexception [:message]
@@ -34,37 +35,41 @@ defmodule Rivulet.Avro do
     end
   end
 
-  @spec bulk_decode([Message.t], Partition.t) :: [Message.t]
-  def bulk_decode(messages, %Partition{} = partition) do
+  @spec bulk_decode([Message.t], Partition.topic) :: [Message.t]
+  def bulk_decode(messages, topic) when is_binary(topic) do
     messages
     |> Enum.map(fn(%Message{} = msg) ->
-         schema =
-           msg.raw_value
-           |> schema_id
-           |> schema
+      schema_id = schema_id(msg.raw_value)
 
-         case decode(msg.raw_key) do
-           {:ok, decoded_key} ->
-             %Message{msg | decoded_key: decoded_key, key_schema: schema}
-           {:error, reason} ->
-             Logger.error("[TOPIC: #{partition.topic}][PARTITION: #{partition.partition}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
-             %Message{msg | decoded_key: {:error, :avro_decoding_failed, msg}, key_schema: schema}
-         end
-       end)
+      if schema_id do
+        schema = schema(schema_id)
+
+        case decode(msg.raw_key) do
+          {:ok, decoded_key} ->
+            %Message{msg | decoded_key: decoded_key, raw_key: nil}
+          {:error, reason} ->
+            Logger.error("[TOPIC: #{topic}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
+            %Message{msg | decoded_key: {:error, :avro_decoding_failed, msg}, key_schema: schema}
+          end
+      end
+    end)
+    |> Enum.filter(&(&1)) # Remove nil values (when schema_id is encoded incorrectly)
     |> Enum.map(fn(%Message{} = msg) ->
-         schema =
-           msg.raw_value
-           |> schema_id
-           |> schema
+      schema_id = schema_id(msg.raw_value)
 
-         case decode(msg.raw_value) do
-           {:ok, decoded_value} ->
-             %Message{msg | decoded_value: decoded_value, value_schema: schema}
-           {:error, reason} ->
-             Logger.error("[TOPIC: #{partition.topic}][PARTITION: #{partition.partition}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
-             %Message{msg | decoded_value: {:error, :avro_decoding_failed, msg}, value_schema: schema}
-         end
-       end)
+      if schema_id do
+        schema = schema(schema_id)
+
+        case decode(msg.raw_value) do
+          {:ok, decoded_value} ->
+            %Message{msg | decoded_value: decoded_value, raw_value: nil}
+          {:error, reason} ->
+            Logger.error("[TOPIC: #{topic}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
+            %Message{msg | decoded_value: {:error, :avro_decoding_failed, msg}, value_schema: schema}
+        end
+      end
+    end)
+    |> Enum.filter(&(&1)) # Remove nil values (when schema_id is encoded incorrectly)
   end
 
   @spec decode(avro_message)
@@ -135,17 +140,13 @@ defmodule Rivulet.Avro do
     avro_msg
   end
 
-  @spec schema_id(avro_message) :: pos_integer | no_return
-  def schema_id(<<0, _id :: size(32), "" :: bitstring>>) do
-    raise DeserializationError, "Avro message has no message after the headers"
-  end
-
+  @spec schema_id(avro_message) :: pos_integer | nil
   def schema_id(<<0, id :: size(32), _rest :: bitstring>>) do
     id
   end
 
   def schema_id(_) do
-    raise DeserializationError, "Avro message wasn't encoded in the confluent style"
+    nil
   end
 
   @spec message(avro_message) :: bitstring

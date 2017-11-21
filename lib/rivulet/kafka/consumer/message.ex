@@ -1,5 +1,10 @@
-defmodule Rivulet.Kafka.Message do
+defmodule Rivulet.Kafka.Consumer.Message do
   alias Rivulet.Avro
+
+  require Record
+  import Record
+
+  Record.defrecord(:kafka_message, Record.extract(:kafka_message, from_lib: "brod/include/brod.hrl"))
 
   defstruct attributes: 0, crc: nil, offset: nil, raw_key: nil, raw_value: nil, decoded_key: nil, decoded_value: nil, key_schema: nil, value_schema: nil
   @type t :: %__MODULE__{
@@ -22,13 +27,13 @@ defmodule Rivulet.Kafka.Message do
        end)
   end
 
-  def from_wire_message(%KafkaEx.Protocol.Fetch.Message{} = msg) do
+  def from_wire_message(msg) when is_record(msg, :kafka_message) do
     %__MODULE__{
-      attributes: msg.attributes,
-      crc: msg.crc,
-      offset: msg.offset,
-      raw_key: msg.key,
-      raw_value: msg.value,
+      attributes: kafka_message(msg, :attributes),
+      crc: kafka_message(msg, :crc),
+      offset: kafka_message(msg, :offset),
+      raw_key: kafka_message(msg, :key),
+      raw_value: kafka_message(msg, :value),
       decoded_key: nil,
       decoded_value: nil
     }
