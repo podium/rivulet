@@ -30,10 +30,10 @@ defmodule Rivulet.Kafka.Consumer.Message do
   def from_wire_message(msg) when is_record(msg, :kafka_message) do
     %__MODULE__{
       attributes: kafka_message(msg, :attributes),
-      crc: msg.crc,
-      offset: msg.offset,
-      raw_key: msg.key,
-      raw_value: msg.value,
+      crc: kafka_message(msg, :crc),
+      offset: kafka_message(msg, :offset),
+      raw_key: kafka_message(msg, :key),
+      raw_value: kafka_message(msg, :value),
       decoded_key: nil,
       decoded_value: nil
     }

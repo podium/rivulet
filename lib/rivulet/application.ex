@@ -10,8 +10,11 @@ defmodule Rivulet.Application do
 
     children = [
       supervisor(Registry, [:unique, Rivulet.Registry]),
-      worker(Rivulet.Avro.Cache, [])
-      #supervisor(KafkaEx.ConsumerGroup, [Rivulet.TestConsumer, "rivulet", ["firehose"], [heartbeat_interval: :timer.seconds(1), commit_interval: 1000]])
+      worker(Rivulet.Avro.Cache, []),
+      #worker(Rivulet.TestConsumer, [:rivulet_brod_client, "consumer_group_name", ["firehose"], _group_config=[
+      #  offset_commit_policy: :commit_to_kafka_v2,
+      #  offset_commit_interval_seconds: 5
+      #], _consumer_config=[begin_offset: :earliest]])
     ]
 
 
@@ -33,15 +36,6 @@ defmodule Rivulet.Application do
       else
         Application.get_env(:rivulet, :kafka_brokers)
       end
-
-    # config
-    # |> Enum.reverse
-    # |> Enum.each(fn({k, v}) ->
-    #      # Application.put_env(:kafka_ex, k, v, persistent: true)
-    #    end)
-
-    # Logger.debug("Kafka should be configured to: #{inspect config}")
-    # Logger.debug("Kafka config: #{inspect Application.get_all_env(:kafka_ex)}")
 
     if System.get_env("MIX_ENV") != "test" do
       :ok = :brod.start_client(kafka_hosts, :rivulet_brod_client, _client_config=[auto_start_producers: true])
