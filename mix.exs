@@ -9,7 +9,7 @@ defmodule Rivulet.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps(),
-     dialyzer: [plt_add_deps: :app_direct, plt_add_apps: [:kafka_ex, :avro_ex], ignore_warnings: "dialyzer.ignore-warnings"],
+     dialyzer: [plt_add_deps: :app_direct, plt_add_apps: [:brod, :avro_ex], ignore_warnings: "dialyzer.ignore-warnings"],
      aliases: aliases()]
   end
 
