@@ -1,5 +1,5 @@
 - type: parallel
   service: rivulet
   steps:
-    - command: MIX_ENV=test mix test --no-start
+    - command: mix test --no-start
     - command: mix dialyzer --halt-exit-status
