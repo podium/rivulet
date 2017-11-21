@@ -25,7 +25,6 @@ defmodule Rivulet.Mixfile do
 
   defp aliases do
     ["compile": ["compile --warnings-as-errors"]]
-     #"test": ["test --no-start", "dialyzer --halt-exit-status"]]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
