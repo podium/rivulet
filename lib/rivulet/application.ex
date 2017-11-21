@@ -8,15 +8,24 @@ defmodule Rivulet.Application do
     configure_kafka()
     configure_schema_registry()
 
+    _test_consumer_config =
+      %Rivulet.Consumer.Config{
+        client_id: :rivulet_brod_client,
+        consumer_group_name: "consumer_group_name",
+        topics: ["firehose"],
+        group_config: [
+          offset_commit_policy: :commit_to_kafka_v2,
+          offset_commit_interval_seconds: 5
+        ],
+        consumer_config: [begin_offset: :earliest],
+        message_type: :message_set
+      }
+
     children = [
       supervisor(Registry, [:unique, Rivulet.Registry]),
       worker(Rivulet.Avro.Cache, []),
-      #worker(Rivulet.TestConsumer, [:rivulet_brod_client, "consumer_group_name", ["firehose"], _group_config=[
-      #  offset_commit_policy: :commit_to_kafka_v2,
-      #  offset_commit_interval_seconds: 5
-      #], _consumer_config=[begin_offset: :earliest]])
+      #worker(Rivulet.TestConsumer, [test_consumer_config])
     ]
-
 
     opts = [strategy: :one_for_one]
 

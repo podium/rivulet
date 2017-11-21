@@ -1,27 +1,18 @@
 defmodule Rivulet.TestConsumer do
-  require Record
-
   alias Rivulet.Kafka.Consumer.Message
+  alias Rivulet.Kafka.Partition
   alias Rivulet.Avro
 
-  Record.defrecord(:kafka_message_set, Record.extract(:kafka_message_set, from_lib: "brod/include/brod.hrl"))
-
-  def start_link(client_id, group_id, topics, group_config, consumer_config) do
-    :brod.start_link_group_subscriber(client_id, group_id, topics,
-                                      group_config, consumer_config,
-                                      :message_set,
-                                      _CallbackModule  = __MODULE__,
-                                      _CallbackInitArg = {})
+  def start_link(%Rivulet.Consumer.Config{} = config) do
+    Rivulet.Consumer.start_link(__MODULE__, config)
   end
 
-  def init(_group_id, {}) do
+  def init(_) do
     {:ok, {}}
   end
 
-  def handle_message(topic, _partition, messages, state) when Record.is_record(messages, :kafka_message_set) and is_binary(topic) do
+  def handle_messages(%Partition{topic: topic}, messages, state) when is_list(messages) do
     messages
-    |> kafka_message_set(:messages)
-    |> Message.from_wire_message
     |> Enum.reject(fn
       (%Message{raw_value: nil}) -> true
       (%Message{}) -> false

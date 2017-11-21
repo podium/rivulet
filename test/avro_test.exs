@@ -65,19 +65,11 @@ defmodule Rivulet.Avro.Test do
     end
 
     test "raises an exception if the magic bit isn't set" do
-      assert_raise @test_module.DeserializationError,
-        "Avro message wasn't encoded in the confluent style",
-      fn ->
-        @test_module.schema_id(<<2147483648 :: size(32), "abcd" :: binary>>)
-      end
+      assert nil == @test_module.schema_id(<<2147483648 :: size(32), "abcd" :: binary>>)
     end
 
-    test "raises an exception if the rest isn't provided" do
-      assert_raise @test_module.DeserializationError,
-        "Avro message has no message after the headers",
-      fn ->
-        2147483648 = @test_module.schema_id(<<0, 2147483648 :: size(32)>>)
-      end
+    test "returns the id if the rest is not provided" do
+       assert 1234 = @test_module.schema_id(<<0, 1234 :: size(32)>>)
     end
   end
 
@@ -119,7 +111,6 @@ defmodule Rivulet.Avro.Test do
     require __MODULE__.Macros
     import __MODULE__.Macros
 
-    @tag :current
     test_deserialize(AvroEx.parse_schema!(~S("null")), nil)
     test_deserialize(AvroEx.parse_schema!(~S("boolean")), true)
     test_deserialize(AvroEx.parse_schema!(~S("int")), 1)
