@@ -8,9 +8,10 @@ defmodule Rivulet.Application do
     configure_kafka()
     configure_schema_registry()
 
-    _test_consumer_config =
+    hostname = System.get_env("HOSTNAME")
+    test_consumer_config =
       %Rivulet.Consumer.Config{
-        client_id: :rivulet_brod_client,
+        client_id: :"rivulet_brod_client-#{hostname}",
         consumer_group_name: "consumer_group_name",
         topics: ["firehose"],
         group_config: [
@@ -24,7 +25,7 @@ defmodule Rivulet.Application do
     children = [
       supervisor(Registry, [:unique, Rivulet.Registry]),
       worker(Rivulet.Avro.Cache, []),
-      #worker(Rivulet.TestConsumer, [test_consumer_config])
+      worker(Rivulet.TestConsumer, [test_consumer_config])
     ]
 
     opts = [strategy: :one_for_one]
@@ -46,8 +47,9 @@ defmodule Rivulet.Application do
         Application.get_env(:rivulet, :kafka_brokers)
       end
 
+    hostname = System.get_env("HOSTNAME")
     if System.get_env("MIX_ENV") != "test" do
-      :ok = :brod.start_client(kafka_hosts, :rivulet_brod_client, _client_config=[auto_start_producers: true])
+      :ok = :brod.start_client(kafka_hosts, :"rivulet_brod_client-#{hostname}", _client_config=[auto_start_producers: true])
     else
       Logger.info("Test Environment detected - not starting :brod")
     end
