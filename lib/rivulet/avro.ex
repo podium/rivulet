@@ -35,10 +35,10 @@ defmodule Rivulet.Avro do
     end
   end
 
-  @spec bulk_decode([Message.t], Partition.topic) :: Stream.t
+  @spec bulk_decode([Message.t], Partition.topic) :: [Message.t]
   def bulk_decode(messages, topic) when is_binary(topic) do
     messages
-    |> Stream.map(fn(%Message{} = msg) ->
+    |> Enum.map(fn(%Message{} = msg) ->
       schema_id = schema_id(msg.raw_value)
 
       if schema_id do
@@ -53,8 +53,8 @@ defmodule Rivulet.Avro do
           end
       end
     end)
-    |> Stream.filter(&(&1)) # Remove nil values (when schema_id is encoded incorrectly)
-    |> Stream.map(fn(%Message{} = msg) ->
+    |> Enum.filter(&(&1)) # Remove nil values (when schema_id is encoded incorrectly)
+    |> Enum.map(fn(%Message{} = msg) ->
       schema_id = schema_id(msg.raw_value)
 
       if schema_id do
@@ -69,7 +69,7 @@ defmodule Rivulet.Avro do
         end
       end
     end)
-    |> Stream.filter(&(&1)) # Remove nil values (when schema_id is encoded incorrectly)
+    |> Enum.filter(&(&1)) # Remove nil values (when schema_id is encoded incorrectly)
   end
 
   @spec decode(avro_message)
