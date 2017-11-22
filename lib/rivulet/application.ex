@@ -33,19 +33,23 @@ defmodule Rivulet.Application do
     Supervisor.start_link(children, opts)
   end
 
-  defp configure_kafka do
-    Logger.debug("Configuring Kafka")
+  def kafka_brokers do
     config = Application.get_all_env(:rivulet)
 
-    kafka_hosts =
-      if Keyword.get(config, :dynamic_hosts) do
-        case System.get_env("KAFKA_HOSTS") do
-          nil -> Logger.error("KAFKA_HOSTS not set")
-          value -> kafka_hosts(value)
-        end
-      else
-        Application.get_env(:rivulet, :kafka_brokers)
+    if Keyword.get(config, :dynamic_hosts) do
+      case System.get_env("KAFKA_HOSTS") do
+        nil -> Logger.error("KAFKA_HOSTS not set")
+        value -> kafka_hosts(value)
       end
+    else
+      Application.get_env(:rivulet, :kafka_brokers)
+    end
+  end
+
+  defp configure_kafka do
+    Logger.debug("Configuring Kafka")
+
+    kafka_hosts = kafka_brokers()
 
     hostname = System.get_env("HOSTNAME")
     if System.get_env("MIX_ENV") != "test" do
