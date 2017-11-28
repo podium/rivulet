@@ -8,18 +8,19 @@ defmodule Rivulet.Application do
     configure_kafka()
     configure_schema_registry()
 
-    _test_consumer_config =
-      %Rivulet.Consumer.Config{
-        client_id: :rivulet_brod_client,
-        consumer_group_name: "consumer_group_name",
-        topics: ["firehose"],
-        group_config: [
-          offset_commit_policy: :commit_to_kafka_v2,
-          offset_commit_interval_seconds: 5
-        ],
-        consumer_config: [begin_offset: :earliest],
-        message_type: :message_set
-      }
+    #hostname = System.get_env("HOSTNAME")
+    #test_consumer_config =
+    #  %Rivulet.Consumer.Config{
+    #    client_id: :"rivulet_brod_client-#{hostname}",
+    #    consumer_group_name: "consumer_group_name",
+    #    topics: ["firehose"],
+    #    group_config: [
+    #      offset_commit_policy: :commit_to_kafka_v2,
+    #      offset_commit_interval_seconds: 5
+    #    ],
+    #    consumer_config: [begin_offset: :earliest],
+    #    message_type: :message_set
+    #  }
 
     children = [
       supervisor(Registry, [:unique, Rivulet.Registry]),
@@ -32,22 +33,27 @@ defmodule Rivulet.Application do
     Supervisor.start_link(children, opts)
   end
 
-  defp configure_kafka do
-    Logger.debug("Configuring Kafka")
+  def kafka_brokers do
     config = Application.get_all_env(:rivulet)
 
-    kafka_hosts =
-      if Keyword.get(config, :dynamic_hosts) do
-        case System.get_env("KAFKA_HOSTS") do
-          nil -> Logger.error("KAFKA_HOSTS not set")
-          value -> kafka_hosts(value)
-        end
-      else
-        Application.get_env(:rivulet, :kafka_brokers)
+    if Keyword.get(config, :dynamic_hosts) do
+      case System.get_env("KAFKA_HOSTS") do
+        nil -> Logger.error("KAFKA_HOSTS not set")
+        value -> kafka_hosts(value)
       end
+    else
+      Application.get_env(:rivulet, :kafka_brokers)
+    end
+  end
+
+  defp configure_kafka do
+    Logger.debug("Configuring Kafka")
+
+    kafka_hosts = kafka_brokers()
 
     if System.get_env("MIX_ENV") != "test" do
-      :ok = :brod.start_client(kafka_hosts, :rivulet_brod_client, _client_config=[auto_start_producers: true])
+      client_name = Application.get_env(:rivulet, :publish_client_name)
+      :ok = :brod.start_client(kafka_hosts, client_name, _client_config=[auto_start_producers: true])
     else
       Logger.info("Test Environment detected - not starting :brod")
     end
