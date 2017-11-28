@@ -17,8 +17,8 @@ defmodule Rivulet.Kafka.Partition do
   :: {:ok, count}
    | {:error, :topic_not_found, topic}
   def partition_count(topic) when is_binary(topic) do
-    hostname = System.get_env("HOSTNAME")
-    case :brod.get_partitions_count(:"rivulet_brod_client-#{hostname}", topic) do
+    client_name = Application.get_env(:rivulet, :publish_client_name)
+    case :brod.get_partitions_count(client_name, topic) do
       {:ok, partition_count} ->
         {:ok, partition_count}
       _ ->

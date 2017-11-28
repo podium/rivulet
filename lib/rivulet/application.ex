@@ -51,9 +51,9 @@ defmodule Rivulet.Application do
 
     kafka_hosts = kafka_brokers()
 
-    hostname = System.get_env("HOSTNAME")
     if System.get_env("MIX_ENV") != "test" do
-      :ok = :brod.start_client(kafka_hosts, :"rivulet_brod_client-#{hostname}", _client_config=[auto_start_producers: true])
+      client_name = Application.get_env(:rivulet, :publish_client_name)
+      :ok = :brod.start_client(kafka_hosts, client_name, _client_config=[auto_start_producers: true])
     else
       Logger.info("Test Environment detected - not starting :brod")
     end
