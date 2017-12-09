@@ -33,6 +33,22 @@ defmodule Rivulet.Application do
     Supervisor.start_link(children, opts)
   end
 
+  defp configure_kafka do
+    Logger.debug("Configuring Kafka")
+
+    kafka_hosts = kafka_brokers()
+
+    if System.get_env("MIX_ENV") != "test" do
+      client_name = Application.get_env(:rivulet, :publish_client_name, :"rivulet_brod_client-#{System.get_env("HOSTNAME")}")
+      unless client_name do
+        raise "Application.get_env(:rivulet, :publish_client_name) not configured"
+      end
+      :ok = :brod.start_client(kafka_hosts, client_name, _client_config=[auto_start_producers: true])
+    else
+      Logger.info("Test Environment detected - not starting :brod")
+    end
+  end
+
   def kafka_brokers do
     config = Application.get_all_env(:rivulet)
 
@@ -43,19 +59,6 @@ defmodule Rivulet.Application do
       end
     else
       Application.get_env(:rivulet, :kafka_brokers)
-    end
-  end
-
-  defp configure_kafka do
-    Logger.debug("Configuring Kafka")
-
-    kafka_hosts = kafka_brokers()
-
-    if System.get_env("MIX_ENV") != "test" do
-      client_name = Application.get_env(:rivulet, :publish_client_name, :"rivulet_brod_client-#{System.get_env("HOSTNAME")}")
-      :ok = :brod.start_client(kafka_hosts, client_name, _client_config=[auto_start_producers: true])
-    else
-      Logger.info("Test Environment detected - not starting :brod")
     end
   end
 
