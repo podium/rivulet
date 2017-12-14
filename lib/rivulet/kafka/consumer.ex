@@ -1,4 +1,5 @@
 defmodule Rivulet.Consumer do
+  defstruct [:pid]
   defmodule Config do
     alias Rivulet.Kafka.Partition
     @enforce_keys [:client_id, :consumer_group_name, :topics, :group_config, :consumer_config]
@@ -30,6 +31,7 @@ defmodule Rivulet.Consumer do
 
   Record.defrecord(:kafka_message_set, Record.extract(:kafka_message_set, from_lib: "brod/include/brod.hrl"))
 
+  @type t :: %__MODULE__{pid: pid}
   @type state :: term
   @type messages :: [Rivulet.Kafka.Consumer.Message.t]
 
@@ -41,6 +43,8 @@ defmodule Rivulet.Consumer do
 
   @behaviour :brod_group_subscriber
 
+  # Public API
+
   @spec start_link(atom, Config.t, [term]) :: GenServer.on_start
   def start_link(callback_module, %Config{} = config, extra \\ []) do
     :brod.start_link_group_subscriber(config.client_id, config.consumer_group_name,
@@ -49,6 +53,17 @@ defmodule Rivulet.Consumer do
                                       config.message_type, _CallbackModule  = __MODULE__,
                                       _CallbackInitArg = {callback_module, extra})
   end
+
+  @spec ack(t | atom | pid, Partition.t, Partition.offset) :: :ok | {:error, term}
+  def ack(%__MODULE__{pid: pid}, %Partition{topic: topic, partition: partition}, offset) when is_integer(offset) do
+    :brod.consume_ack(pid, topic, partition, offset)
+  end
+
+  def ack(ref, %Partition{topic: topic, partition: partition}, offset) when is_integer(offset) do
+    :brod.consume_ack(ref, topic, partition, offset)
+  end
+
+  # Callback Functions
 
   def init(_group_id, {callback_module, extra}) do
     {:ok, state} = apply(callback_module, :init, [extra])
