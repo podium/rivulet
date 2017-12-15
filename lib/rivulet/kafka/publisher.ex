@@ -39,7 +39,7 @@ defmodule Rivulet.Kafka.Publisher do
 
   def publish(topic, partition, :raw, key, message) when is_integer(partition) and is_binary(key) do
     :rivulet
-    |> Application.get_env(:publish_client_name, :"rivulet_brod_client-#{System.get_env("HOSTNAME")}")
+    |> Application.get_env(:publish_client_name)
     |> :brod.produce(topic, partition, key, message)
   end
 
@@ -68,7 +68,7 @@ defmodule Rivulet.Kafka.Publisher do
     |> group_messages
     |> Enum.map(fn({{topic, partition}, msgs}) ->
       :rivulet
-      |> Application.get_env(:publish_client_name, :"rivulet_brod_client-#{System.get_env("HOSTNAME")}")
+      |> Application.get_env(:publish_client_name)
       |> :brod.produce(topic, partition, _key = "", Enum.map(msgs, &to_brod_message/1))
     end)
   end
