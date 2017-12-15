@@ -25,7 +25,7 @@ defmodule Rivulet.Application do
     kafka_hosts = kafka_brokers()
 
     if System.get_env("MIX_ENV") != "test" do
-      client_name = Application.get_env(:rivulet, :publish_client_name, :"rivulet_brod_client-#{System.get_env("HOSTNAME")}")
+      client_name = Application.get_env(:rivulet, :publish_client_name)
       unless client_name do
         raise "Application.get_env(:rivulet, :publish_client_name) not configured"
       end
