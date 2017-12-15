@@ -8,20 +8,6 @@ defmodule Rivulet.Application do
     configure_kafka()
     configure_schema_registry()
 
-    #hostname = System.get_env("HOSTNAME")
-    #test_consumer_config =
-    #  %Rivulet.Consumer.Config{
-    #    client_id: :"rivulet_brod_client-#{hostname}",
-    #    consumer_group_name: "consumer_group_name",
-    #    topics: ["firehose"],
-    #    group_config: [
-    #      offset_commit_policy: :commit_to_kafka_v2,
-    #      offset_commit_interval_seconds: 5
-    #    ],
-    #    consumer_config: [begin_offset: :earliest],
-    #    message_type: :message_set
-    #  }
-
     children = [
       supervisor(Registry, [:unique, Rivulet.Registry]),
       worker(Rivulet.Avro.Cache, []),
@@ -31,6 +17,22 @@ defmodule Rivulet.Application do
     opts = [strategy: :one_for_one]
 
     Supervisor.start_link(children, opts)
+  end
+
+  defp configure_kafka do
+    Logger.debug("Configuring Kafka")
+
+    kafka_hosts = kafka_brokers()
+
+    if System.get_env("MIX_ENV") != "test" do
+      client_name = Application.get_env(:rivulet, :publish_client_name)
+      unless client_name do
+        raise "Application.get_env(:rivulet, :publish_client_name) not configured"
+      end
+      :ok = :brod.start_client(kafka_hosts, client_name, _client_config=[auto_start_producers: true])
+    else
+      Logger.info("Test Environment detected - not starting :brod")
+    end
   end
 
   def kafka_brokers do
@@ -43,19 +45,6 @@ defmodule Rivulet.Application do
       end
     else
       Application.get_env(:rivulet, :kafka_brokers)
-    end
-  end
-
-  defp configure_kafka do
-    Logger.debug("Configuring Kafka")
-
-    kafka_hosts = kafka_brokers()
-
-    if System.get_env("MIX_ENV") != "test" do
-      client_name = Application.get_env(:rivulet, :publish_client_name, :"rivulet_brod_client-#{System.get_env("HOSTNAME")}")
-      :ok = :brod.start_client(kafka_hosts, client_name, _client_config=[auto_start_producers: true])
-    else
-      Logger.info("Test Environment detected - not starting :brod")
     end
   end
 
