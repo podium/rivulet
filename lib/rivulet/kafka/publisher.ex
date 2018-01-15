@@ -61,23 +61,6 @@ defmodule Rivulet.Kafka.Publisher do
     end
   end
 
-  # @spec publish([Message.t])
-  # :: produce_return
-  # def publish(messages) do
-  #   messages
-  #   |> group_messages
-  #   |> Enum.map(fn({{topic, partition}, msgs}) ->
-  #     :rivulet
-  #     |> Application.get_env(:publish_client_name)
-  #     |> :brod.produce(topic, partition, _key = "", Enum.map(msgs, &to_brod_message/1))
-  #   end)
-  # end
-
-  # msg = %Rivulet.Kafka.Publisher.Message{topic: "abc", partition_strategy: :random, encoding_strategy: :raw, key: "def", value: "123"}
-  # msg1 = %Rivulet.Kafka.Publisher.Message{topic: "abc1", partition_strategy: :random, encoding_strategy: :raw, key: "def1", value: "1234"}
-  # Rivulet.Kafka.Publisher.publish([msg, msg, msg, msg])
-  # Rivulet.Kafka.Publisher.publish([msg, msg1])
-
   @spec publish([Message.t]) :: produce_return
   def publish(messages) do
     publish(messages, 0)
