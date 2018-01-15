@@ -89,26 +89,33 @@ defmodule Rivulet.Kafka.Publisher do
   def publish(messages, counter)  when counter <= 10 do
     counter = counter + 1
 
-    messages
-    |> group_messages
-    |> Enum.map(fn({{topic, partition}, msgs}) ->
-      Task.Supervisor.async(Task.Supervisor, fn ->
-        :rivulet
-        |> Application.get_env(:publish_client_name)
-        |> :brod.produce(topic, partition, _key = "", Enum.map(msgs, &to_brod_message/1))
+    tasks =
+      messages
+      |> group_messages
+      |> Enum.map(fn({{topic, partition}, msgs}) ->
+        Task.Supervisor.async(Task.Supervisor, fn ->
+          :rivulet
+          |> Application.get_env(:publish_client_name)
+          |> :brod.produce(topic, partition, _key = "", Enum.map(msgs, &to_brod_message/1))
+        end)
       end)
-    end)
-    |> Task.yield_many()
+
+    lookup_map =
+      tasks
+      |> Enum.zip(messages)
+      |> Map.new
+
+    Task.yield_many(tasks)
     |> Enum.each(fn
-      ({_, {:exit, err}}) ->
-        IO.puts "Republishing due to received errors:"
+      ({task, {:exit, err}}) ->
+        IO.puts "Republishing #{lookup_map[task].key} due to received errors:"
         IO.inspect err
-        publish(messages, counter)
-      ({_, {:ok, value}}) ->
-        IO.inspect value
-      ({_, nil}) ->
+        publish(lookup_map[task], counter)
+      ({task, {:ok, _}}) ->
+        IO.puts "Published #{lookup_map[task].key}"
+      ({task, nil}) ->
         IO.puts "Received 'nil', republishing"
-        publish(messages, counter)
+        publish(lookup_map[task], counter)
     end)
   end
 
