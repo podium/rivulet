@@ -80,6 +80,15 @@ defmodule Rivulet.Kafka.Publisher do
 
   @spec publish([Message.t]) :: produce_return
   def publish(messages) do
+    publish(messages, 0)
+  end
+
+  def publish(_, counter) when counter > 10, do: {:error, "Too many retries"}
+
+  @spec publish([Message.t], non_neg_integer) :: produce_return
+  def publish(messages, counter)  when counter <= 10 do
+    counter = counter + 1
+
     messages
     |> group_messages
     |> Enum.map(fn({{topic, partition}, msgs}) ->
@@ -91,13 +100,15 @@ defmodule Rivulet.Kafka.Publisher do
     end)
     |> Task.yield_many()
     |> Enum.each(fn
-      ({_, {:exit, _}}) ->
-        IO.puts "Received errors - republishing"
-        publish(messages)
+      ({_, {:exit, err}}) ->
+        IO.puts "Republishing due to received errors:"
+        IO.inspect err
+        publish(messages, counter)
       ({_, {:ok, value}}) ->
         IO.inspect value
       ({_, nil}) ->
-        publish(messages)
+        IO.puts "Received 'nil', republishing"
+        publish(messages, counter)
     end)
   end
 
