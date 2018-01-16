@@ -88,16 +88,16 @@ defmodule Rivulet.Kafka.Publisher do
       |> Enum.zip(messages)
       |> Map.new
 
-    Task.yield_many(tasks)
+    Task.yield_many(tasks, 15000)
     |> Enum.each(fn
       ({task, {:exit, err}}) ->
-        IO.puts "Republishing #{lookup_map[task].key} due to received errors:"
-        IO.inspect err
+        Logger.error "Republishing #{lookup_map[task].key} due to received errors:"
+        Logger.error err
         publish(lookup_map[task], counter)
       ({task, {:ok, _}}) ->
-        IO.puts "Published #{lookup_map[task].key}"
+        Logger.info "Published #{lookup_map[task].key}"
       ({task, nil}) ->
-        IO.puts "Received 'nil', republishing"
+        Logger.info "Received 'nil', republishing"
         publish(lookup_map[task], counter)
     end)
   end
