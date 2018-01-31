@@ -5,6 +5,7 @@ defmodule Rivulet.Avro do
   The remaining metadata is the Schema ID as returned by the Schema Registry.
   """
   @type avro_message :: <<_ :: 40, _ :: _*1>>
+  @type subject :: String.t
   @type schema_id :: pos_integer
   @type schema :: term
   @type buffer :: binary
@@ -109,7 +110,16 @@ defmodule Rivulet.Avro do
     decoded_message
   end
 
-  @spec encode(term, schema_id | Schema.t)
+  @spec encode(term, schema_id | Schema.t | subject)
+  :: {:ok, avro_message }
+  | {:error, term}
+  def encode(msg, subject) when is_binary(subject) do
+    case schema_for_subject(subject) do
+      {:ok, schema} -> encode(msg, schema)
+      {:error, _reason} = err -> err
+    end
+  end
+
   :: {:ok, avro_message } | {:error, term}
   def encode(msg, %Schema{schema_id: schema_id, schema: schema}) do
     encode(msg, schema_id, schema)
