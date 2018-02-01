@@ -120,7 +120,6 @@ defmodule Rivulet.Avro do
     end
   end
 
-  :: {:ok, avro_message } | {:error, term}
   def encode(msg, %Schema{schema_id: schema_id, schema: schema}) do
     encode(msg, schema_id, schema)
   end
