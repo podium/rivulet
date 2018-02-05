@@ -13,6 +13,7 @@ defmodule Rivulet.Router do
 
       \tExample:
 
+      ```
       \tdefmodule MyModule do
       \t  use #{__MODULE__},
       \t    consumer_group: "my-consumer-group"
