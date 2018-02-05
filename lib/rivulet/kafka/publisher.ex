@@ -87,6 +87,7 @@ defmodule Rivulet.Kafka.Publisher do
   defp do_wait(tasks, lookup_map, counter)
   when is_list(tasks) and counter > 0 do
     if :error in tasks do
+      Logger.error("Bulk publish to kafka failed due to error.")
       :error
     else
       tasks
@@ -109,13 +110,19 @@ defmodule Rivulet.Kafka.Publisher do
 
   @spec handle_task(%{Task.t => [Message.t]}, {Task.t, {:exit, term} | {:ok, term} | nil})
   :: {:still_running, Task.t} | :ok | :error
-  defp handle_task(_lookup_map, {_task, {:ok, {:error, _}}}), do: :error
-  defp handle_task(_lookup_map, {_task, {:ok, :leader_not_available}}), do: :error
+  defp handle_task(_lookup_map, {_task, {:ok, {:error, err}}}) do
+    Logger.error("Bulk publish failed: #{inspect err}")
+    :error
+  end
+  defp handle_task(_lookup_map, {_task, {:ok, :leader_not_available}}) do
+    Logger.error("Bulk publish failed - leader not available")
+    :error
+  end
   defp handle_task(_lookup_map, {_task, {:ok, :ok}}), do: :ok
   defp handle_task(_lookup_map, {_task, {:ok, _}}), do: :ok
   defp handle_task(_lookup_map, {task, nil}), do: {:still_running, task}
   defp handle_task(lookup_map, {task, {:exit, err}}) do
-    Logger.error("Republishing #{lookup_map[task].key} due to received errors: #{inspect err}")
+    Logger.error("Bulk publish failed: #{inspect err}")
     :error
   end
 
