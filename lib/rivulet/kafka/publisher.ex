@@ -74,17 +74,12 @@ defmodule Rivulet.Kafka.Publisher do
         end)
       end)
 
-    lookup_map =
-      tasks
-      |> Enum.zip(messages)
-      |> Map.new
-
-    do_wait(tasks, lookup_map, 4)
+    do_wait(tasks, 4)
   end
 
-  defp do_wait(tasks, _lookup_map, 0) when is_list(tasks), do: :error
-  defp do_wait([], _lookup_map, counter) when counter > 0, do: :ok
-  defp do_wait(tasks, lookup_map, counter)
+  defp do_wait(tasks, 0) when is_list(tasks), do: :error
+  defp do_wait([], counter) when counter > 0, do: :ok
+  defp do_wait(tasks, counter)
   when is_list(tasks) and counter > 0 do
     if :error in tasks do
       Logger.error("Bulk publish to kafka failed due to error.")
@@ -93,7 +88,7 @@ defmodule Rivulet.Kafka.Publisher do
       tasks
       |> Task.yield_many
       |> Enum.map(fn(res) ->
-        handle_task(lookup_map, res)
+        handle_task(res)
       end)
       |> Enum.reject(fn
         (:ok) -> true
@@ -104,24 +99,24 @@ defmodule Rivulet.Kafka.Publisher do
         (:error) -> :error
         ({:still_running, task}) -> task
       end)
-      |> do_wait(lookup_map, counter - 1)
+      |> do_wait(counter - 1)
     end
   end
 
-  @spec handle_task(%{Task.t => [Message.t]}, {Task.t, {:exit, term} | {:ok, term} | nil})
+  @spec handle_task({Task.t, {:exit, term} | {:ok, term} | nil})
   :: {:still_running, Task.t} | :ok | :error
-  defp handle_task(_lookup_map, {_task, {:ok, {:error, err}}}) do
+  defp handle_task({_task, {:ok, {:error, err}}}) do
     Logger.error("Bulk publish failed: #{inspect err}")
     :error
   end
-  defp handle_task(_lookup_map, {_task, {:ok, :leader_not_available}}) do
+  defp handle_task({_task, {:ok, :leader_not_available}}) do
     Logger.error("Bulk publish failed - leader not available")
     :error
   end
-  defp handle_task(_lookup_map, {_task, {:ok, :ok}}), do: :ok
-  defp handle_task(_lookup_map, {_task, {:ok, _}}), do: :ok
-  defp handle_task(_lookup_map, {task, nil}), do: {:still_running, task}
-  defp handle_task(lookup_map, {task, {:exit, err}}) do
+  defp handle_task({_task, {:ok, :ok}}), do: :ok
+  defp handle_task({_task, {:ok, _}}), do: :ok
+  defp handle_task({task, nil}), do: {:still_running, task}
+  defp handle_task({_task, {:exit, err}}) do
     Logger.error("Bulk publish failed: #{inspect err}")
     :error
   end
