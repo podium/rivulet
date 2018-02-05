@@ -61,17 +61,8 @@ defmodule Rivulet.Kafka.Publisher do
     end
   end
 
-  @spec publish([Message.t]) :: produce_return
+  @spec publish([Message.t]) :: :ok
   def publish(messages) do
-    publish(messages, 0)
-  end
-
-  def publish(_, counter) when counter > 10, do: {:error, "Too many retries"}
-
-  @spec publish([Message.t], non_neg_integer) :: produce_return
-  def publish(messages, counter)  when counter <= 10 do
-    counter = counter + 1
-
     tasks =
       messages
       |> group_messages
@@ -88,18 +79,44 @@ defmodule Rivulet.Kafka.Publisher do
       |> Enum.zip(messages)
       |> Map.new
 
-    Task.yield_many(tasks, 15000)
-    |> Enum.each(fn
-      ({task, {:exit, err}}) ->
-        Logger.error "Republishing #{lookup_map[task].key} due to received errors:"
-        Logger.error err
-        publish(lookup_map[task], counter)
-      ({task, {:ok, _}}) ->
-        Logger.info "Published #{lookup_map[task].key}"
-      ({task, nil}) ->
-        Logger.info "Received 'nil', republishing"
-        publish(lookup_map[task], counter)
-    end)
+    do_wait(tasks, lookup_map, 0)
+  end
+
+  defp do_wait(_, _lookup_map, 0), do: :error
+  defp do_wait([], _lookup_map, _counter), do: :ok
+  defp do_wait(tasks, lookup_map, counter)
+  when is_list(tasks) and counter > 0 do
+    if :error in tasks do
+      :error
+    else
+      tasks
+      |> Task.yield_many(tasks)
+      |> Enum.map(fn(res) ->
+        handle_task(lookup_map, res)
+      end)
+      |> Enum.reject(fn
+        (:ok) -> true
+        (:error) -> false
+        ({:still_running, %Task{}}) -> false
+      end)
+      |> Enum.map(fn
+        (:error) -> :error
+        ({:still_running, task}) -> task
+      end)
+      |> do_wait(lookup_map, counter - 1)
+    end
+  end
+
+  @spec handle_task(%{Task.t => [Message.t]}, {Task.t, {:exit, term} | {:ok, term} | nil})
+  :: {:still_running, Task.t} | :ok | :error
+  defp handle_task(_lookup_map, {_task, {:ok, {:error, _}}}), do: :error
+  defp handle_task(_lookup_map, {_task, {:ok, :leader_not_available}}), do: :error
+  defp handle_task(_lookup_map, {_task, {:ok, :ok}}), do: :ok
+  defp handle_task(_lookup_map, {_task, {:ok, _}}), do: :ok
+  defp handle_task(_lookup_map, {task, nil}), do: {:still_running, task}
+  defp handle_task(lookup_map, {task, {:exit, err}}) do
+    Logger.error("Republishing #{lookup_map[task].key} due to received errors: #{inspect err}")
+    :error
   end
 
   @doc false
@@ -190,7 +207,7 @@ defmodule Rivulet.Kafka.Publisher do
   defp remove_nil(nil), do: false
   defp remove_nil(_), do: true
 
-  defp to_brod_message(%Message{key: key, value: value}) when is_nil(key) do
+  defp to_brod_message(%Message{key: nil, value: value}) do
     {"", value}
   end
   defp to_brod_message(%Message{key: key, value: value}) when is_binary(key) do
