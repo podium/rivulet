@@ -61,7 +61,7 @@ defmodule Rivulet.Kafka.Publisher do
     end
   end
 
-  @spec publish([Message.t]) :: :ok
+  @spec publish([Message.t]) :: :ok | :error
   def publish(messages) do
     tasks =
       messages
@@ -79,18 +79,18 @@ defmodule Rivulet.Kafka.Publisher do
       |> Enum.zip(messages)
       |> Map.new
 
-    do_wait(tasks, lookup_map, 0)
+    do_wait(tasks, lookup_map, 4)
   end
 
-  defp do_wait(_, _lookup_map, 0), do: :error
-  defp do_wait([], _lookup_map, _counter), do: :ok
+  defp do_wait(tasks, _lookup_map, 0) when is_list(tasks), do: :error
+  defp do_wait([], _lookup_map, counter) when counter > 0, do: :ok
   defp do_wait(tasks, lookup_map, counter)
   when is_list(tasks) and counter > 0 do
     if :error in tasks do
       :error
     else
       tasks
-      |> Task.yield_many(tasks)
+      |> Task.yield_many
       |> Enum.map(fn(res) ->
         handle_task(lookup_map, res)
       end)
