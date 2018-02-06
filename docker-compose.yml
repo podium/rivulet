@@ -1,0 +1,7 @@
+version: '3'
+
+services:
+  rivulet:
+    build: .
+    volumes:
+      - .:/app

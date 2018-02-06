@@ -61,16 +61,64 @@ defmodule Rivulet.Kafka.Publisher do
     end
   end
 
-  @spec publish([Message.t])
-  :: produce_return
+  @spec publish([Message.t]) :: :ok | :error
   def publish(messages) do
-    messages
-    |> group_messages
-    |> Enum.map(fn({{topic, partition}, msgs}) ->
-      :rivulet
-      |> Application.get_env(:publish_client_name)
-      |> :brod.produce(topic, partition, _key = "", Enum.map(msgs, &to_brod_message/1))
-    end)
+    tasks =
+      messages
+      |> group_messages
+      |> Enum.map(fn({{topic, partition}, msgs}) ->
+        Task.Supervisor.async(Task.Supervisor, fn ->
+          :rivulet
+          |> Application.get_env(:publish_client_name)
+          |> :brod.produce(topic, partition, _key = "", Enum.map(msgs, &to_brod_message/1))
+        end)
+      end)
+
+    do_wait(tasks, 4)
+  end
+
+  defp do_wait(tasks, 0) when is_list(tasks), do: :error
+  defp do_wait([], counter) when counter > 0, do: :ok
+  defp do_wait(tasks, counter)
+  when is_list(tasks) and counter > 0 do
+    if :error in tasks do
+      Logger.error("Bulk publish to kafka failed due to error.")
+      :error
+    else
+      tasks
+      |> Task.yield_many
+      |> Enum.map(fn(res) ->
+        handle_task(res)
+      end)
+      |> Enum.reject(fn
+        (:ok) -> true
+        (:error) -> false
+        ({:still_running, %Task{}}) -> false
+      end)
+      |> Enum.map(fn
+        (:error) -> :error
+        ({:still_running, task}) -> task
+      end)
+      |> do_wait(counter - 1)
+    end
+  end
+
+  @spec handle_task({Task.t, {:exit, term} | {:ok, term} | nil})
+  :: {:still_running, Task.t} | :ok | :error
+  defp handle_task({_task, {:ok, {:error, err}}}) do
+    Logger.error("Bulk publish failed: #{inspect err}")
+    :error
+  end
+  defp handle_task({_task, {:ok, :leader_not_available}}) do
+    Logger.error("Bulk publish failed - leader not available")
+    :error
+  end
+  defp handle_task({_task, {:ok, :ok}}), do: :ok
+  defp handle_task({_task, {:ok, _}}), do: :ok
+  defp handle_task({task, nil}), do: {:still_running, task}
+  defp handle_task({_task, {:exit, err}}) do
+    Logger.error("Bulk publish failed: #{inspect err}")
+    :error
   end
 
   @doc false
@@ -161,7 +209,7 @@ defmodule Rivulet.Kafka.Publisher do
   defp remove_nil(nil), do: false
   defp remove_nil(_), do: true
 
-  defp to_brod_message(%Message{key: key, value: value}) when is_nil(key) do
+  defp to_brod_message(%Message{key: nil, value: value}) do
     {"", value}
   end
   defp to_brod_message(%Message{key: key, value: value}) when is_binary(key) do
