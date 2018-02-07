@@ -1,6 +1,9 @@
 defmodule Rivulet.Kafka.Router.Funcs do
   require Logger
 
+  defp to_list(list) when is_list(list), do: list
+  defp to_list(other), do: [other]
+
   def start_link(module, consumer_group, source_topics) do
     config =
       %Rivulet.Consumer.Config{
@@ -55,6 +58,7 @@ defmodule Rivulet.Kafka.Router.Funcs do
         |> Enum.map(fn(message) ->
           message
           |> transformer.handle_message
+          |> to_list
           |> List.flatten
           |> Enum.map(&to_publish/1)
         end)
