@@ -67,12 +67,17 @@ defmodule Rivulet.Kafka.Publisher do
       messages
       |> group_messages
       |> Enum.map(fn({{topic, partition}, msgs}) ->
-        Task.Supervisor.async(Task.Supervisor, fn ->
-          :rivulet
-          |> Application.get_env(:publish_client_name)
-          |> :brod.produce(topic, partition, _key = "", Enum.map(msgs, &to_brod_message/1))
+        msgs
+        |> Enum.chunk_every(100, 100, [])
+        |> Enum.map(fn(chunk) ->
+          Task.Supervisor.async(Task.Supervisor, fn ->
+            :rivulet
+            |> Application.get_env(:publish_client_name)
+            |> :brod.produce(topic, partition, _key = "", Enum.map(chunk, &to_brod_message/1))
+          end)
         end)
       end)
+      |> List.flatten
 
     do_wait(tasks, 4)
   end
