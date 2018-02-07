@@ -27,8 +27,6 @@ services:
       - zookeeper
     links:
       - zookeeper
-    ports:
-      - "9092:9092"
     environment:
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
@@ -39,8 +37,6 @@ services:
     restart: on-failure
   zookeeper:
     image: confluentinc/cp-zookeeper:3.3.0
-    ports:
-      - "2181:2181"
     volumes:
       - zookeeper:/var/lib/zookeeper/data
     environment:
@@ -54,8 +50,6 @@ services:
     links:
       - kafka
       - zookeeper:confluent
-    ports:
-      - "8081:8081"
     environment:
       SCHEMA_REGISTRY_HOST_NAME: kafkaschema
       SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "confluent:2181"

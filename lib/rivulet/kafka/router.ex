@@ -1,4 +1,4 @@
-defmodule Rivulet.Router do
+defmodule Rivulet.Kafka.Router do
   defmacro __using__(opts) do
     Module.register_attribute(__CALLER__.module, :sources, accumulate: true)
 
@@ -53,92 +53,15 @@ defmodule Rivulet.Router do
 
     quote do
       def start_link do
-        require Logger
-        config =
-          %Rivulet.Consumer.Config{
-            client_id: Application.get_env(:rivulet, :publish_client_name),
-            consumer_group_name: unquote(consumer_group),
-            topics: unquote(source_topics),
-            group_config: [
-              offset_commit_policy: :commit_to_kafka_v2,
-              offset_commit_interval_secons: 1
-            ],
-            consumer_config: [begin_offset: :earliest],
-            message_type: :message_set
-          }
-
-        Logger.info("Configuration for #{__MODULE__}: #{inspect config}")
-
-        Rivulet.Consumer.start_link(__MODULE__, config)
+        Rivulet.Kafka.Router.Funcs.start_link(__MODULE__, unquote(consumer_group), unquote(source_topics))
       end
 
       def init(_) do
         {:ok, {}}
       end
 
-      def handle_messages(%Rivulet.Kafka.Partition{topic: topic} = partition, messages, state) do
-        require Logger
-        {^topic, routes} =
-          Enum.find(unquote(sources), fn
-            ({^topic, _}) -> true
-            (_) -> false
-          end)
-
-        routes =
-          case routes do
-            [:route | _] = route -> [route]
-            routes when is_list(routes) -> routes
-          end
-
-        Enum.map(routes, fn([:route, transformer, publish_topics]) ->
-          transformed_messages =
-            Enum.map(messages, fn(message) ->
-              case transformer.handle_message(message) do
-                nil -> nil
-                {key, value} = m ->
-                  %Rivulet.Kafka.Publisher.Message{
-                    key: key,
-                    value: value,
-                    encoding_strategy: :raw,
-                    topic: :unknown,
-                    partition_strategy: :unknown
-                  }
-                messages when is_list(messages) -> messages
-                other ->
-                  Logger.error("#{transformer}.handle_message returned #{inspect other}, which is an unsupported type.")
-                  nil
-              end
-            end)
-
-          publish_messages =
-            transformed_messages
-            |> List.flatten
-            |> Enum.reject(fn
-              (nil) -> true
-              (_) -> false
-            end)
-
-          publish_topics =
-            case publish_topics do
-              topics when is_list(topics) -> topics
-              {topic, partition_strategy} when is_binary(topic) -> [{topic, partition_strategy}]
-            end
-
-          Enum.each(publish_topics, fn
-            ({publish_topic, :key}) ->
-              publish_messages
-              |> Enum.map(fn(%Rivulet.Kafka.Publisher.Message{} = m) ->
-                %Rivulet.Kafka.Publisher.Message{m | topic: publish_topic, partition_strategy: {:key, m.key}}
-              end)
-              |> Rivulet.Kafka.Publisher.publish
-            ({publish_topic, :random}) ->
-              publish_messages
-              |> Enum.map(fn(%Rivulet.Kafka.Publisher.Message{} = m) ->
-                %Rivulet.Kafka.Publisher.Message{m | topic: publish_topic, partition_strategy: :random}
-              end)
-              |> Rivulet.Kafka.Publisher.publish
-          end)
-        end)
+      def handle_messages(partition, messages, state) do
+        Rivulet.Kafka.Router.Funcs.handle_messages(partition, messages, unquote(sources))
 
         {:ok, :ack, state}
       end
