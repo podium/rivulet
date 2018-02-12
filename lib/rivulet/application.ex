@@ -31,7 +31,12 @@ defmodule Rivulet.Application do
 
       default_producer_config = [max_batch_size: 100]
 
-      :ok = :brod.start_client(kafka_hosts, client_name, _client_config=[auto_start_producers: true, allow_topic_auto_creation: false, default_producer_config: default_producer_config])
+      :ok =
+        :brod.start_client(kafka_hosts, client_name, _client_config=[
+          auto_start_producers: true,
+          allow_topic_auto_creation: false,
+          default_producer_config: default_producer_config
+        ])
     else
       Logger.info("Test Environment detected - not starting :brod")
     end

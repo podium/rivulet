@@ -6,6 +6,8 @@ defmodule Rivulet do
     unless client_name do
       raise "Application.get_env(:rivulet, :client_name) not configured"
     end
+
+    client_name
   end
 
   @spec client_name() :: nil | pid
