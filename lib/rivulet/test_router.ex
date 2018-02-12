@@ -1,4 +1,5 @@
 defmodule Rivulet.TestRouter do
+  @moduledoc false
   use Rivulet.Kafka.Router,
     consumer_group: "test-rivulet"
 

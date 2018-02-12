@@ -15,8 +15,7 @@ defmodule Rivulet.Kafka.Router.Funcs do
           offset_commit_policy: :commit_to_kafka_v2,
           offset_commit_interval_secons: 1
         ],
-        consumer_config: [begin_offset: :earliest],
-        message_type: :message_set
+        consumer_config: [begin_offset: :earliest]
       }
 
     Logger.info("Configuration for #{module}: #{inspect config}")
