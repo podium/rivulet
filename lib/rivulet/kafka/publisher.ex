@@ -38,8 +38,7 @@ defmodule Rivulet.Kafka.Publisher do
   end
 
   def publish(topic, partition, :raw, key, message) when is_integer(partition) and is_binary(key) do
-    :rivulet
-    |> Application.get_env(:publish_client_name)
+    Rivulet.client_name()
     |> :brod.produce(topic, partition, key, message)
   end
 

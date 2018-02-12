@@ -8,7 +8,7 @@ defmodule Rivulet.Kafka.Router.Funcs do
   def start_link(module, consumer_group, source_topics) do
     config =
       %Rivulet.Consumer.Config{
-        client_id: Application.get_env(:rivulet, :publish_client_name),
+        client_id: Rivulet.client_name(),
         consumer_group_name: consumer_group,
         topics: source_topics,
         group_config: [
