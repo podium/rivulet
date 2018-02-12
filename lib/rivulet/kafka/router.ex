@@ -1,6 +1,7 @@
 defmodule Rivulet.Kafka.Router do
+  @partition_strategies [:key, :random]
   defmacro __using__(opts) do
-    Module.register_attribute(__CALLER__.module, :sources, accumulate: true)
+    Module.register_attribute(__CALLER__.module, :streams, accumulate: true)
 
     consumer_group = Keyword.get(opts, :consumer_group)
 
@@ -36,24 +37,31 @@ defmodule Rivulet.Kafka.Router do
   @type topic :: String.t
   @type transformer :: module
 
-  defmacro __before_compile__(env) do
-    check_duplicate_sources(env.module)
+  defp get_stuff(env) do
+    check_duplicate_streams(env.module)
 
     consumer_group = Module.get_attribute(env.module, :consumer_group)
-    sources =
-      case Module.get_attribute(env.module, :sources) do
-        sources when is_list(sources) -> sources
-        source -> [source]
+
+    streams =
+      case Module.get_attribute(env.module, :streams) do
+        streams when is_list(streams) -> streams
+        stream -> [stream]
       end
 
-    source_topics =
-      Enum.map(sources, fn({topic, _routes}) ->
+    stream_topics =
+      Enum.map(streams, fn({topic, _routes}) ->
         topic
       end)
 
+    {consumer_group, stream_topics, streams}
+  end
+
+  defmacro __before_compile__(env) do
+    {consumer_group, stream_topics, streams} = get_stuff(env)
+
     quote do
       def start_link do
-        Rivulet.Kafka.Router.Funcs.start_link(__MODULE__, unquote(consumer_group), unquote(source_topics))
+        Rivulet.Kafka.Router.Funcs.start_link(__MODULE__, unquote(consumer_group), unquote(stream_topics))
       end
 
       def init(_) do
@@ -61,24 +69,27 @@ defmodule Rivulet.Kafka.Router do
       end
 
       def handle_messages(partition, messages, state) do
-        Rivulet.Kafka.Router.Funcs.handle_messages(partition, messages, unquote(sources))
+        Rivulet.Kafka.Router.Funcs.handle_messages(partition, messages, unquote(streams))
 
         {:ok, :ack, state}
       end
     end
   end
 
-  defmacro defsource(topic, [do: routes]) do
+  defmacro defstream(topic, [do: routes]) do
     routes =
       Macro.postwalk(routes, fn
         ({:transformer, _, [transformer, [do: {:__block__, _, publishes}]]}) ->
           [:route, Macro.expand_once(transformer, __ENV__), publishes]
         ({:transformer, _, [transformer, [do: publishes]]}) ->
           [:route, Macro.expand_once(transformer, __ENV__), publishes]
-        ({:publish_to, _, [topic, [partition: :key]]}) ->
-          {topic, :key}
-        ({:publish_to, _, [topic, [partition: :random]]}) ->
-          {topic, :random}
+        ({:publish_to, _, [topic, config]}) ->
+          partition_strategy = Keyword.get(config, :partition, :key)
+          unless partition_strategy in @partition_strategies do
+            raise "#{__CALLER__.module} publishing to #{topic} has an unsupported partition strategy: #{partition_strategy}"
+          end
+
+          {topic, partition_strategy}
         (node) -> node
       end)
 
@@ -89,39 +100,39 @@ defmodule Rivulet.Kafka.Router do
         route  -> [route]
       end
 
-    set_source(__CALLER__.module, {topic, routes})
+    set_stream(__CALLER__.module, {topic, routes})
 
     nil
   end
 
-  @spec set_source(module, {topic, [term]})
+  @spec set_stream(module, {topic, [term]})
   :: ignored
-  defp set_source(module, source) do
-    Module.put_attribute(module, :sources, source)
+  defp set_stream(module, stream) do
+    Module.put_attribute(module, :streams, stream)
   end
 
-  @spec check_duplicate_sources(module) :: ignored
-  defp check_duplicate_sources(module) do
+  @spec check_duplicate_streams(module) :: ignored
+  defp check_duplicate_streams(module) do
     require Logger
-    case Module.get_attribute(module, :sources) do
+    case Module.get_attribute(module, :streams) do
       [] ->
-        Logger.warn("You didn't define any sources in #{module}. Was this an error?")
-      sources when is_list(sources) ->
+        Logger.warn("You didn't define any streams in #{module}. Was this an error?")
+      streams when is_list(streams) ->
         {_, dups} =
-        Enum.reduce(sources, {[], []}, fn({source_topic, _}, {topics, dups}) ->
-          if source_topic in topics do
-            {topics, [source_topic | dups]}
+        Enum.reduce(streams, {[], []}, fn({stream_topic, _}, {topics, dups}) ->
+          if stream_topic in topics do
+            {topics, [stream_topic | dups]}
           else
-            {[source_topic | topics], dups}
+            {[stream_topic | topics], dups}
           end
         end)
 
         case dups do
           [] -> :ok
-          duplicates -> raise "The following source topics were defined multiple times in #{module}: #{inspect duplicates}"
+          duplicates -> raise "The following stream topics were defined multiple times in #{module}: #{inspect duplicates}"
         end
 
-      _single_source -> :ok
+      _single_stream -> :ok
     end
   end
 end

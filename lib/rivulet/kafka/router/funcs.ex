@@ -1,5 +1,6 @@
 defmodule Rivulet.Kafka.Router.Funcs do
   require Logger
+  alias Rivulet.Kafka.Publisher.Message
 
   defp to_list(list) when is_list(list), do: list
   defp to_list(other), do: [other]
@@ -72,7 +73,6 @@ defmodule Rivulet.Kafka.Router.Funcs do
         if :error in transformed_messages do
           Logger.error("Could not publish messages because transformer returned an error. Moving on.")
         else
-          publish_messages = transformed_messages # sorry - refactor
 
           publish_topics =
             case publish_topics do
@@ -81,20 +81,26 @@ defmodule Rivulet.Kafka.Router.Funcs do
             end
 
             Enum.each(publish_topics, fn
-              ({publish_topic, :key}) ->
-                publish_messages
-                |> Enum.map(fn(%Rivulet.Kafka.Publisher.Message{} = m) ->
-                  %Rivulet.Kafka.Publisher.Message{m | topic: publish_topic, partition_strategy: {:key, m.key}}
-                end)
-                |> Rivulet.Kafka.Publisher.publish
-              ({publish_topic, :random}) ->
-                publish_messages
-                |> Enum.map(fn(%Rivulet.Kafka.Publisher.Message{} = m) ->
-                  %Rivulet.Kafka.Publisher.Message{m | topic: publish_topic, partition_strategy: :random}
+              ({publish_topic, partition_strategy}) ->
+                transformed_messages
+                |> Enum.map(fn(message) ->
+                  to_message(message, publish_topic, partition_strategy)
                 end)
                 |> Rivulet.Kafka.Publisher.publish
             end)
         end
     end)
+  end
+
+  def to_message(%Message{} = m, publish_topic, {:key, value}) do
+    %Message{m | topic: publish_topic, partition_strategy: {:key, value}}
+  end
+
+  def to_message(%Message{} = m, publish_topic, :key) do
+    %Message{m | topic: publish_topic, partition_strategy: {:key, m.key}}
+  end
+
+  def to_message(%Message{} = m, publish_topic, :random) do
+    %Message{m | topic: publish_topic, partition_strategy: :random}
   end
 end
