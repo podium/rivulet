@@ -1,6 +1,7 @@
-defmodule Rivulet.Router do
+defmodule Rivulet.Kafka.Router do
+  @partition_strategies [:key, :random]
   defmacro __using__(opts) do
-    Module.register_attribute(__CALLER__.module, :sources, accumulate: true)
+    Module.register_attribute(__CALLER__.module, :streams, accumulate: true)
 
     consumer_group = Keyword.get(opts, :consumer_group)
 
@@ -36,126 +37,59 @@ defmodule Rivulet.Router do
   @type topic :: String.t
   @type transformer :: module
 
-  defmacro __before_compile__(env) do
-    check_duplicate_sources(env.module)
+  defp get_stuff(env) do
+    check_duplicate_streams(env.module)
 
     consumer_group = Module.get_attribute(env.module, :consumer_group)
-    sources =
-      case Module.get_attribute(env.module, :sources) do
-        sources when is_list(sources) -> sources
-        source -> [source]
+
+    streams =
+      case Module.get_attribute(env.module, :streams) do
+        streams when is_list(streams) -> streams
+        stream -> [stream]
       end
 
-    source_topics =
-      Enum.map(sources, fn({topic, _routes}) ->
+    stream_topics =
+      Enum.map(streams, fn({topic, _routes}) ->
         topic
       end)
 
+    {consumer_group, stream_topics, streams}
+  end
+
+  defmacro __before_compile__(env) do
+    {consumer_group, stream_topics, streams} = get_stuff(env)
+
     quote do
       def start_link do
-        require Logger
-        config =
-          %Rivulet.Consumer.Config{
-            client_id: Application.get_env(:rivulet, :publish_client_name),
-            consumer_group_name: unquote(consumer_group),
-            topics: unquote(source_topics),
-            group_config: [
-              offset_commit_policy: :commit_to_kafka_v2,
-              offset_commit_interval_secons: 1
-            ],
-            consumer_config: [begin_offset: :earliest],
-            message_type: :message_set
-          }
-
-        Logger.info("Configuration for #{__MODULE__}: #{inspect config}")
-
-        Rivulet.Consumer.start_link(__MODULE__, config)
+        Rivulet.Kafka.Router.Funcs.start_link(__MODULE__, unquote(consumer_group), unquote(stream_topics))
       end
 
       def init(_) do
         {:ok, {}}
       end
 
-      def handle_messages(%Rivulet.Kafka.Partition{topic: topic} = partition, messages, state) do
-        require Logger
-        {^topic, routes} =
-          Enum.find(unquote(sources), fn
-            ({^topic, _}) -> true
-            (_) -> false
-          end)
-
-        routes =
-          case routes do
-            [:route | _] = route -> [route]
-            routes when is_list(routes) -> routes
-          end
-
-        Enum.map(routes, fn([:route, transformer, publish_topics]) ->
-          transformed_messages =
-            Enum.map(messages, fn(message) ->
-              case transformer.handle_message(message) do
-                nil -> nil
-                {key, value} = m ->
-                  %Rivulet.Kafka.Publisher.Message{
-                    key: key,
-                    value: value,
-                    encoding_strategy: :raw,
-                    topic: :unknown,
-                    partition_strategy: :unknown
-                  }
-                messages when is_list(messages) -> messages
-                other ->
-                  Logger.error("#{transformer}.handle_message returned #{inspect other}, which is an unsupported type.")
-                  nil
-              end
-            end)
-
-          publish_messages =
-            transformed_messages
-            |> List.flatten
-            |> Enum.reject(fn
-              (nil) -> true
-              (_) -> false
-            end)
-
-          publish_topics =
-            case publish_topics do
-              topics when is_list(topics) -> topics
-              {topic, partition_strategy} when is_binary(topic) -> [{topic, partition_strategy}]
-            end
-
-          Enum.each(publish_topics, fn
-            ({publish_topic, :key}) ->
-              publish_messages
-              |> Enum.map(fn(%Rivulet.Kafka.Publisher.Message{} = m) ->
-                %Rivulet.Kafka.Publisher.Message{m | topic: publish_topic, partition_strategy: {:key, m.key}}
-              end)
-              |> Rivulet.Kafka.Publisher.publish
-            ({publish_topic, :random}) ->
-              publish_messages
-              |> Enum.map(fn(%Rivulet.Kafka.Publisher.Message{} = m) ->
-                %Rivulet.Kafka.Publisher.Message{m | topic: publish_topic, partition_strategy: :random}
-              end)
-              |> Rivulet.Kafka.Publisher.publish
-          end)
-        end)
+      def handle_messages(partition, messages, state) do
+        Rivulet.Kafka.Router.Funcs.handle_messages(partition, messages, unquote(streams))
 
         {:ok, :ack, state}
       end
     end
   end
 
-  defmacro defsource(topic, [do: routes]) do
+  defmacro defstream(topic, [do: routes]) do
     routes =
       Macro.postwalk(routes, fn
         ({:transformer, _, [transformer, [do: {:__block__, _, publishes}]]}) ->
           [:route, Macro.expand_once(transformer, __ENV__), publishes]
         ({:transformer, _, [transformer, [do: publishes]]}) ->
           [:route, Macro.expand_once(transformer, __ENV__), publishes]
-        ({:publish_to, _, [topic, [partition: :key]]}) ->
-          {topic, :key}
-        ({:publish_to, _, [topic, [partition: :random]]}) ->
-          {topic, :random}
+        ({:publish_to, _, [topic, config]}) ->
+          partition_strategy = Keyword.get(config, :partition, :key)
+          unless partition_strategy in @partition_strategies do
+            raise "#{__CALLER__.module} publishing to #{topic} has an unsupported partition strategy: #{partition_strategy}"
+          end
+
+          {topic, partition_strategy}
         (node) -> node
       end)
 
@@ -166,39 +100,39 @@ defmodule Rivulet.Router do
         route  -> [route]
       end
 
-    set_source(__CALLER__.module, {topic, routes})
+    set_stream(__CALLER__.module, {topic, routes})
 
     nil
   end
 
-  @spec set_source(module, {topic, [term]})
+  @spec set_stream(module, {topic, [term]})
   :: ignored
-  defp set_source(module, source) do
-    Module.put_attribute(module, :sources, source)
+  defp set_stream(module, stream) do
+    Module.put_attribute(module, :streams, stream)
   end
 
-  @spec check_duplicate_sources(module) :: ignored
-  defp check_duplicate_sources(module) do
+  @spec check_duplicate_streams(module) :: ignored
+  defp check_duplicate_streams(module) do
     require Logger
-    case Module.get_attribute(module, :sources) do
+    case Module.get_attribute(module, :streams) do
       [] ->
-        Logger.warn("You didn't define any sources in #{module}. Was this an error?")
-      sources when is_list(sources) ->
+        Logger.warn("You didn't define any streams in #{module}. Was this an error?")
+      streams when is_list(streams) ->
         {_, dups} =
-        Enum.reduce(sources, {[], []}, fn({source_topic, _}, {topics, dups}) ->
-          if source_topic in topics do
-            {topics, [source_topic | dups]}
+        Enum.reduce(streams, {[], []}, fn({stream_topic, _}, {topics, dups}) ->
+          if stream_topic in topics do
+            {topics, [stream_topic | dups]}
           else
-            {[source_topic | topics], dups}
+            {[stream_topic | topics], dups}
           end
         end)
 
         case dups do
           [] -> :ok
-          duplicates -> raise "The following source topics were defined multiple times in #{module}: #{inspect duplicates}"
+          duplicates -> raise "The following stream topics were defined multiple times in #{module}: #{inspect duplicates}"
         end
 
-      _single_source -> :ok
+      _single_stream -> :ok
     end
   end
 end

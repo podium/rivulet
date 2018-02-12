@@ -11,8 +11,7 @@ defmodule Rivulet.Consumer do
         offset_commit_policy: :commit_to_kafka_v2,
         offset_commit_interval_seconds: 5
       ],
-      consumer_config: [begin_offset: :earliest],
-      message_type: :message_set
+      consumer_config: [begin_offset: :earliest]
     ]
 
     @type t :: %__MODULE__{
@@ -21,7 +20,6 @@ defmodule Rivulet.Consumer do
       topics: [Partition.topic],
       group_config: Keyword.t,
       consumer_config: Keyword.t,
-      message_type: :message | :message_set
     }
   end
   require Record
@@ -47,10 +45,10 @@ defmodule Rivulet.Consumer do
 
   @spec start_link(atom, Config.t, [term]) :: GenServer.on_start
   def start_link(callback_module, %Config{} = config, extra \\ []) do
-    :brod.start_link_group_subscriber(config.client_id, config.consumer_group_name,
+    :brod_group_subscriber.start_link(config.client_id, config.consumer_group_name,
                                       config.topics, config.group_config,
                                       config.consumer_config,
-                                      config.message_type, _CallbackModule  = __MODULE__,
+                                      :message_set, _CallbackModule  = __MODULE__,
                                       _CallbackInitArg = {callback_module, extra})
   end
 

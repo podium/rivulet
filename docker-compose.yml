@@ -1,7 +1,55 @@
 version: '3'
 
+volumes:
+  kafka:
+    driver: local
+  zookeeper:
+    driver: local
+
 services:
   rivulet:
-    build: .
+    build:
+      context: .
+      args:
+        - MIX_ENV=dev
+    command: echo "Not an app"
+    environment:
+      HOSTNAME: host1
+    depends_on:
+      - kafka
+      - schema-registry
     volumes:
       - .:/app
+  kafka:
+    image: confluentinc/cp-kafka:4.0.0
+    hostname: kafka
+    depends_on:
+      - zookeeper
+    links:
+      - zookeeper
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_DELETE_TOPIC_ENABLE: "true"
+    volumes:
+      - kafka:/var/lib/kafka/data
+    restart: on-failure
+  zookeeper:
+    image: confluentinc/cp-zookeeper:4.0.0
+    volumes:
+      - zookeeper:/var/lib/zookeeper/data
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+  schema-registry:
+    image: confluentinc/cp-schema-registry:4.0.0
+    hostname: kafkaschema
+    depends_on:
+      - kafka
+      - zookeeper
+    links:
+      - kafka
+      - zookeeper:confluent
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: kafkaschema
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "confluent:2181"
