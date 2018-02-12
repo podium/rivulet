@@ -21,7 +21,7 @@ services:
     volumes:
       - .:/app
   kafka:
-    image: confluentinc/cp-kafka:3.3.0
+    image: confluentinc/cp-kafka:4.0.0
     hostname: kafka
     depends_on:
       - zookeeper
@@ -36,13 +36,13 @@ services:
       - kafka:/var/lib/kafka/data
     restart: on-failure
   zookeeper:
-    image: confluentinc/cp-zookeeper:3.3.0
+    image: confluentinc/cp-zookeeper:4.0.0
     volumes:
       - zookeeper:/var/lib/zookeeper/data
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
   schema-registry:
-    image: confluentinc/cp-schema-registry:3.3.0
+    image: confluentinc/cp-schema-registry:4.0.0
     hostname: kafkaschema
     depends_on:
       - kafka
