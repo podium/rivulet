@@ -86,6 +86,18 @@ defmodule Rivulet.Kafka.Router.Funcs do
                   to_message(message, publish_topic, partition_strategy)
                 end)
                 |> Rivulet.Kafka.Publisher.publish
+                |> Enum.map(fn
+                  ({:ok, call_ref}) ->
+                    receive do
+                      {:brod_produce_reply, ^call_ref, :brod_produce_req_acked} -> :ok
+                      {:brod_produce_reply, ^call_ref, _} ->
+                        Logger.error("Publish failed - crashing router")
+                        raise "Publish failed - crashing router"
+                    after 1000 ->
+                        Logger.error("Publish took too long")
+                        raise "Publish failed - crashing router"
+                    end
+                end)
             end)
         end
     end)
