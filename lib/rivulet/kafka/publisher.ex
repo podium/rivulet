@@ -65,19 +65,16 @@ defmodule Rivulet.Kafka.Publisher do
     publish(message.topic, partition, :raw, message.key, message.value)
   end
 
-  @spec publish([Message.t]) :: :ok | :error
+  @spec publish([Message.t]) :: [{:ok, term} | {:error, term}]
   def publish(messages) do
-    resps =
-      messages
-      |> Enum.map(&publish/1)
-      |> Enum.map(fn
-        ({:ok, _call_ref}) -> :ok
-        ({:error, _reason} = err) ->
-          Logger.error("Bulk publishing failed: #{inspect err}")
-          :error
-      end)
-
-    if Enum.any?(resps, &(&1 == :error)), do: :error, else: :ok
+    messages
+    |> Enum.map(&publish/1)
+    |> Enum.map(fn
+      ({:ok, call_ref}) -> {:ok, call_ref}
+      ({:error, _reason} = err) ->
+        Logger.error("Bulk publishing failed: #{inspect err}")
+        raise "Bulk Publish failed for reason: #{inspect err}"
+    end)
   end
 
   @doc false
