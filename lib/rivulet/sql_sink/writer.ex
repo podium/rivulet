@@ -22,8 +22,6 @@ defmodule Rivulet.SQLSink.Writer do
     Logger.debug("Should get to #{partition.topic}:#{partition.partition} - #{offset}")
 
     decoded_messages = decoded_messages(messages, partition)
-    require IEx
-    IEx.pry
 
     decoded_messages
     |> upserts
@@ -33,8 +31,7 @@ defmodule Rivulet.SQLSink.Writer do
     |> deletions
     |> do_deletes(state, partition)
 
-    IO.inspect("Acking")
-    Rivulet.Consumer.ack(Rivulet.client_name!, partition, offset) |> IO.inspect
+    Rivulet.Consumer.ack(Rivulet.client_name!, partition, offset)
 
     {:noreply, state}
   end
