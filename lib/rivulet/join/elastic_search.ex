@@ -1,10 +1,9 @@
 defmodule Rivulet.Join.ElasticSearch do
   use HTTPoison.Base
-  use FireHydrant.Stats
   alias HTTPoison.Response
-  alias FireHydrant.JSON
+  alias Rivulet.JSON
 
-  deftime process_url(path) do
+  def process_url(path) do
     :fire_hydrant
     |> Application.get_env(:elasticsearch_uri)
     |> URI.parse
@@ -12,11 +11,11 @@ defmodule Rivulet.Join.ElasticSearch do
     |> URI.to_string
   end
 
-  deftime process_request_headers(headers) do
+  def process_request_headers(headers) do
     [{"Content-Type", "application/json"} | headers]
   end
 
-  deftime process_response_body(body) do
+  def process_response_body(body) do
     :jiffy.decode(body, [:return_maps])
   end
 
@@ -31,7 +30,7 @@ defmodule Rivulet.Join.ElasticSearch do
   @type batch :: [binary] #[cmd, newline, data, newline]
 
   @spec bulk_put_join_doc([{:put, join_key, object_id, document, uuid}], join_id) :: batch
-  deftime bulk_put_join_doc(docs, join_id) when is_binary(join_id) do
+  def bulk_put_join_doc(docs, join_id) when is_binary(join_id) do
     docs
     |> Enum.map(fn({:put, join_key, object_id, value, uuid}) ->
       cmd =
@@ -58,7 +57,7 @@ defmodule Rivulet.Join.ElasticSearch do
       end)
   end
 
-  deftime bulk_update(batch) do
+  def bulk_update(batch) do
     case post("/_bulk?refresh=wait_for", batch) do
       {:error, _} = err -> raise "Calls to Elasticsearch are failing! #{inspect err}"
       {:ok, %Response{status_code: code, body: body}} when code >= 200 and code < 300 ->
@@ -68,7 +67,7 @@ defmodule Rivulet.Join.ElasticSearch do
     end
   end
 
-  deftime create_join_index(index_name) do
+  def create_join_index(index_name) do
     index_name = index(index_name)
     {:ok, json} =
       %{mappings:
@@ -80,7 +79,7 @@ defmodule Rivulet.Join.ElasticSearch do
     put("/#{index_name}", json, [])
   end
 
-  deftime put_join_doc(join_id, join_key, object_id, document) do
+  def put_join_doc(join_id, join_key, object_id, document) do
     params =
       document
       |> Map.update(:join_key, join_key, fn(_) -> join_key end)
@@ -89,7 +88,7 @@ defmodule Rivulet.Join.ElasticSearch do
     put("/#{index(join_id)}/join_documents/#{object_id}" , params)
   end
 
-  deftime bulk_get_join_docs(join_id, join_keys) do
+  def bulk_get_join_docs(join_id, join_keys) do
     body =
       Enum.map(join_keys, fn(join_key) ->
         {:ok, header} =
@@ -112,7 +111,7 @@ defmodule Rivulet.Join.ElasticSearch do
     end
   end
 
-  deftime get_join_docs(join_id, join_key) do
+  def get_join_docs(join_id, join_key) do
     case get("/#{index(join_id)}/join_documents/_search?q=join_key:/#{join_key}/") do
       {:ok, %Response{body: body}} -> body
       {:error, _reason} = err -> err

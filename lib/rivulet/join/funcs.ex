@@ -1,9 +1,8 @@
 defmodule Rivulet.Kafka.Join.Funcs do
   require Logger
-  use FireHydrant.Stats
   alias Rivulet.Join.ElasticSearch
 
-  deftime start_link(module, consumer_group, stream_topics) do
+  def start_link(module, consumer_group, stream_topics) do
     config =
       %Rivulet.Consumer.Config{
         client_id: Application.get_env(:rivulet, :client_name),
@@ -21,8 +20,8 @@ defmodule Rivulet.Kafka.Join.Funcs do
     Rivulet.Consumer.start_link(module, config)
   end
 
-  deftime to_publish(nil), do: nil
-  deftime to_publish({k, v}) when is_binary(k) and is_binary(v) do
+  def to_publish(nil), do: nil
+  def to_publish({k, v}) when is_binary(k) and is_binary(v) do
     %Rivulet.Kafka.Publisher.Message{
       key: k,
       value: v,
@@ -32,12 +31,12 @@ defmodule Rivulet.Kafka.Join.Funcs do
     }
   end
 
-  deftime to_publish(other) do
+  def to_publish(other) do
     Logger.error("handle_message returned #{inspect other}, which is an unsupported type.")
     :error
   end
 
-  deftimep deserialize_key(module, message) do
+  defp deserialize_key(module, message) do
     case module.deserialize_key(message.raw_key) do
       {:ok, key} -> {:ok, key}
       {:error, _err} ->
@@ -47,7 +46,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
     end
   end
 
-  deftime deserialize_value(module, message) do
+  def deserialize_value(module, message) do
     case module.deserialize_value(message.raw_value) do
       {:ok, value} -> {:ok, value}
       {:error, _err} ->
@@ -57,7 +56,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
     end
   end
 
-  deftime get_object_id(module, key, value) do
+  def get_object_id(module, key, value) do
     case module.object_id(key, value) do
       {:ok, key} when is_binary(key) -> {:ok, key}
       {:ok, key} ->
@@ -69,7 +68,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
     end
   end
 
-  deftime handle_messages(%Rivulet.Kafka.Partition{topic: topic, partition: partition}, messages, stream, join_id, batcher) do
+  def handle_messages(%Rivulet.Kafka.Partition{topic: topic, partition: partition}, messages, stream, join_id, batcher) do
     {_, module} =
       Enum.find(stream, fn
         ({^topic, _}) -> true
@@ -121,7 +120,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
 
   @spec transforms([[term]], {module, [{Rivulet.Kafka.Partition.topic, :key | :random}]})
   :: ignored
-  deftime transforms(join_docs, transformers) do
+  def transforms(join_docs, transformers) do
     Enum.map(join_docs, fn(join) ->
       Enum.map(transformers, fn({module, publishes}) ->
         messages = module.handle_join(join)

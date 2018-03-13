@@ -1,7 +1,7 @@
 defmodule Rivulet.Kafka.Publisher do
   alias Rivulet.Kafka.Publisher.Message
   alias Rivulet.Kafka.Partition
-  alias Rivulet.Avro
+  alias Rivulet.{Avro, JSON}
 
   require Logger
 
@@ -43,8 +43,8 @@ defmodule Rivulet.Kafka.Publisher do
   end
 
   def publish(topic, partition, :json, key, message) when is_integer(partition) do
-    with {:ok, k} <- Poison.encode(key),
-         {:ok, msg} <- Poison.encode(message) do
+    with {:ok, k} <- JSON.encode(key),
+         {:ok, msg} <- JSON.encode(message) do
       publish(topic, partition, :raw, k, msg)
     end
   end

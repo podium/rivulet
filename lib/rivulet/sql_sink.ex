@@ -66,9 +66,7 @@ defmodule Rivulet.SQLSink do
       schema
       |> table_definition!(config)
       |> SQLGenerator.create_table
-      |> IO.inspect
-      |> SQLGenerator.execute
-      |> IO.inspect
+      |> SQLGenerator.execute(config.repo)
 
       #Enum.each(results, fn({:ok, _}) -> :ok end)
   end

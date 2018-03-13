@@ -1,6 +1,5 @@
 defmodule Rivulet.Join.Handler do
   use GenServer
-  use FireHydrant.Stats
 
   alias Rivulet.Join.ElasticSearch
 
@@ -8,27 +7,27 @@ defmodule Rivulet.Join.Handler do
     defstruct [:join_id, :transformers, :consumer]
   end
 
-  deftime start(join_id, transformers, consumer) do
+  def start(join_id, transformers, consumer) do
     GenServer.start(__MODULE__, [join_id, transformers, consumer])
   end
 
-  deftime start_link(join_id, transformers, consumer) do
+  def start_link(join_id, transformers, consumer) do
     GenServer.start_link(__MODULE__, [join_id, transformers, consumer])
   end
 
-  deftime stop(ref) do
+  def stop(ref) do
     GenServer.stop(ref)
   end
 
-  deftime handle_resp(handler, join_keys, ack_data) do
+  def handle_resp(handler, join_keys, ack_data) do
     GenServer.call(handler, {:handle_resp, join_keys, ack_data}, 8_000)
   end
 
-  deftime init([join_id, transformers, consumer]) do
+  def init([join_id, transformers, consumer]) do
     {:ok, %State{join_id: join_id, transformers: transformers, consumer: consumer}}
   end
 
-  deftime handle_call({:handle_resp, join_keys, ack_data}, from,  %State{join_id: join_id, transformers: transformers, consumer: consumer} = state) do
+  def handle_call({:handle_resp, join_keys, ack_data}, from,  %State{join_id: join_id, transformers: transformers, consumer: consumer} = state) do
     GenServer.reply(from, :ok)
 
     res =

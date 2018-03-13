@@ -4,6 +4,7 @@ defmodule Rivulet.Avro.Registry do
   require Logger
 
   alias Rivulet.Avro
+  alias Rivulet.JSON
   alias Rivulet.Avro.Schema
   alias Rivulet.Kafka.Partition
 
@@ -32,13 +33,14 @@ defmodule Rivulet.Avro.Registry do
 
   @spec process_response_body(json) :: term
   def process_response_body(body) do
-    Poison.decode(body)
+    JSON.decode(body)
   end
 
   @spec create_schema(subject, json) :: {:ok, Schema.t} | {:error, term}
   def create_schema(subject, schema) when is_binary(subject) and is_binary(schema) do
     Logger.debug("Attempting to create schema for subject: #{subject}")
-    post("/subjects/#{subject}/versions", %{schema: schema} |> Poison.encode!, [{"Content-Type", "application/vnd.schemaregistry.v1+json"}])
+    {:ok, json} = JSON.encode(%{schema: schema})
+    post("/subjects/#{subject}/versions", json, [{"Content-Type", "application/vnd.schemaregistry.v1+json"}])
   end
 
   @spec get_schema(Avro.schema_id) :: {:ok, Schema.t} | {:error, term}

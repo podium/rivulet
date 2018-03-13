@@ -5,16 +5,16 @@ end
 defmodule Rivulet.SQLSink.Database.SQLGenerator do
   alias Rivulet.SQLSink.Database.{Postgres, Table}
 
-  def execute(commands) when is_list(commands) do
-    FireHydrant.Repo.transaction(fn ->
+  def execute(commands, repo) when is_list(commands) do
+    repo.transaction(fn ->
       commands
       |> List.flatten
-      |> Enum.map(&execute/1)
+      |> Enum.map(&(execute(&1, repo)))
     end)
   end
 
-  def execute(sql) when is_binary(sql) do
-    Ecto.Adapters.SQL.query(FireHydrant.Repo, sql)
+  def execute(sql, repo) when is_binary(sql) do
+    Ecto.Adapters.SQL.query(repo, sql)
   end
 
   def create_table(%Table{database: :postgres, primary_keys: :sequence} = table) do

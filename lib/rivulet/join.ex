@@ -1,6 +1,6 @@
 defmodule Rivulet.Kafka.Join do
   require Logger
-  use FireHydrant.Stats
+
   defmacro __using__(opts) do
     Module.register_attribute(__CALLER__.module, :streams, accumulate: true)
     Module.register_attribute(__CALLER__.module, :transformers, accumulate: true)
@@ -31,7 +31,6 @@ defmodule Rivulet.Kafka.Join do
     quote do
       import unquote(__MODULE__)
       alias unquote(__MODULE__)
-      use FireHydrant.Stats
       @before_compile unquote(__MODULE__)
     end
   end
@@ -68,11 +67,11 @@ defmodule Rivulet.Kafka.Join do
     join_id = Module.get_attribute(env.module, :join_id)
 
     quote do
-      deftime start_link do
+      def start_link do
         Rivulet.Kafka.Join.Funcs.start_link(__MODULE__, unquote(consumer_group), unquote(topics))
       end
 
-      deftime init(_) do
+      def init(_) do
         Rivulet.Join.ElasticSearch.create_join_index(unquote(join_id))
         {:ok, handler} = Rivulet.Join.Handler.start_link(unquote(join_id), unquote(transformers), self())
         {:ok, batcher} = Rivulet.Join.Batcher.start_link(handler)
@@ -80,7 +79,7 @@ defmodule Rivulet.Kafka.Join do
         {:ok, {handler, batcher, unquote(streams)}}
       end
 
-      deftime handle_messages(partition, messages, {handler, batcher, streams} = state) do
+      def handle_messages(partition, messages, {handler, batcher, streams} = state) do
         Rivulet.Kafka.Join.Funcs.handle_messages(partition, messages, streams, unquote(join_id), batcher)
 
         {:ok, state}
