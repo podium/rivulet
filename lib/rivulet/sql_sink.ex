@@ -83,14 +83,12 @@ defmodule Rivulet.SQLSink do
   | Table.t
   def table_definition(avro_schema, config)
   when is_binary(avro_schema) do
-    IO.inspect("Parsing JSON")
     with {:ok, schema} <- AvroEx.parse_schema(avro_schema) do
       table_definition(schema, config)
     end
   end
 
   def table_definition(%Schema{} = schema, %Config{} = config) do
-    IO.inspect("defining table")
     case AvroConverter.definition(schema, config.table_pattern, config.topic) do
       :error -> {:error, :invalid_table_definition}
       {:error, :schema_not_insertable} -> {:error, :invalid_table_definition}

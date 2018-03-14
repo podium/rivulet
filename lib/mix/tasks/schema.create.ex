@@ -23,7 +23,7 @@ defmodule Mix.Tasks.Schema.Create do
            :ok
     else
       {:error, _} = err ->
-        IO.inspect("Failed for reason: #{inspect err}")
+        Logger.error("Failed for reason: #{inspect err}")
         System.halt(1)
     end
   end

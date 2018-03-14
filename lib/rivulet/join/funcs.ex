@@ -1,7 +1,6 @@
 defmodule Rivulet.Kafka.Join.Funcs do
   require Logger
   alias Rivulet.Join.ElasticSearch
-
   def start_link(module, consumer_group, stream_topics) do
     config =
       %Rivulet.Consumer.Config{

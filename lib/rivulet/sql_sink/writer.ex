@@ -77,8 +77,7 @@ defmodule Rivulet.SQLSink.Writer do
 
   def deletions(messages) when is_list(messages) do
     messages
-    |> Enum.filter(&((&1.decoded_value |> IO.inspect) == nil))
-    |> IO.inspect
+    |> Enum.filter(&((&1.decoded_value) == nil))
     |> Enum.map(&(&1.decoded_key))
   end
 end

@@ -15,12 +15,10 @@ defmodule Rivulet.SQLSink.AvroConverter do
       :error -> :error
       {:error, _reason} = err -> err
       columns ->
-        IO.inspect(columns)
         table =
           name_pattern
           |> Table.table_name(topic)
           |> Table.new
-          |> IO.inspect
 
         columns
         |> Enum.reduce(table, fn({column_name, column_type}, %Table{} = table) ->
