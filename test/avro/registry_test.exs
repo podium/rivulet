@@ -40,8 +40,8 @@ defmodule Rivulet.Avro.Registry.Test do
       assert {:ok, _} = @test_module.process_response_body(%{schema: @schema} |> Poison.encode!)
     end
 
-    test "returns an error tuple on failure" do
-      assert {:error, _} = @test_module.process_response_body("wat")
+    test "throws an error on failuew" do
+      {:error, {1, :invalid_json}} = catch_throw(@test_module.process_response_body("wat"))
     end
   end
 
