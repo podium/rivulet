@@ -6,15 +6,15 @@ defmodule Rivulet.Avro.Registry.Test do
   alias Rivulet.Avro.Schema
 
   @schema """
-{
-     "type": "record",
-     "namespace": "com.example",
-     "name": "FullName",
-     "fields": [
-       { "name": "first", "type": "string" },
-       { "name": "last", "type": "string" }
-     ]
-} 
+  {
+       "type": "record",
+       "namespace": "com.example",
+       "name": "FullName",
+       "fields": [
+         { "name": "first", "type": "string" },
+         { "name": "last", "type": "string" }
+       ]
+  }
   """
 
   setup do

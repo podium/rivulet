@@ -90,7 +90,7 @@ defmodule Rivulet.SQLSink do
 
   def table_definition(%Schema{} = schema, %Config{} = config) do
     case AvroConverter.definition(schema, config.table_pattern, config.topic) do
-      :error -> {:error, :invalid_table_definition}
+      {:error, :invalid_schema} -> {:error, :invalid_schema}
       {:error, :schema_not_insertable} -> {:error, :invalid_table_definition}
       %Table{} = table ->
         %Table{} =

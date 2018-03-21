@@ -31,7 +31,6 @@ defmodule Rivulet.Avro.Registry do
     uri
   end
 
-  @spec process_response_body(json) :: term
   def process_response_body(body) do
     JSON.decode(body)
   end

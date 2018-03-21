@@ -12,7 +12,6 @@ defmodule Rivulet.SQLSink.AvroConverter do
   def definition(%Schema{} = schema, name_pattern, topic) do
     Logger.debug("Getting table definition for avro schema")
     case columns(schema) do
-      :error -> :error
       {:error, _reason} = err -> err
       columns ->
         table =

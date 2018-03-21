@@ -80,7 +80,7 @@ defmodule Rivulet.Join.ElasticSearch do
   end
 
   def put_join_doc(join_id, join_key, object_id, document) do
-    params =
+    {:ok, params} =
       document
       |> Map.update(:join_key, join_key, fn(_) -> join_key end)
       |> JSON.encode
