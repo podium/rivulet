@@ -13,14 +13,14 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
     %Config{} = config = Config.from_sink_opts(consumer_opts)
 
     {:ok, _} = Application.ensure_all_started(:httpoison)
-    
+
     Rivulet.ElasticSearchSink.ensure_es_setup!(config)
 
     children =
       [
-        worker(Rivulet.ElasticSearchSink.Writer.Manager, [self(), count], id: :manager),
+        # worker(Rivulet.ElasticSearchSink.Writer.Manager, [self(), count], id: :manager),
         worker(Rivulet.ElasticSearchSink.Consumer, [config, self()], id: :consumer),
-        worker(Rivulet.ElasticSearchSink.Writer, [config], id: "writer_1"),
+        # worker(Rivulet.ElasticSearchSink.Writer, [config], id: "writer_1"),
       ]
 
     opts = [strategy: :rest_for_one]

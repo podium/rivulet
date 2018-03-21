@@ -40,6 +40,8 @@ defmodule Rivulet.Mixfile do
      {:httpoison, ">= 0.12.0"},
      {:meck, "~> 0.8.7", only: [:test]},
      {:jiffy, "0.15.1"},
-     {:uuid, "~> 1.1.8"}]
+     {:uuid, "~> 1.1.8"},
+     {:elastix, "~> 0.5.0"}
+    ]
   end
 end
