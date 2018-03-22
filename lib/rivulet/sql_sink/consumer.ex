@@ -28,10 +28,6 @@ defmodule Rivulet.SQLSink.Consumer do
     Consumer.start_link(__MODULE__, consumer_config, {config.table_pattern, sink})
   end
 
-  def set_pool(consumer, pool) do
-    GenServer.call(consumer, pool)
-  end
-
   def init({pattern, sink}) do
     {:ok, %State{pattern: pattern, sink: sink}}
   end

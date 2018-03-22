@@ -57,10 +57,6 @@ defmodule Rivulet.Join.Handler do
     {:noreply, state}
   end
 
-  def ack(consumer, topic, partition, offset) do
-    :brod_group_subscriber.ack(consumer, topic, partition, offset)
-  end
-
   def handle_info(_, state) do
     {:noreply, state}
   end
