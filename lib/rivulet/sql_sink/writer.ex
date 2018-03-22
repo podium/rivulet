@@ -23,13 +23,15 @@ defmodule Rivulet.SQLSink.Writer do
 
     decoded_messages = decoded_messages(messages, partition)
 
-    decoded_messages
-    |> upserts
-    |> do_upsert(state, partition)
+    state.repo.transaction(fn ->
+      decoded_messages
+      |> upserts
+      |> do_upsert(state, partition)
 
-    decoded_messages
-    |> deletions
-    |> do_deletes(state, partition)
+      decoded_messages
+      |> deletions
+      |> do_deletes(state, partition)
+    end)
 
     Rivulet.Consumer.ack(Rivulet.client_name!, partition, offset)
 

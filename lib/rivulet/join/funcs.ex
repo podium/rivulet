@@ -76,8 +76,8 @@ defmodule Rivulet.Kafka.Join.Funcs do
 
     bulk =
       messages
-      |> Enum.map(fn(message) -> {UUID.uuid4(), message} end)
-      |> Enum.map(fn({uuid, message}) ->
+      |> Enum.map(fn(message) -> message end)
+      |> Enum.map(fn(message) ->
         alias Rivulet.Kafka.Consumer.Message
         with {:ok, key} <- deserialize_key(module, message),
              {:ok, value} <- deserialize_value(module, message),
@@ -85,7 +85,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
              {:ok, join_key} when is_binary(join_key) <- module.join_key(key, value) do
                message = %Message{message | decoded_key: key, decoded_value: value}
 
-              {join_key, message, object_id, uuid}
+              {join_key, message, object_id}
         else
           err ->
             Logger.error("#{module} did not correctly handle message #{inspect message} - got #{inspect err}. Dropping message.")
@@ -96,12 +96,12 @@ defmodule Rivulet.Kafka.Join.Funcs do
         (nil) -> true
         (_) -> false
       end)
-      |> Enum.map(fn({join_key, message, object_id, uuid}) ->
-        {:put, join_key, object_id, message.decoded_value, uuid}
+      |> Enum.map(fn({join_key, message, object_id}) ->
+        {:put, join_key, object_id, message.decoded_value}
       end)
 
     join_keys =
-      Enum.map(bulk, fn({:put, join_key, _message, _object_id, _uuid}) ->
+      Enum.map(bulk, fn({:put, join_key, _message, _object_id}) ->
         join_key
       end)
 

@@ -23,16 +23,15 @@ defmodule Rivulet.Join.ElasticSearch do
   @type join_id :: binary
   @type object_id :: binary
   @type document :: Keyword.t | [{String.t, term}]
-  @type uuid :: binary
   @type newline :: binary
   @type cmd :: binary
   @type data :: Poison.t
   @type batch :: [binary] #[cmd, newline, data, newline]
 
-  @spec bulk_put_join_doc([{:put, join_key, object_id, document, uuid}], join_id) :: batch
+  @spec bulk_put_join_doc([{:put, join_key, object_id, document}], join_id) :: batch
   def bulk_put_join_doc(docs, join_id) when is_binary(join_id) do
     docs
-    |> Enum.map(fn({:put, join_key, object_id, value, uuid}) ->
+    |> Enum.map(fn({:put, join_key, object_id, value}) ->
       cmd =
         %{"update" =>
           %{"_index" => index(join_id),
@@ -42,15 +41,14 @@ defmodule Rivulet.Join.ElasticSearch do
         }
       doc = %{"doc" => %{"join_key" => join_key, "document" => value}, "doc_as_upsert" => true}
 
-      {:ok, cmd} = JSON.encode(cmd)
-      {:ok, doc} = JSON.encode(doc)
-
-      {uuid, cmd, doc}
+      with {:ok, cmd} <- JSON.encode(cmd),
+           {:ok, doc} <- JSON.encode(doc) do
+             {cmd, doc}
+      else
+        _ -> nil
+      end
     end)
-    |> Enum.reject(fn
-      (nil) -> true
-      (_) -> false
-    end)
+    |> Enum.reject(&is_nil/1)
     |> List.flatten
     |> Enum.map(fn({_uuid, cmd, doc}) ->
         [cmd, "\n", doc, "\n"]
