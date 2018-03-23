@@ -30,7 +30,7 @@ defmodule Rivulet.Join.Handler do
   def handle_call({:handle_resp, join_keys, ack_data}, from,  %State{join_id: join_id, transformers: transformers, consumer: consumer} = state) do
     GenServer.reply(from, :ok)
 
-    {time, val} = tc(fn ->
+    {time, val} = :timer.tc(fn ->
     res =
       join_id
       |> ElasticSearch.bulk_get_join_docs(join_keys)
