@@ -28,6 +28,7 @@ defmodule Rivulet.Join.Handler do
   end
 
   def handle_call({:handle_resp, join_keys, ack_data}, from,  %State{join_id: join_id, transformers: transformers, consumer: consumer} = state) do
+    IO.inspect("Thing`")
     GenServer.reply(from, :ok)
 
     {time, val} = :timer.tc(fn ->
