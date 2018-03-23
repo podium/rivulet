@@ -45,7 +45,6 @@ defmodule Rivulet.Join.ElasticSearch do
         |> :erlang.term_to_binary
         |> Base.encode64
       doc = %{"doc" => %{"join_key" => join_key, "document" => value}, "doc_as_upsert" => true}
-      require IEx; IEx.pry
 
       {:ok, cmd} = JSON.encode(cmd)
       {:ok, doc} = JSON.encode(doc)
