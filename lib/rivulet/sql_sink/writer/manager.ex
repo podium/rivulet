@@ -7,6 +7,9 @@ defmodule Rivulet.SQLSink.Writer.Manager do
     GenServer.start_link(__MODULE__, {sup, count})
   end
 
+  @doc """
+  NOTE: signature for GenServer.call/2 is call(process_identifier, message_to_pass)
+  """
   def handle_batch(manager, partition, messages) do
     pid = GenServer.call(manager, {:get_pid, partition})
     Rivulet.SQLSink.Writer.handle_messages(pid, partition, messages)
@@ -16,7 +19,7 @@ defmodule Rivulet.SQLSink.Writer.Manager do
     {:ok, {sup, count}}
   end
 
-  def handle_call({:get_pid, %Partition{} = partition}, _from, {sup, count} = state) do
+  def handle_call({:get_pid, %Partition{} = partition} = _message_passed_to_process, _from, {sup, count} = state) do
     pid =
       partition
       |> id
