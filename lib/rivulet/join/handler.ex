@@ -37,7 +37,7 @@ defmodule Rivulet.Join.Handler do
       |> Enum.map(fn(%{"hits" => %{"hits" => hits}}) -> hits end)
       |> Enum.map(fn(hits) -> Enum.map(hits, fn(hit) -> hit["_source"]["document"] end) end)
       |> List.flatten()
-      |> Enum.map(&Base.decode64/1)
+      |> Enum.map(&Base.decode64!/1)
       |> Enum.map(&:erlang.binary_to_term/1)
 
     Rivulet.Kafka.Join.Funcs.transforms(res, transformers)
