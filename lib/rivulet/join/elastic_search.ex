@@ -40,6 +40,7 @@ defmodule Rivulet.Join.ElasticSearch do
             "_id" => object_id
           }
         }
+      value = :erlang.term_to_binary(value)
       doc = %{"doc" => %{"join_key" => join_key, "document" => value}, "doc_as_upsert" => true}
 
       {:ok, cmd} = JSON.encode(cmd)
