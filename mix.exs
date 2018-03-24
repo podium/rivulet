@@ -1,6 +1,7 @@
 defmodule Rivulet.Mixfile do
   use Mix.Project
 
+  
   def project do
     [app: :rivulet,
      version: "0.1.0",
