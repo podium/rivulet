@@ -41,7 +41,7 @@ defmodule Rivulet.Avro.Registry.Test do
     end
 
     test "throws an error on failure" do
-      {:error, {1, :invalid_json}} = catch_throw(@test_module.process_response_body("wat"))
+      assert {:error, {1, :invalid_json}} = @test_module.process_response_body("wat")
     end
   end
 
