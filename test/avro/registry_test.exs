@@ -6,15 +6,15 @@ defmodule Rivulet.Avro.Registry.Test do
   alias Rivulet.Avro.Schema
 
   @schema """
-{
-     "type": "record",
-     "namespace": "com.example",
-     "name": "FullName",
-     "fields": [
-       { "name": "first", "type": "string" },
-       { "name": "last", "type": "string" }
-     ]
-} 
+  {
+       "type": "record",
+       "namespace": "com.example",
+       "name": "FullName",
+       "fields": [
+         { "name": "first", "type": "string" },
+         { "name": "last", "type": "string" }
+       ]
+  }
   """
 
   setup do
@@ -40,8 +40,8 @@ defmodule Rivulet.Avro.Registry.Test do
       assert {:ok, _} = @test_module.process_response_body(%{schema: @schema} |> Poison.encode!)
     end
 
-    test "returns an error tuple on failure" do
-      assert {:error, _} = @test_module.process_response_body("wat")
+    test "throws an error on failure" do
+      assert {:error, {1, :invalid_json}} = @test_module.process_response_body("wat")
     end
   end
 

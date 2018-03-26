@@ -1,7 +1,7 @@
 defmodule Rivulet.Kafka.Publisher do
   alias Rivulet.Kafka.Publisher.Message
   alias Rivulet.Kafka.Partition
-  alias Rivulet.Avro
+  alias Rivulet.{Avro, JSON}
 
   require Logger
 
@@ -21,6 +21,8 @@ defmodule Rivulet.Kafka.Publisher do
   :: produce_return
   | {:error, :schema_not_found}
   | {:error, term}
+  def publish(topic, partition_strategy, encoding_strategy \\ :raw, key, message)
+
   def publish(topic, :random, encoding_strategy, key, message) do
     with {:ok, partition} <- Partition.random_partition(topic) do
       publish(topic, partition, encoding_strategy, key, message)
@@ -43,8 +45,8 @@ defmodule Rivulet.Kafka.Publisher do
   end
 
   def publish(topic, partition, :json, key, message) when is_integer(partition) do
-    with {:ok, k} <- Poison.encode(key),
-         {:ok, msg} <- Poison.encode(message) do
+    with {:ok, k} <- JSON.encode(key),
+         {:ok, msg} <- JSON.encode(message) do
       publish(topic, partition, :raw, k, msg)
     end
   end
@@ -65,19 +67,16 @@ defmodule Rivulet.Kafka.Publisher do
     publish(message.topic, partition, :raw, message.key, message.value)
   end
 
-  @spec publish([Message.t]) :: :ok | :error
+  @spec publish([Message.t]) :: [{:ok, term} | {:error, term}]
   def publish(messages) do
-    resps =
-      messages
-      |> Enum.map(&publish/1)
-      |> Enum.map(fn
-        ({:ok, _call_ref}) -> :ok
-        ({:error, _reason} = err) ->
-          Logger.error("Bulk publishing failed: #{inspect err}")
-          :error
-      end)
-
-    if Enum.any?(resps, &(&1 == :error)), do: :error, else: :ok
+    messages
+    |> Enum.map(&publish/1)
+    |> Enum.map(fn
+      ({:ok, call_ref}) -> {:ok, call_ref}
+      ({:error, _reason} = err) ->
+        Logger.error("Bulk publishing failed: #{inspect err}")
+        raise "Bulk Publish failed for reason: #{inspect err}"
+    end)
   end
 
   @doc false

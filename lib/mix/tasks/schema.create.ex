@@ -6,19 +6,24 @@ defmodule Mix.Tasks.Schema.Create do
 
   @shortdoc "POST a k/v schema from priv/avro_schemas to the registry"
 
-  def run([topic]) do
+  def run([type | subjects]) do
     Application.ensure_all_started(:rivulet)
 
     schemas_dir = Path.join(["priv", "avro_schemas"])
-    key_schema = File.read!(Path.join([schemas_dir, topic, "key.avsc"]))
-    value_schema = File.read!(Path.join([schemas_dir, topic, "value.avsc"]))
+    key_schema = File.read!(Path.join([schemas_dir, type, "key.avsc"]))
+    value_schema = File.read!(Path.join([schemas_dir, type, "value.avsc"]))
 
-    with {:ok, _} <- create_schema(topic <> "-key", key_schema),
-         {:ok, _} <- create_schema(topic <> "-value", value_schema) do
+    create_subject(key_schema, value_schema, type)
+    Enum.each(subjects, &(create_subject(key_schema, value_schema, &1)))
+  end
+
+  def create_subject(key_schema, value_schema, subject) do
+    with {:ok, _} <- create_schema(subject <> "-key", key_schema),
+         {:ok, _} <- create_schema(subject <> "-value", value_schema) do
            :ok
     else
       {:error, _} = err ->
-        IO.inspect("Failed for reason: #{inspect err}")
+        Logger.error("Failed for reason: #{inspect err}")
         System.halt(1)
     end
   end
