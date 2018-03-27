@@ -12,7 +12,7 @@ defmodule Rivulet.Application do
       supervisor(Registry, [:unique, Rivulet.Registry]),
       worker(Rivulet.Avro.Cache, []),
       supervisor(Task.Supervisor, [[name: Task.Supervisor, restart: :transient]]),
-      worker(Rivulet.TestRouter, []),
+      #worker(Rivulet.TestRouter, []),
       #worker(Rivulet.TestConsumer, [test_consumer_config])
     ]
 
