@@ -28,14 +28,19 @@ defmodule Rivulet.Join.Handler do
   end
 
   def handle_call({:handle_resp, join_keys, ack_data}, from,  %State{join_id: join_id, transformers: transformers, consumer: consumer} = state) do
+    IO.inspect("Thing`")
     GenServer.reply(from, :ok)
 
+    {time, val} = :timer.tc(fn ->
     res =
       join_id
       |> ElasticSearch.bulk_get_join_docs(join_keys)
       |> Map.get("responses")
       |> Enum.map(fn(%{"hits" => %{"hits" => hits}}) -> hits end)
       |> Enum.map(fn(hits) -> Enum.map(hits, fn(hit) -> hit["_source"]["document"] end) end)
+      |> Enum.map(fn (docs) ->
+        Enum.map(docs, fn (doc) -> doc |> Base.decode64! |> :erlang.binary_to_term end)
+      end)
 
     Rivulet.Kafka.Join.Funcs.transforms(res, transformers)
 
@@ -53,6 +58,9 @@ defmodule Rivulet.Join.Handler do
     end)
 
     {:noreply, state}
+    end)
+    IO.inspect("handle took #{time} microseconds")
+    val
   end
 
   def ack(consumer, topic, partition, offset) do

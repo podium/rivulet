@@ -1,5 +1,4 @@
-%{
-  "avro_ex": {:hex, :avro_ex, "0.1.0-beta.5", "4e3e4892edb437deda8ad99da8b874458eb45a7d03ca99a4ba5b3bf2352fa26e", [:mix], [{:ecto, "~> 2.1.0 or ~> 2.2.0", [hex: :ecto, repo: "hexpm", optional: false]}, {:poison, "~> 3.1.0", [hex: :poison, repo: "hexpm", optional: false]}], "hexpm"},
+%{"avro_ex": {:git, "git@github.com:dconger/avro_ex", "5ee3d5629566aced170a05ab5f9fdfac8a1db3e9", [ref: "master"]},
   "brod": {:hex, :brod, "3.3.5", "c48b2c4314c99841c415193a5b30b367ad44caf293321fe2bc978867c1406f1a", [:make, :rebar, :rebar3], [{:kafka_protocol, "1.1.2", [hex: :kafka_protocol, repo: "hexpm", optional: false]}, {:supervisor3, "1.1.5", [hex: :supervisor3, repo: "hexpm", optional: false]}], "hexpm"},
   "certifi": {:hex, :certifi, "1.2.1", "c3904f192bd5284e5b13f20db3ceac9626e14eeacfbb492e19583cf0e37b22be", [:rebar3], [], "hexpm"},
   "decimal": {:hex, :decimal, "1.4.1", "ad9e501edf7322f122f7fc151cce7c2a0c9ada96f2b0155b8a09a795c2029770", [:mix], [], "hexpm"},
@@ -26,5 +25,4 @@
   "swarm": {:hex, :swarm, "3.0.5", "c54ead44ca5f879959899f325f0e6b904e1a219faecb24ca4e55aad1fe38fecc", [:mix], [{:gen_state_machine, "~> 2.0", [hex: :gen_state_machine, optional: false]}, {:libring, "~> 1.0", [hex: :libring, optional: false]}]},
   "unicode_util_compat": {:hex, :unicode_util_compat, "0.2.0", "dbbccf6781821b1c0701845eaf966c9b6d83d7c3bfc65ca2b78b88b8678bfa35", [:rebar3], [], "hexpm"},
   "uuid": {:hex, :uuid, "1.1.8", "e22fc04499de0de3ed1116b770c7737779f226ceefa0badb3592e64d5cfb4eb9", [:mix], [], "hexpm"},
-  "zlists": {:hex, :zlists, "0.0.4", "f641fcd2d05dcc34e6f98a0a88290ec54fd269246d2bed41d9504361f243a442", [:mix, :rebar3], [], "hexpm"},
-}
+  "zlists": {:hex, :zlists, "0.0.4", "f641fcd2d05dcc34e6f98a0a88290ec54fd269246d2bed41d9504361f243a442", [:mix, :rebar3], [], "hexpm"}}
