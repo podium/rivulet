@@ -3,16 +3,16 @@ defmodule Rivulet.JSON do
   # We handle that so other functions can branch with a case statement
   # or raise their own exception if desired.
   def encode(data) do
-    try_action(&:jiffy.encode/1, data)
+    try do
+      {:ok, :jiffy.encode(data, [:use_nil])}
+    catch
+      {:error, _reason} = err -> err
+    end
   end
 
   def decode(binary) when is_binary(binary) do
-    try_action(&:jiffy.decode/1, binary)
-  end
-
-  defp try_action(func, data) do
     try do
-      {:ok, func.(data)}
+      {:ok, :jiffy.decode(binary, [:use_nil, :return_maps])}
     catch
       {:error, _reason} = err -> err
     end
