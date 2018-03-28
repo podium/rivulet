@@ -1,5 +1,5 @@
 defmodule Rivulet.ElasticSearchSink.Database.ElasticSearchGenerator do
-  alias Elastix.{Index, Mapping, Bulk}
+  alias Elastix.{Index, Mapping}
 
   @type config :: Config.t
   @type url :: String.t

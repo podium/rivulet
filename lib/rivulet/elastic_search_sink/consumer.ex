@@ -1,4 +1,4 @@
-defmodule Rivulet.ElasticSearchSink.ConsumerTwo do
+defmodule Rivulet.ElasticSearchSink.Consumer do
   alias Rivulet.{
     Consumer,
     Consumer.Config,
@@ -8,8 +8,8 @@ defmodule Rivulet.ElasticSearchSink.ConsumerTwo do
   alias Rivulet.ElasticSearchSink.Config, as: SinkConfig
 
   defmodule State do
-    @enforce_keys [:pattern, :sink]
-    defstruct [:pattern, :manager, :sink]
+    @enforce_keys [:sink_consumer_pid]
+    defstruct [:manager_pid, :sink_consumer_pid]
   end
 
   @doc """
@@ -31,29 +31,25 @@ defmodule Rivulet.ElasticSearchSink.ConsumerTwo do
         consumer_config: [begin_offset: :earliest, max_bytes: 2_000_000]
       }
 
-    # NOTE: we'll need to tweak this a bit (spefically the config.table_pattern piece)
-    Consumer.start_link(__MODULE__, consumer_config, {config.table_pattern, sink_supervisor_process})
+    Consumer.start_link(__MODULE__, consumer_config)
   end
 
   def set_pool(consumer, pool) do
     GenServer.call(consumer, pool)
   end
 
-  def init({pattern, sink}) do
-    {:ok, %State{pattern: pattern, sink: sink}}
+  def init(sink) do
+    {:ok, %State{sink_consumer_pid: sink}}
   end
 
-  def handle_messages(partition, messages, %State{manager: nil} = state) do
-    manager = Rivulet.ElasticSearchSink.Supervisor.find_manager(state.sink)
-    state = %State{state | manager: manager}
+  def handle_messages(partition, messages, %State{manager_pid: nil} = state) do
+    manager_pid = Rivulet.ElasticSearchSink.Supervisor.find_manager(state.sink_consumer_pid)
+    state = %State{state | manager_pid: manager_pid}
     handle_messages(partition, messages, state)
   end
 
-  @doc """
-  Question: what does state.manager equal here?
-  """
   def handle_messages(%Partition{} = partition, messages, %State{} = state) do
-    Rivulet.ElasticSearchSink.Writer.Manager.handle_batch(state.manager, partition, messages)
+    Rivulet.ElasticSearchSink.Writer.Manager.handle_batch(state.manager_pid, partition, messages)
     {:ok, state}
   end
 end
