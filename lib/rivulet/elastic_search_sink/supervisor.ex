@@ -18,6 +18,8 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
     # already exists or not. We'll need to change this.
     Rivulet.ElasticSearchSink.ensure_es_setup!(config)
 
+    count = 1
+
     children =
       [
         worker(Rivulet.ElasticSearchSink.Writer.Manager, [self(), count], id: :manager),

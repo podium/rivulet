@@ -18,7 +18,7 @@ defmodule Rivulet.ElasticSearchSink.Consumer do
 
   worker(Rivulet.ElasticSearchSink.ConsumerTwo, [config, self()], id: :consumer)
   """
-  def start_link(%SinkConfig{} = config, sink_supervisor_process) do
+  def start_link(%SinkConfig{} = config, _sink_supervisor_process) do
     consumer_config =
       %Config{
         client_id: Rivulet.client_name(),
@@ -32,10 +32,6 @@ defmodule Rivulet.ElasticSearchSink.Consumer do
       }
 
     Consumer.start_link(__MODULE__, consumer_config)
-  end
-
-  def set_pool(consumer, pool) do
-    GenServer.call(consumer, pool)
   end
 
   def init(sink) do
