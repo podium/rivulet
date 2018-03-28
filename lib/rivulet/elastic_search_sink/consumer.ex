@@ -32,7 +32,7 @@ defmodule Rivulet.ElasticSearchSink.Consumer do
         consumer_config: [begin_offset: :earliest, max_bytes: 2_000_000]
       }
 
-    Consumer.start_link(__MODULE__, consumer_config)
+    Consumer.start_link(__MODULE__, consumer_config, {:sink_supervisor_process, sink_supervisor_process})
   end
 
   def init(sink) do
