@@ -28,10 +28,8 @@ defmodule Rivulet.Join.Handler do
   end
 
   def handle_call({:handle_resp, join_keys, ack_data}, from,  %State{join_id: join_id, transformers: transformers, consumer: consumer} = state) do
-    IO.inspect("Thing`")
     GenServer.reply(from, :ok)
 
-    {time, val} = :timer.tc(fn ->
     res =
       join_id
       |> ElasticSearch.bulk_get_join_docs(join_keys)
@@ -58,9 +56,6 @@ defmodule Rivulet.Join.Handler do
     end)
 
     {:noreply, state}
-    end)
-    IO.inspect("handle took #{time} microseconds")
-    val
   end
 
   def ack(consumer, topic, partition, offset) do

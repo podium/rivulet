@@ -12,7 +12,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
           offset_commit_interval_secons: 1,
         ],
         consumer_config: [begin_offset: :earliest, max_bytes: 1_000_000]
-      } |> IO.inspect(label: "join funcs config")
+      }
 
     Logger.info("Configuration for #{module}: #{inspect config}")
 
