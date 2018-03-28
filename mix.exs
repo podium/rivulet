@@ -1,7 +1,7 @@
 defmodule Rivulet.Mixfile do
   use Mix.Project
 
-  
+
   def project do
     [app: :rivulet,
      version: "0.1.0",
@@ -36,8 +36,7 @@ defmodule Rivulet.Mixfile do
 
   defp deps do
     [{:dialyxir, "~> 0.5.0", only: [:dev, :test], runtime: false},
-     # {:avro_ex, "~> 0.1.0-beta.5"},
-     {:avro_ex, git: "git@github.com:dconger/avro_ex", ref: "master"},
+     {:avro_ex, "~> 0.1.0-beta.5"},
      {:brod, "~> 3.3.1"},
      {:httpoison, ">= 0.12.0"},
      {:meck, "~> 0.8.7", only: [:test]},
