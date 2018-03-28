@@ -41,38 +41,15 @@ defmodule Rivulet.ElasticSearchSink.Writer do
     Logger.debug("Handling Messages by dumping")
 
     offset = messages |> List.last |> Map.get(:offset)
+
     Logger.debug("Should get to #{partition.topic}:#{partition.partition} - #{offset}")
 
-    # decoded_messages = decoded_messages(messages, state)
-    dan = bulk_index_decoded_messages(messages, state)
-      |> IO.inspect(label: "dan")
+    bulk_index_decoded_messages(messages, state)
 
-    # decoded_messages
-    # |> upserts
-    # |> do_upsert(state, partition)
-    #
-    # decoded_messages
-    # |> deletions
-    # |> do_deletes(state, partition)
-    #
-    # Rivulet.Consumer.ack(Rivulet.client_name!, partition, offset)
+    Rivulet.Consumer.ack(Rivulet.client_name!, partition, offset)
 
     {:noreply, state}
   end
-
-#   [
-#   %Rivulet.Kafka.Consumer.Message{
-#     attributes: 0,
-#     crc: 3330001812,
-#     decoded_key: nil,
-#     decoded_value: nil,
-#     key_schema: nil,
-#     offset: 0,
-#     raw_key: "789686bf-fa4d-569a-9a9f-0fd66496fa48",
-#     raw_value: "{\"response_received_at\":\"2018-03-28T02:53:37.035923Z\",\"organization_uid\":\"f4ac4bcb-e271-5a92-8e43-1d676a8821fa\",\"nps_score\":10,\"nps_response_uid\":\"63ea1ac2-28d4-50ed-8396-055f9326b380\",\"nps_invitation_uid\":\"789686bf-fa4d-569a-9a9f-0fd66496fa48\",\"nps_comment\":\"Dan\",\"location_uid\":\"5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5\",\"location_name\":\"Paul Blanco's Good Car Company\",\"location_address\":\"3190 Auto Center Cir, Stockton, CA 95212, USA\",\"invitation_sent_at\":\"2018-03-28T02:53:37.035923Z\",\"customer_phone\":\"+18505857616\",\"customer_name\":\"Dan\",\"created_at\":\"2018-03-28T02:53:37.035923Z\",\"adjusted_score\":100}",
-#     value_schema: nil
-#   }
-# ]
 
   def only_latest_per_key(messages) when is_list(messages) do
     messages
