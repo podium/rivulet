@@ -15,7 +15,10 @@ defmodule Rivulet.Kafka.Router.Funcs do
           offset_commit_policy: :commit_to_kafka_v2,
           offset_commit_interval_secons: 1
         ],
-        consumer_config: [begin_offset: :earliest]
+        consumer_config: [
+          begin_offset: :earliest,
+          max_bytes: Application.get_env(:rivulet, :default_max_bytes, 100_000)
+        ]
       }
 
     Logger.info("Configuration for #{module}: #{inspect config}")
