@@ -21,7 +21,10 @@ defmodule Rivulet.ElasticSearchSink.Writer do
   The pid here is the identifier for this particular Writer process
   """
   def handle_messages(pid, %Partition{} = partition, messages) do
-    GenServer.cast(pid, {:handle_messages, partition, messages})
+    IO.inspect(pid, label: "pid")
+    IO.inspect(partition, label: "partition")
+    IO.inspect(messages, label: "messages")
+    # GenServer.cast(pid, {:handle_messages, partition, messages})
   end
 
   def handle_cast({:handle_messages, partition, messages}, %Config{} = state) do

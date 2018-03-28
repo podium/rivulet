@@ -39,11 +39,9 @@ defmodule Rivulet.ElasticSearchSink.Consumer do
   end
 
   def handle_messages(partition, messages, %State{manager_pid: nil} = state) do
-    IO.inspect(messages, label: "messages")
     manager_pid = Rivulet.ElasticSearchSink.Supervisor.find_manager(state.sink_consumer_pid)
-      |> IO.inspect(label: "manager pid")
     state = %State{state | manager_pid: manager_pid}
-    # handle_messages(partition, messages, state)
+    handle_messages(partition, messages, state)
   end
 
   def handle_messages(%Partition{} = partition, messages, %State{} = state) do
