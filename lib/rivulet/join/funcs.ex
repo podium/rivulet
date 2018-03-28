@@ -79,12 +79,11 @@ defmodule Rivulet.Kafka.Join.Funcs do
       |> Enum.map(fn(message) -> {UUID.uuid4(), message} end)
       |> Enum.map(fn({uuid, message}) ->
         alias Rivulet.Kafka.Consumer.Message
-        IO.inspect(module, label: "module Dan")
-        IO.inspect(message, label: "message Dan")
-        with {:ok, key} <- deserialize_key(module, message),
-             {:ok, value} <- deserialize_value(module, message),
-             {:ok, object_id} <- get_object_id(module, key, value),
-             {:ok, join_key} when is_binary(join_key) <- module.join_key(key, value) do
+
+        with {:ok, key} <- deserialize_key(module, message) |> IO.inspect(),
+             {:ok, value} <- deserialize_value(module, message) |> IO.inspect(),
+             {:ok, object_id} <- get_object_id(module, key, value) |> IO.inspect(),
+             {:ok, join_key} when is_binary(join_key) <- module.join_key(key, value) |> IO.inspect() do
                message = %Message{message | decoded_key: key, decoded_value: value}
 
               {join_key, message, object_id, uuid}
@@ -124,6 +123,8 @@ defmodule Rivulet.Kafka.Join.Funcs do
   def transforms(join_docs, transformers) do
     Enum.map(join_docs, fn(join) ->
       Enum.map(transformers, fn({module, publishes}) ->
+        IO.inspect(join, label: "join Dan")
+        IO.inspect(module, label: "module Dan")
         messages = module.handle_join(join)
 
         messages =
