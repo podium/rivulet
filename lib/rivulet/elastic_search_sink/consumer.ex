@@ -18,7 +18,8 @@ defmodule Rivulet.ElasticSearchSink.Consumer do
 
   worker(Rivulet.ElasticSearchSink.ConsumerTwo, [config, self()], id: :consumer)
   """
-  def start_link(%SinkConfig{} = config, _sink_supervisor_process) do
+  def start_link(%SinkConfig{} = config, sink_supervisor_process) do
+    IO.inspect(sink_supervisor_process, label: "sup")
     consumer_config =
       %Config{
         client_id: Rivulet.client_name(),
@@ -30,11 +31,12 @@ defmodule Rivulet.ElasticSearchSink.Consumer do
         ],
         consumer_config: [begin_offset: :earliest, max_bytes: 2_000_000]
       }
-    IO.inspect(consumer_config, label: "consumer_config")
+
     Consumer.start_link(__MODULE__, consumer_config)
   end
 
   def init(sink) do
+    IO.inspect(sink, label: "sink yo")
     {:ok, %State{sink_consumer_pid: sink}}
   end
 
