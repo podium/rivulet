@@ -71,11 +71,11 @@ defmodule Rivulet.Kafka.Router.Funcs do
           ({:ok, call_ref}) ->
             receive do
               {:brod_produce_reply, ^call_ref, :brod_produce_req_acked} -> :ok
-              {:brod_produce_reply, ^call_ref, _} ->
-                Logger.error("Publish failed - crashing router")
+              {:brod_produce_reply, ^call_ref, resp} ->
+                Logger.error("Publish failed - crashing router: #{inspect resp}")
                 raise "Publish failed - crashing router"
-            after 1000 ->
-              Logger.error("Publish took too long")
+            after 10_000 ->
+              Logger.error("Publish took too long - timeout: 10_000 timeout")
               raise "Publish failed - crashing router"
             end
         end)
