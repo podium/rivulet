@@ -4,9 +4,7 @@ defmodule Rivulet do
 
   @spec client_name!() :: term | no_return
   def client_name!() do
-    client_name = Application.get_env(:rivulet, :client_name)
-
-    unless client_name do
+    unless client_name = Application.get_env(:rivulet, :client_name) do
       raise "Application.get_env(:rivulet, :client_name) not configured"
     end
 
