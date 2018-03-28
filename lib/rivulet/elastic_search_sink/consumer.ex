@@ -30,7 +30,7 @@ defmodule Rivulet.ElasticSearchSink.Consumer do
         ],
         consumer_config: [begin_offset: :earliest, max_bytes: 2_000_000]
       }
-
+    IO.inspect(consumer_config, label: "consumer_config")
     Consumer.start_link(__MODULE__, consumer_config)
   end
 
@@ -39,7 +39,9 @@ defmodule Rivulet.ElasticSearchSink.Consumer do
   end
 
   def handle_messages(partition, messages, %State{manager_pid: nil} = state) do
+    IO.inspect(messages, label: "messages")
     manager_pid = Rivulet.ElasticSearchSink.Supervisor.find_manager(state.sink_consumer_pid)
+      |> IO.inspect(label: "manager pid")
     state = %State{state | manager_pid: manager_pid}
     handle_messages(partition, messages, state)
   end
