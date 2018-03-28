@@ -17,7 +17,7 @@ defmodule Rivulet.Kafka.Router.Funcs do
         ],
         consumer_config: [
           begin_offset: :earliest,
-          max_bytes: Application.get_env(:rivulet, :default_max_bytes, 100_000)
+          max_bytes: Rivulet.Config.max_bytes()
         ]
       }
 
