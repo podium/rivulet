@@ -29,7 +29,6 @@ defmodule Rivulet.Consumer do
 
   Record.defrecord(:kafka_message_set, Record.extract(:kafka_message_set, from_lib: "brod/include/brod.hrl"))
 
-  @type t :: %__MODULE__{pid: pid}
   @type state :: term
   @type messages :: [Rivulet.Kafka.Consumer.Message.t]
 
@@ -52,13 +51,19 @@ defmodule Rivulet.Consumer do
                                       _CallbackInitArg = {callback_module, extra})
   end
 
-  @spec ack(t | atom | pid, Partition.t, Partition.offset) :: :ok | {:error, term}
-  def ack(%__MODULE__{pid: pid}, %Partition{topic: topic, partition: partition}, offset) when is_integer(offset) do
-    :brod.consume_ack(pid, topic, partition, offset)
+  @spec ack(atom | pid, Partition.t, Partition.offset) :: :ok | {:error, term}
+  def ack(ref, %Partition{topic: topic, partition: partition}, offset)
+  when is_binary(topic)
+  and is_integer(partition)
+  and is_integer(offset) do
+    ack(ref, topic, partition, offset)
   end
 
-  def ack(ref, %Partition{topic: topic, partition: partition}, offset) when is_integer(offset) do
-    :brod.consume_ack(ref, topic, partition, offset)
+  def ack(ref, topic, partition, offset)
+  when is_binary(topic)
+  and is_integer(partition)
+  and is_integer(offset) do
+    :brod_group_subscriber.ack(ref, topic, partition, offset)
   end
 
   # Callback Functions
