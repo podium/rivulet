@@ -39,7 +39,7 @@ defmodule Rivulet.SQLSink.Consumer do
   end
 
   def handle_messages(%Partition{} = partition, messages, %State{} = state) do
-    Rivulet.SQLSink.Writer.Manager.handle_batch(state.manager, partition, messages)
+    Rivulet.SQLSink.Writer.Manager.handle_batch(state.manager, partition, messages, self())
     {:ok, state}
   end
 end

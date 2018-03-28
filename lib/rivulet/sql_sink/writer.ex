@@ -11,11 +11,11 @@ defmodule Rivulet.SQLSink.Writer do
     {:ok, config}
   end
 
-  def handle_messages(pid, %Partition{} = partition, messages) do
-    GenServer.cast(pid, {:handle_messages, partition, messages})
+  def handle_messages(pid, %Partition{} = partition, messages, consumer) do
+    GenServer.cast(pid, {:handle_messages, partition, messages, consumer})
   end
 
-  def handle_cast({:handle_messages, partition, messages}, %Config{} = state) do
+  def handle_cast({:handle_messages, partition, messages, consumer}, %Config{} = state) do
     Logger.debug("Handling Messages by dumping to #{table_name(state, partition)}")
 
     offset = messages |> List.last |> Map.get(:offset)
@@ -33,7 +33,7 @@ defmodule Rivulet.SQLSink.Writer do
       |> do_deletes(state, partition)
     end)
 
-    Rivulet.Consumer.ack(Rivulet.client_name!, partition, offset)
+    Rivulet.Consumer.ack(consumer, partition, offset)
 
     {:noreply, state}
   end
