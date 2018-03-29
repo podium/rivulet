@@ -40,6 +40,7 @@ defmodule Rivulet.SQLSink do
       topic = Keyword.fetch!(opts, :topic)
       table_pattern = Keyword.get(opts, :table_pattern, topic)
       unique_constraints = Keyword.get(opts, :unique_constraints, [])
+      whitelist = Keyword.get(opts, :whitelist, :all)
 
       %__MODULE__{
         consumer_group: consumer_group,
@@ -48,7 +49,8 @@ defmodule Rivulet.SQLSink do
         repo: repo,
         topic: topic,
         table_pattern: table_pattern,
-        unique_constraints: unique_constraints
+        unique_constraints: unique_constraints,
+        whitelist: whitelist
       }
     end
   end
@@ -91,7 +93,7 @@ defmodule Rivulet.SQLSink do
   end
 
   def table_definition(%Schema{} = schema, %Config{} = config) do
-    case AvroConverter.definition(schema, config.table_pattern, config.topic) do
+    case AvroConverter.definition(schema, config.table_pattern, config.topic, config.whitelist) do
       {:error, :invalid_schema} -> {:error, :invalid_schema}
       {:error, :schema_not_insertable} -> {:error, :invalid_table_definition}
       %Table{} = table ->
