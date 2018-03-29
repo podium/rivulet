@@ -84,12 +84,12 @@ defmodule Rivulet.AvroConverter.Test do
   describe "definition" do
     test "returns the table name", context do
       assert %Table{name: "kafka_platform_things"} =
-        @test_module.definition(context.record, "kafka_$$", "platform-things")
+        @test_module.definition(context.record, "kafka_$$", "platform-things", :all)
     end
 
     test "returns the column_definitions", context do
       assert @expected_table_definition =
-        @test_module.definition(context.record, "kafka_$$", "platform.things")
+        @test_module.definition(context.record, "kafka_$$", "platform.things", :all)
     end
 
     test "can handle named types" do
@@ -100,7 +100,7 @@ defmodule Rivulet.AvroConverter.Test do
         ]}))
 
       assert %Table{column_definitions: [{"field1", :uuid}, {"field2", :uuid}]} =
-        @test_module.definition(schema, "kafka_$$", "platform_things")
+        @test_module.definition(schema, "kafka_$$", "platform_things", :all)
     end
   end
 end
