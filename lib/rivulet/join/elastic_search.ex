@@ -54,7 +54,7 @@ defmodule Rivulet.Join.ElasticSearch do
     end)
     |> Enum.reject(&is_nil/1)
     |> List.flatten
-    |> Enum.map(fn({_uuid, cmd, doc}) ->
+    |> Enum.map(fn({cmd, doc}) ->
         [cmd, "\n", doc, "\n"]
       end)
   end
