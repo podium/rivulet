@@ -21,6 +21,8 @@ defmodule Rivulet.Kafka.Publisher do
   :: produce_return
   | {:error, :schema_not_found}
   | {:error, term}
+  def publish(topic, partition_strategy, encoding_strategy \\ :raw, key, message)
+
   def publish(topic, :random, encoding_strategy, key, message) do
     with {:ok, partition} <- Partition.random_partition(topic) do
       publish(topic, partition, encoding_strategy, key, message)

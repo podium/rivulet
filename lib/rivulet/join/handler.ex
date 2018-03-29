@@ -2,6 +2,7 @@ defmodule Rivulet.Join.Handler do
   use GenServer
 
   alias Rivulet.Join.ElasticSearch
+  alias Rivulet.Kafka.Partition
 
   defmodule State do
     defstruct [:join_id, :transformers, :consumer]
@@ -52,14 +53,11 @@ defmodule Rivulet.Join.Handler do
         end)
     end)
     |> Enum.each(fn({{topic, partition}, offset}) ->
-      ack(consumer, topic, partition, offset)
+      partition = %Partition{topic: topic, partition: partition}
+      Rivulet.Consumer.ack(consumer, partition, offset)
     end)
 
     {:noreply, state}
-  end
-
-  def ack(consumer, topic, partition, offset) do
-    :brod_group_subscriber.ack(consumer, topic, partition, offset)
   end
 
   def handle_info(_, state) do

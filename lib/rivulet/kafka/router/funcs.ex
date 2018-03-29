@@ -15,7 +15,10 @@ defmodule Rivulet.Kafka.Router.Funcs do
           offset_commit_policy: :commit_to_kafka_v2,
           offset_commit_interval_secons: 1
         ],
-        consumer_config: [begin_offset: :earliest]
+        consumer_config: [
+          begin_offset: :earliest,
+          max_bytes: Rivulet.Config.max_bytes()
+        ]
       }
 
     Logger.info("Configuration for #{module}: #{inspect config}")
@@ -40,66 +43,45 @@ defmodule Rivulet.Kafka.Router.Funcs do
   end
 
   def handle_messages(%Rivulet.Kafka.Partition{topic: topic}, messages, sources) do
-    {^topic, routes} =
-      Enum.find(sources, fn
-        ({^topic, _}) -> true
-        (_) -> false
-      end)
-
     routes =
-      case routes do
-        [:route | _] = route -> [route]
-        routes when is_list(routes) -> routes
-      end
+      topic
+      |> routes_for_topic(sources)
+      |> listify_routes
 
     Enum.map(routes, fn([:route, transformer, publish_topics]) ->
-      transformed_messages =
-        messages
-        |> Enum.map(fn(message) ->
-          message
-          |> transformer.handle_message
-          |> to_list
-          |> List.flatten
-          |> Enum.map(&to_publish/1)
-        end)
-        |> List.flatten
-        |> Enum.reject(fn
-          (nil) -> true
-          (_) -> false
-        end)
+      transformed_messages = transform(messages, transformer)
 
-
-        if :error in transformed_messages do
+      case :error in transformed_messages do
+        true ->
           Logger.error("Could not publish messages because transformer returned an error. Moving on.")
-        else
+        false ->
+          publish_topics
+          |> listify_publish_topics
+          |> publish_transformed_messages(transformed_messages)
+      end
+    end)
+  end
 
-          publish_topics =
-            case publish_topics do
-              topics when is_list(topics) -> topics
-              {topic, partition_strategy} when is_binary(topic) -> [{topic, partition_strategy}]
+  defp publish_transformed_messages(topics, transformed_messages) do
+    Enum.each(topics, fn
+      ({topic, partition_strategy}) ->
+        transformed_messages
+        |> Enum.map(fn(message) ->
+          to_message(message, topic, partition_strategy)
+        end)
+        |> Rivulet.Kafka.Publisher.publish
+        |> Enum.map(fn
+          ({:ok, call_ref}) ->
+            receive do
+              {:brod_produce_reply, ^call_ref, :brod_produce_req_acked} -> :ok
+              {:brod_produce_reply, ^call_ref, resp} ->
+                Logger.error("Publish failed - crashing router: #{inspect resp}")
+                raise "Publish failed - crashing router"
+            after 10_000 ->
+              Logger.error("Publish took too long - timeout: 10_000 timeout")
+              raise "Publish failed - crashing router"
             end
-
-            Enum.each(publish_topics, fn
-              ({publish_topic, partition_strategy}) ->
-                transformed_messages
-                |> Enum.map(fn(message) ->
-                  to_message(message, publish_topic, partition_strategy)
-                end)
-                |> Rivulet.Kafka.Publisher.publish
-                |> Enum.map(fn
-                  ({:ok, call_ref}) ->
-                    receive do
-                      {:brod_produce_reply, ^call_ref, :brod_produce_req_acked} -> :ok
-                      {:brod_produce_reply, ^call_ref, _} ->
-                        Logger.error("Publish failed - crashing router")
-                        raise "Publish failed - crashing router"
-                    after 1000 ->
-                        Logger.error("Publish took too long")
-                        raise "Publish failed - crashing router"
-                    end
-                end)
-            end)
-        end
+        end)
     end)
   end
 
@@ -113,5 +95,36 @@ defmodule Rivulet.Kafka.Router.Funcs do
 
   def to_message(%Message{} = m, publish_topic, :random) do
     %Message{m | topic: publish_topic, partition_strategy: :random}
+  end
+
+  # Raise pattern match exception if no route was defined for the topic - that
+  # is an error.
+  defp routes_for_topic(topic, sources) do
+    {^topic, routes} =
+      Enum.find(sources, fn
+        ({^topic, _}) -> true
+        (_) -> false
+      end)
+
+    routes
+  end
+
+  defp listify_routes([:route | _] = route), do: [route]
+  defp listify_routes(routes) when is_list(routes), do: routes
+
+  defp listify_publish_topics({topic, _partition_strategy} = t) when is_binary(topic), do: [t]
+  defp listify_publish_topics(topics) when is_list(topics), do: topics
+
+  defp transform(messages, transformer) do
+      messages
+      |> Enum.map(fn(message) ->
+        message
+        |> transformer.handle_message
+        |> to_list
+        |> List.flatten
+        |> Enum.map(&to_publish/1)
+      end)
+      |> List.flatten
+      |> Enum.reject(&is_nil/1)
   end
 end

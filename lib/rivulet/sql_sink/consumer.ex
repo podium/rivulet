@@ -15,21 +15,17 @@ defmodule Rivulet.SQLSink.Consumer do
   def start_link(%SinkConfig{} = config, sink) do
     consumer_config =
       %Config{
-        client_id: Rivulet.client_name(),
+        client_id: Rivulet.client_name!(),
         consumer_group_name: config.consumer_group,
         topics: [config.topic],
         group_config: [
           offset_commit_policy: :commit_to_kafka_v2,
           offset_commit_interval_seconds: 1,
         ],
-        consumer_config: [begin_offset: :earliest, max_bytes: 2_000_000]
+        consumer_config: [begin_offset: :earliest, max_bytes: Rivulet.Config.max_bytes()]
       }
 
     Consumer.start_link(__MODULE__, consumer_config, {config.table_pattern, sink})
-  end
-
-  def set_pool(consumer, pool) do
-    GenServer.call(consumer, pool)
   end
 
   def init({pattern, sink}) do
@@ -46,8 +42,7 @@ defmodule Rivulet.SQLSink.Consumer do
   Question: what does state.manager equal here?
   """
   def handle_messages(%Partition{} = partition, messages, %State{} = state) do
-    # below line is similar to Pool.ex
-    Rivulet.SQLSink.Writer.Manager.handle_batch(state.manager, partition, messages)
+    Rivulet.SQLSink.Writer.Manager.handle_batch(state.manager, partition, messages, self())
     {:ok, state}
   end
 end
