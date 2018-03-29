@@ -7,9 +7,9 @@ defmodule Rivulet.SQLSink.Writer.Manager do
     GenServer.start_link(__MODULE__, {sup, count})
   end
 
-  def handle_batch(manager, partition, messages) do
+  def handle_batch(manager, partition, messages, consumer) do
     pid = GenServer.call(manager, {:get_pid, partition})
-    Rivulet.SQLSink.Writer.handle_messages(pid, partition, messages)
+    Rivulet.SQLSink.Writer.handle_messages(pid, partition, messages, consumer)
   end
 
   def init({sup, count}) do
