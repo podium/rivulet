@@ -7,9 +7,9 @@ defmodule Rivulet.SQLSink.AvroConverter do
 
   require Logger
 
-  @spec definition(Schema.t, Table.name_pattern, Partition.topic)
+  @spec definition(Schema.t, Table.name_pattern, Partition.topic, [Table.column_name] | :all)
   :: :error | Table.t
-  def definition(%Schema{} = schema, name_pattern, topic) do
+  def definition(%Schema{} = schema, name_pattern, topic, whitelist) do
     Logger.debug("Getting table definition for avro schema")
     case columns(schema) do
       {:error, _reason} = err -> err
@@ -20,6 +20,7 @@ defmodule Rivulet.SQLSink.AvroConverter do
           |> Table.new
 
         columns
+        |> Enum.filter(fn({column_name, _column_type}) -> whitelisted?(column_name, whitelist) end)
         |> Enum.reduce(table, fn({column_name, column_type}, %Table{} = table) ->
           Table.with_column(table, column_name, column_type)
         end)
@@ -71,5 +72,10 @@ defmodule Rivulet.SQLSink.AvroConverter do
       Logger.debug("Type #{inspect type} is NOT insertable")
       false
     end
+  end
+
+  defp whitelisted?(_column_name, :all), do: true
+  defp whitelisted?(column_name, whitelist) when is_list(whitelist) do
+    column_name in whitelist
   end
 end

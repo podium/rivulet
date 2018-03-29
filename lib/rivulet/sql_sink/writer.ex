@@ -15,27 +15,27 @@ defmodule Rivulet.SQLSink.Writer do
     GenServer.cast(pid, {:handle_messages, partition, messages, consumer})
   end
 
-  def handle_cast({:handle_messages, partition, messages, consumer}, %Config{} = state) do
-    Logger.debug("Handling Messages by dumping to #{table_name(state, partition)}")
+  def handle_cast({:handle_messages, partition, messages, consumer}, %Config{} = config) do
+    Logger.debug("Handling Messages by dumping to #{table_name(config, partition)}")
 
     offset = messages |> List.last |> Map.get(:offset)
     Logger.debug("Should get to #{partition.topic}:#{partition.partition} - #{offset}")
 
     decoded_messages = decoded_messages(messages, partition)
 
-    state.repo.transaction(fn ->
+    config.repo.transaction(fn ->
       decoded_messages
-      |> upserts
-      |> do_upsert(state, partition)
+      |> upserts(config)
+      |> do_upsert(config, partition)
 
       decoded_messages
       |> deletions
-      |> do_deletes(state, partition)
+      |> do_deletes(config, partition)
     end)
 
     Rivulet.Consumer.ack(consumer, partition, offset)
 
-    {:noreply, state}
+    {:noreply, config}
   end
 
   def do_deletes([], _, _) do
@@ -71,10 +71,16 @@ defmodule Rivulet.SQLSink.Writer do
     |> Rivulet.Avro.bulk_decode(partition.topic)
   end
 
-  def upserts(messages) when is_list(messages) do
-    messages
-    |> Enum.reject(&(&1.decoded_value == nil))
-    |> Enum.map(&(&1.decoded_value))
+  def upserts(messages, %Config{} = config) when is_list(messages) do
+    messages =
+      messages
+      |> Enum.reject(&(&1.decoded_value == nil))
+      |> Enum.map(&(&1.decoded_value))
+
+    case config.whitelist do
+      :all -> messages
+      fields when is_list(fields) -> Enum.map(messages, &(Map.take(&1, fields)))
+    end
   end
 
   def deletions(messages) when is_list(messages) do
