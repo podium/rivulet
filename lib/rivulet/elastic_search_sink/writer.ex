@@ -54,12 +54,16 @@ defmodule Rivulet.ElasticSearchSink.Writer do
   def only_latest_per_key(messages) when is_list(messages) do
     messages
     |> Enum.group_by(&(&1.raw_key))
+    |> IO.inspect(label: "mes")
     |> Enum.map(fn({_key, messages}) -> List.last(messages) end)
+    |> IO.inspect(label: "mapped")
     |> List.flatten
+    |> IO.inspect(label: "flattened")
   end
 
   def bulk_index_decoded_messages(messages, state) when is_list(messages) do
     messages
+    |> IO.inspect(label: "messages")
     |> only_latest_per_key
     |> bulk_index(state)
   end
