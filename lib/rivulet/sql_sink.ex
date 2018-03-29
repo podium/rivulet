@@ -18,6 +18,7 @@ defmodule Rivulet.SQLSink do
       :table_pattern,
       :topic,
       :unique_constraints,
+      whitelist: :all
     ]
 
     @type t :: %__MODULE__{
@@ -28,6 +29,7 @@ defmodule Rivulet.SQLSink do
       table_pattern: String.t,
       topic: Partition.topic,
       unique_constraints: [[Table.column_name]],
+      whitelist: :all | [Table.column_name]
     }
 
     def from_sink_opts(opts) do
