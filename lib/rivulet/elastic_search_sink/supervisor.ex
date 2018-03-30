@@ -16,7 +16,7 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
 
     # NOTE: right now this tries to create an index / mapping regardless of whether one
     # already exists or not. We'll need to change this.
-    Rivulet.ElasticSearchSink.ensure_es_setup!(config)
+    # Rivulet.ElasticSearchSink.ensure_es_setup!(config)
 
     count = 1
 
