@@ -35,4 +35,3 @@ defmodule Rivulet.GenWorker do
     end
   end
 end
-end
