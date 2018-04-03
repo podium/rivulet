@@ -15,16 +15,15 @@ defmodule Rivulet.GenWorker do
       @doc """
       Start GenServer
       """
-      defdelegate start_link(opts), to: Rivulet.GenWorker.Supervisor
+      def start_link(params \\ nil) do
+        IO.inspect(params, label: "params")
+        state = @options
+          |> Keyword.put(:caller, __MODULE__)
+          |> State.init!()
+          |> IO.inspect(label: "state")
 
-      # def start_link(params \\ nil) do
-      #   state = @options
-      #     |> Keyword.put(:caller, __MODULE__)
-      #     |> Keyword.put(:worker_args, params)
-      #     |> State.init!()
-      #
-      #   GenServer.start_link(Rivulet.GenWorker.Server, state, name: __MODULE__)
-      # end
+        GenServer.start_link(Rivulet.GenWorker.Server, state, name: __MODULE__)
+      end
 
       @doc false
       def run(_params) do

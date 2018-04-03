@@ -3,7 +3,7 @@ defmodule Rivulet.GenWorker.Supervisor do
 
   # require Logger
 
-  alias Rivulet.GenWorker.Config
+  alias Rivulet.GenWorker.State
 
   def start_link(opts) do
     Supervisor.start_link(__MODULE__, opts)
@@ -11,7 +11,7 @@ defmodule Rivulet.GenWorker.Supervisor do
 
   def init(consumer_opts) do
     IO.inspect(consumer_opts, label: "consumer_opts")
-    %Config{} = config = Config.init!(consumer_opts)
+    %State{} = config = State.init!(consumer_opts)
 
     # {:ok, _} = Application.ensure_all_started(:httpoison)
 

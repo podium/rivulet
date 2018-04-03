@@ -1,4 +1,4 @@
-defmodule Rivulet.GenWorker.Config do
+defmodule Rivulet.GenWorker.State do
   defstruct [
     :consumer_group,
     :elastic_index,
@@ -6,6 +6,7 @@ defmodule Rivulet.GenWorker.Config do
     :elastic_type,
     :elastic_mapping,
     :topic,
+    :caller
   ]
 
   @type t :: %__MODULE__{
