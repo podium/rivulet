@@ -68,7 +68,9 @@ defmodule Rivulet.ElasticSearchSink.Writer do
     records = format_bulk_records(state.elastic_index, state.elastic_type, records)
     raw_data = encode_bulk_records(records)
 
-    Bulk.post_raw(state.elastic_url, raw_data, index: state.elastic_index, type: state.elastic_type)
+    posted = Bulk.post_raw(state.elastic_url, raw_data, index: state.elastic_index, type: state.elastic_type)
+    
+    state.callback_module.on_complete(posted)
   end
 
   defp encode_bulk_records(lines) do

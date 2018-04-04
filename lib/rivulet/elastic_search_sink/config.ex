@@ -7,7 +7,7 @@ defmodule Rivulet.ElasticSearchSink.Config do
     :elastic_url,
     :elastic_type,
     :elastic_mapping,
-    :topic,
+    :topic
   ]
 
   @type t :: %__MODULE__{
