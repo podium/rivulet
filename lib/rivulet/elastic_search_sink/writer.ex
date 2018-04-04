@@ -44,7 +44,12 @@ defmodule Rivulet.ElasticSearchSink.Writer do
 
     Logger.debug("Should get to #{partition.topic}:#{partition.partition} - #{offset}")
 
-    bulk_index_decoded_messages(messages, state)
+    successfully_inserted =
+      messages
+      |> bulk_index_decoded_messages(state)
+      |> filter_for_successfully_inserted(messages)
+
+    state.callback_module.on_complete(successfully_inserted)
 
     Rivulet.Consumer.ack(Rivulet.client_name!, partition, offset)
 
@@ -68,9 +73,7 @@ defmodule Rivulet.ElasticSearchSink.Writer do
     records = format_bulk_records(state.elastic_index, state.elastic_type, records)
     raw_data = encode_bulk_records(records)
 
-    posted = Bulk.post_raw(state.elastic_url, raw_data, index: state.elastic_index, type: state.elastic_type)
-    
-    state.callback_module.on_complete(posted)
+    Bulk.post_raw(state.elastic_url, raw_data, index: state.elastic_index, type: state.elastic_type)
   end
 
   defp encode_bulk_records(lines) do
