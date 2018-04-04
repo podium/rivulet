@@ -57,7 +57,7 @@ defmodule Rivulet.ElasticSearchSink.Writer do
   end
 
   def filter_for_successfully_inserted(%{"errors" => false} = _es_response, records) do
-    Enum.map(records, &(&1.decoded_value))
+    Enum.map(records, &(&1.raw_value))
   end
   def filter_for_successfully_inserted(%{"errors" => true, "items" => es_items} = _es_response, records) do
     zipped = Enum.zip(es_items, records)
