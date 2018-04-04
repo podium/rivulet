@@ -7,6 +7,7 @@ defmodule Rivulet.ElasticSearchSink do
       @behaviour Rivulet.ElasticSearchSink
 
       {otp_app, config} = Rivulet.ElasticSearchSink.Supervisor.compile_config(__MODULE__, opts)
+
       @otp_app otp_app
       @config  config
 
@@ -24,14 +25,19 @@ defmodule Rivulet.ElasticSearchSink do
       end
 
       def start_link(opts \\ []) do
-        Rivulet.ElasticSearchSink.Supervisor.start_link(__MODULE__, @otp_app, @adapter, opts)
+        Rivulet.ElasticSearchSink.Supervisor.start_link(__MODULE__, @otp_app, opts)
       end
 
       def stop(pid, timeout \\ 5000) do
         Supervisor.stop(pid, :normal, timeout)
       end
 
-      defoverridable child_spec: 1
+      @doc false
+      def on_complete(_params) do
+        raise "Behaviour function #{__MODULE__}.on_complete/1 is not implemented!"
+      end
+
+      defoverridable [on_complete: 1, child_spec: 1]
     end
   end
 

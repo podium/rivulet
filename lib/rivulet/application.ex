@@ -14,6 +14,7 @@ defmodule Rivulet.Application do
       supervisor(Task.Supervisor, [[name: Task.Supervisor, restart: :transient]]),
       #worker(Rivulet.TestRouter, []),
       #worker(Rivulet.TestConsumer, [test_consumer_config])
+      # supervisor(Rivulet.TestDan, [])
     ]
 
     opts = [strategy: :one_for_one]

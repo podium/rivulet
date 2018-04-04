@@ -4,38 +4,73 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
 
   alias Rivulet.ElasticSearchSink.Config
 
-  @defaults [timeout: 15000, pool_timeout: 5000]
+  @defaults []
 
   @doc """
   Starts the repo supervisor.
   """
-  def start_link(opts) do
-    Supervisor.start_link(__MODULE__, opts, name: __MODULE__)
+  def start_link(caller, otp_app, opts) do
+    Supervisor.start_link(__MODULE__, {caller, otp_app, opts}, [])
   end
 
-  def init(consumer_opts) do
-    # NOTE: instead of Config.from_sink_opts() it could be runtime_config() from below
-    %Config{} = config = Config.from_sink_opts(consumer_opts)
+  def init({caller, otp_app, opts}) do
+    case runtime_config(:supervisor, caller, otp_app, opts) do
+      {:ok, consumer_opts} ->
+ #        [elastic_url: "http://elasticsearch:9200", otp_app: :rivulet,
+ # repo: Rivulet.TestDan, elastic_index: "nps", elastic_type: "response",
+ # elastic_mapping: %{}, topic: "platform_nps_location_joins"]
 
-    {:ok, _} = Application.ensure_all_started(:httpoison)
+        %Config{} = config = Config.from_sink_opts(consumer_opts)
 
-    # NOTE: right now this tries to create an index / mapping regardless of whether one
-    # already exists or not. We'll need to change this.
-    # Rivulet.ElasticSearchSink.ensure_es_setup!(config)
+        {:ok, _} = Application.ensure_all_started(:httpoison)
 
-    count = 1
+        count = 1
 
-    children =
-      [
-        worker(Rivulet.ElasticSearchSink.Writer.Manager, [self(), count], id: :manager),
-        worker(Rivulet.ElasticSearchSink.Consumer, [config, self()], id: :consumer),
-        worker(Rivulet.ElasticSearchSink.Writer, [config], id: "writer_1"),
-      ]
+        children =
+          [
+            worker(Rivulet.ElasticSearchSink.Writer.Manager, [self(), count], id: :manager),
+            worker(Rivulet.ElasticSearchSink.Consumer, [config, self()], id: :consumer),
+            worker(Rivulet.ElasticSearchSink.Writer, [config], id: "writer_1"),
+          ]
 
-    opts = [strategy: :rest_for_one]
+        opts = [strategy: :rest_for_one]
 
-    supervise(children, opts)
+        supervise(children, opts)
+
+        # children = [adapter.child_spec(repo, opts)]
+        # if Keyword.get(opts, :query_cache_owner, true) do
+        #   :ets.new(repo, [:set, :public, :named_table, read_concurrency: true])
+        # end
+        # supervise(children, strategy: :one_for_one)
+      :ignore ->
+        :ignore
+    end
   end
+  # def init({caller, consumer_opts}) do
+  #   IO.inspect(caller, label: "caller")
+  #   IO.inspect(consumer_opts, label: "consumer_opts")
+  #   # NOTE: instead of Config.from_sink_opts() it could be runtime_config() from below
+  #   %Config{} = config = Config.from_sink_opts(consumer_opts) |> IO.inspect(label: "sassy")
+  #
+  #   {:ok, _} = Application.ensure_all_started(:httpoison)
+  #
+  #   # NOTE: right now this tries to create an index / mapping regardless of whether one
+  #   # already exists or not. We'll need to change this.
+  #   # Rivulet.ElasticSearchSink.ensure_es_setup!(config)
+  #
+  #   count = 1
+  #
+  #   children =
+  #     [
+  #       worker(Rivulet.ElasticSearchSink.Writer.Manager, [self(), count], id: :manager),
+  #       worker(Rivulet.ElasticSearchSink.Consumer, [config, self()], id: :consumer),
+  #       worker(Rivulet.ElasticSearchSink.Writer, [config], id: "writer_1"),
+  #     ]
+  #
+  #   opts = [strategy: :rest_for_one]
+  #
+  #   supervise(children, opts)
+  # end
 
   @doc false
   # def init(opts) do
@@ -88,16 +123,17 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
 
   @doc """
   Retrieves the runtime configuration.
+  type: :supervisor
+  repo: Rivulet.TestDan
+  otp_ap: :rivulet
   """
-  def runtime_config(type, repo, otp_app, custom) do
+  def runtime_config(type, repo, otp_app, _custom) do
     if config = Application.get_env(otp_app, repo) do
-      config = [otp_app: otp_app, repo: repo] ++
-               (@defaults |> Keyword.merge(config) |> Keyword.merge(custom))
+      config = [otp_app: otp_app, repo: repo] ++ config
 
       case repo_init(type, repo, config) do
         {:ok, config} ->
-          {url, config} = Keyword.pop(config, :url)
-          {:ok, Keyword.merge(config, parse_url(url || ""))}
+          {:ok, config}
         :ignore ->
           :ignore
       end
@@ -118,11 +154,10 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
   @doc """
   Retrieves the compile time configuration.
   """
-  def compile_config(repo, opts) do
+  def compile_config(caller, opts) do
     otp_app = Keyword.fetch!(opts, :otp_app)
-    config  = Application.get_env(otp_app, repo, [])
+    config  = Application.get_env(otp_app, caller, [])
 
     {otp_app, config}
   end
-
 end
