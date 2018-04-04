@@ -62,7 +62,7 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
   Retrieves the runtime configuration.
   type: :supervisor
   repo: Rivulet.TestDan
-  otp_ap: :rivulet
+  otp_app: :rivulet
   """
   def runtime_config(type, repo, otp_app, _custom) do
     if config = Application.get_env(otp_app, repo) do
