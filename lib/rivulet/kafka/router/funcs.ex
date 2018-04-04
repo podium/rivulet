@@ -118,11 +118,16 @@ defmodule Rivulet.Kafka.Router.Funcs do
   defp transform(messages, transformer) do
       messages
       |> Enum.map(fn(message) ->
-        message
-        |> transformer.handle_message
-        |> to_list
-        |> List.flatten
-        |> Enum.map(&to_publish/1)
+        Task.async(fn ->
+          message
+          |> transformer.handle_message
+          |> to_list
+          |> List.flatten
+          |> Enum.map(&to_publish/1)
+        end)
+      end)
+      |> Enum.map(fn(task) ->
+        Task.await(task, :timer.seconds(15))
       end)
       |> List.flatten
       |> Enum.reject(&is_nil/1)
