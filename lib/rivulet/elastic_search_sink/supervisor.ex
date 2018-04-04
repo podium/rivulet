@@ -14,7 +14,7 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
   end
 
   def init({caller, otp_app, opts}) do
-    case runtime_config(:supervisor, caller, otp_app, opts) |> IO.inspect(label: "runtime") do
+    case runtime_config(:supervisor, caller, otp_app, opts) do
       {:ok, consumer_opts} ->
         %Config{} = config = Config.from_sink_opts(consumer_opts)
 
