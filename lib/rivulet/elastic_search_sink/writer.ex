@@ -46,7 +46,6 @@ defmodule Rivulet.ElasticSearchSink.Writer do
 
     successfully_inserted =
       messages
-      |> IO.inspect(label: "message")
       |> bulk_index_decoded_messages(state)
       |> filter_for_successfully_inserted(messages)
 
@@ -63,7 +62,7 @@ defmodule Rivulet.ElasticSearchSink.Writer do
   def filter_for_successfully_inserted(%{"errors" => true, "items" => es_items} = _es_response, records) do
     zipped = Enum.zip(es_items, records)
     successful_msgs = Enum.filter(zipped, &message_successfully_inserted?/1)
-    Enum.map(successful_msgs, fn ({_, %Message{decoded_value: val}}) -> val end)
+    Enum.map(successful_msgs, fn ({_, %Message{raw_value: val}}) -> val end)
   end
 
   def message_successfully_inserted?({%{"index" => doc} = _es_resp, _}) do
@@ -97,7 +96,6 @@ defmodule Rivulet.ElasticSearchSink.Writer do
     messages
     |> only_latest_per_key
     |> bulk_index(state)
-    |> IO.inspect(label: "bulk")
     |> handle_es_response()
   end
 
@@ -105,7 +103,7 @@ defmodule Rivulet.ElasticSearchSink.Writer do
     records = format_bulk_records(state.elastic_index, state.elastic_type, records)
     raw_data = encode_bulk_records(records)
 
-    Bulk.post_raw(state.elastic_url, raw_data, index: state.elastic_index, type: state.elastic_type) |> IO.inspect(label: "dan")
+    Bulk.post_raw(state.elastic_url, raw_data, index: state.elastic_index, type: state.elastic_type)
   end
 
   def handle_es_response({:ok, %HTTPoison.Response{body: body}}), do: body
