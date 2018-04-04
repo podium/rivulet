@@ -26,7 +26,7 @@ defmodule Rivulet.Mixfile do
 
   defp aliases do
     [
-      "compile": ["compile --warnings-as-errors"],
+      # "compile": ["compile --warnings-as-errors"],
       "test": ["test --no-start"]
     ]
   end
