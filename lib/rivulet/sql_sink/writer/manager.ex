@@ -16,7 +16,7 @@ defmodule Rivulet.SQLSink.Writer.Manager do
     {:ok, {sup, count}}
   end
 
-  def handle_call({:get_pid, %Partition{} = partition}, _from, {sup, count} = state) do
+  def handle_call({:get_pid, %Partition{} = partition} = _message_passed_to_process, _from, {sup, count} = state) do
     pid =
       partition
       |> id

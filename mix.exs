@@ -1,6 +1,7 @@
 defmodule Rivulet.Mixfile do
   use Mix.Project
 
+
   def project do
     [app: :rivulet,
      version: "0.1.0",
@@ -40,6 +41,8 @@ defmodule Rivulet.Mixfile do
      {:httpoison, ">= 1.0.0"},
      {:meck, "~> 0.8.7", only: [:test]},
      {:jiffy, "0.15.1"},
-     {:uuid, "~> 1.1.8"}]
+     {:uuid, "~> 1.1.8"},
+     {:elastix, "~> 0.5.0"}
+    ]
   end
 end

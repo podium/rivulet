@@ -39,6 +39,10 @@ defmodule Rivulet.Join.ElasticSearch do
             "_id" => object_id
           }
         }
+      value =
+        value
+        |> :erlang.term_to_binary
+        |> Base.encode64
       doc = %{"doc" => %{"join_key" => join_key, "document" => value}, "doc_as_upsert" => true}
 
       with {:ok, cmd} <- JSON.encode(cmd),
@@ -50,7 +54,7 @@ defmodule Rivulet.Join.ElasticSearch do
     end)
     |> Enum.reject(&is_nil/1)
     |> List.flatten
-    |> Enum.map(fn({_uuid, cmd, doc}) ->
+    |> Enum.map(fn({cmd, doc}) ->
         [cmd, "\n", doc, "\n"]
       end)
   end
@@ -72,7 +76,7 @@ defmodule Rivulet.Join.ElasticSearch do
         %{join_documents:
           %{properties:
             %{join_key: %{type: "keyword"},
-              document: %{type: "object"}}}}}
+              document: %{type: "binary"}}}}}
       |> JSON.encode
     put("/#{index_name}", json, [])
   end
