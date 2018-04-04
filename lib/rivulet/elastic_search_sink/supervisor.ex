@@ -14,7 +14,10 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
   end
 
   def init({caller, otp_app, opts}) do
-    case runtime_config(:supervisor, caller, otp_app, opts) do
+    IO.inspect(caller, label: "caller")
+    IO.inspect(otp_app, label: "otp_app")
+    IO.inspect(opts, label: "opts")
+    case runtime_config(:supervisor, caller, otp_app, opts) |> IO.inspect(label: "runtime") do
       {:ok, consumer_opts} ->
  #        [elastic_url: "http://elasticsearch:9200", otp_app: :rivulet,
  # callback_module: Rivulet.TestDan, elastic_index: "nps", elastic_type: "response",
@@ -129,7 +132,7 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
   """
   def runtime_config(type, repo, otp_app, _custom) do
     if config = Application.get_env(otp_app, repo) do
-      config = [otp_app: otp_app, callback_module: repo] ++ config
+      config = [otp_app: otp_app] ++ config
 
       case repo_init(type, repo, config) do
         {:ok, config} ->
@@ -157,6 +160,7 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
   def compile_config(caller, opts) do
     otp_app = Keyword.fetch!(opts, :otp_app)
     config  = Application.get_env(otp_app, caller, [])
+    config = [callback_module: caller] ++ config
 
     {otp_app, config}
   end

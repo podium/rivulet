@@ -7,7 +7,8 @@ defmodule Rivulet.ElasticSearchSink.Config do
     :elastic_url,
     :elastic_type,
     :elastic_mapping,
-    :topic
+    :topic,
+    :callback_module
   ]
 
   @type t :: %__MODULE__{
@@ -16,10 +17,12 @@ defmodule Rivulet.ElasticSearchSink.Config do
     elastic_url: String.t,
     elastic_type: String.t,
     elastic_mapping: map,
-    topic: Partition.topic
+    topic: Partition.topic,
+    callback_module: any
   }
 
   def from_sink_opts(opts) do
+    callback_module = Keyword.get(opts, :caller_module)
     elastic_index = Keyword.get(opts, :elastic_index)
     elastic_url = Keyword.get(opts, :elastic_url, [])
     elastic_type = Keyword.fetch!(opts, :elastic_type)
@@ -32,7 +35,8 @@ defmodule Rivulet.ElasticSearchSink.Config do
       elastic_url: elastic_url,
       elastic_type: elastic_type,
       topic: topic,
-      elastic_mapping: elastic_mapping
+      elastic_mapping: elastic_mapping,
+      callback_module: callback_module
     }
   end
 end
