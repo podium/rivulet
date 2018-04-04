@@ -38,9 +38,6 @@ defmodule Rivulet.SQLSink.Consumer do
     handle_messages(partition, messages, state)
   end
 
-  @doc """
-  Question: what does state.manager equal here?
-  """
   def handle_messages(%Partition{} = partition, messages, %State{} = state) do
     Rivulet.SQLSink.Writer.Manager.handle_batch(state.manager, partition, messages, self())
     {:ok, state}
