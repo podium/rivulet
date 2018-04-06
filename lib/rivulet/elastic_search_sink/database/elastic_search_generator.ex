@@ -63,7 +63,7 @@ defmodule Rivulet.ElasticSearchSink.Database.ElasticSearchGenerator do
 
   # Success
   defp handle_es_response({:ok, %HTTPoison.Response{status_code: status_code}}, _) when status_code in 200..299 do
-    true
+    :ok
   end
 
   # Catch-all error

@@ -1,5 +1,6 @@
 defmodule Rivulet.ElasticSearchSink.Consumer do
   alias Rivulet.{
+    Config,
     Consumer,
     Consumer.Config,
     Kafka.Partition,
@@ -8,8 +9,8 @@ defmodule Rivulet.ElasticSearchSink.Consumer do
   alias Rivulet.ElasticSearchSink.Config, as: SinkConfig
 
   defmodule State do
-    @enforce_keys [:sink_consumer_pid]
-    defstruct [:manager_pid, :sink_consumer_pid]
+    @enforce_keys [:sink_supervisor_pid]
+    defstruct [:manager_pid, :sink_supervisor_pid]
   end
 
   @doc """
@@ -21,25 +22,28 @@ defmodule Rivulet.ElasticSearchSink.Consumer do
   def start_link(%SinkConfig{} = config, sink_supervisor_process) do
     consumer_config =
       %Config{
-        client_id: Rivulet.client_name(),
+        client_id: Rivulet.client_name!(),
         consumer_group_name: config.consumer_group,
         topics: [config.topic],
         group_config: [
           offset_commit_policy: :commit_to_kafka_v2,
           offset_commit_interval_seconds: 1,
         ],
-        consumer_config: [begin_offset: :earliest, max_bytes: 2_000_000]
+        consumer_config: [begin_offset: :earliest, max_bytes: Config.max_bytes]
       }
 
     Consumer.start_link(__MODULE__, consumer_config, {:sink_supervisor_process, sink_supervisor_process})
   end
 
+  @doc """
+  pid is passed in via line 35 above
+  """
   def init({_, sink}) do
-    {:ok, %State{sink_consumer_pid: sink}}
+    {:ok, %State{sink_supervisor_pid: sink}}
   end
 
   def handle_messages(partition, messages, %State{manager_pid: nil} = state) do
-    manager_pid = Rivulet.ElasticSearchSink.Supervisor.find_manager(state.sink_consumer_pid)
+    manager_pid = Rivulet.ElasticSearchSink.Supervisor.find_manager(state.sink_supervisor_pid)
     state = %State{state | manager_pid: manager_pid}
     handle_messages(partition, messages, state)
   end

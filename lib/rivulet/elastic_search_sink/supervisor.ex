@@ -68,7 +68,7 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
     if config = Application.get_env(otp_app, repo) do
       config = [otp_app: otp_app, callback_module: repo] ++ config
 
-      case repo_init(type, repo, config) do
+      case sink_module_init(type, repo, config) do
         {:ok, config} ->
           {:ok, config}
         :ignore ->
@@ -80,9 +80,9 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
     end
   end
 
-  defp repo_init(type, repo, config) do
-    if Code.ensure_loaded?(repo) and function_exported?(repo, :init, 2) do
-      repo.init(type, config)
+  defp sink_module_init(type, sink_module, config) do
+    if Code.ensure_loaded?(sink_module) and function_exported?(sink_module, :init, 2) do
+      sink_module.init(type, config)
     else
       {:ok, config}
     end

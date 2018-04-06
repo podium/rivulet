@@ -12,7 +12,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
           offset_commit_interval_secons: 1,
         ],
         consumer_config: [begin_offset: :earliest, max_bytes: Rivulet.Config.max_bytes()]
-      }
+      } |> IO.inspect(label: "join funcs config")
 
     Logger.info("Configuration for #{module}: #{inspect config}")
 
@@ -76,9 +76,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
 
     bulk =
       messages
-      # |> Enum.map(fn(message) -> {UUID.uuid4(), message} end)
       |> Enum.map(fn(message) -> message end)
-      # |> Enum.map(fn({uuid, message}) ->
       |> Enum.map(fn(message) ->
         alias Rivulet.Kafka.Consumer.Message
 
@@ -88,7 +86,6 @@ defmodule Rivulet.Kafka.Join.Funcs do
              {:ok, join_key} when is_binary(join_key) <- module.join_key(key, value) do
                message = %Message{message | decoded_key: key, decoded_value: value}
 
-            # {join_key, message, object_id, uuid}
               {join_key, message, object_id}
         else
           err ->
@@ -100,14 +97,11 @@ defmodule Rivulet.Kafka.Join.Funcs do
         (nil) -> true
         (_) -> false
       end)
-      # |> Enum.map(fn({join_key, message, object_id, uuid}) ->
       |> Enum.map(fn({join_key, message, object_id}) ->
-        # {:put, join_key, object_id, message.decoded_value, uuid}
         {:put, join_key, object_id, message.decoded_value}
       end)
 
     join_keys =
-      # Enum.map(bulk, fn({:put, join_key, _message, _object_id, _uuid}) ->
       Enum.map(bulk, fn({:put, join_key, _message, _object_id}) ->
         join_key
       end)

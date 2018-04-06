@@ -22,7 +22,7 @@ defmodule Rivulet.ElasticSearchSink.Writer.Manager do
   @doc """
   NOTE: state is a tuple consisting of {supervisor_process_pid, integer_for_count_of_writers}
   """
-  def handle_call({:get_pid, %Partition{} = partition} = _message_passed_to_process, _from, {sup_pid, count} = state) do
+  def handle_call({:get_pid, %Partition{} = partition}, _from, {sup_pid, count} = state) do
     pid =
       partition
       |> id

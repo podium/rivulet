@@ -53,12 +53,12 @@ defmodule Rivulet.ElasticSearchSink.Config do
    ]
   """
   def from_sink_opts(opts) do
-    callback_module = Keyword.get(opts, :callback_module)
-    elastic_index = Keyword.get(opts, :elastic_index)
-    elastic_url = Keyword.get(opts, :elastic_url, [])
+    callback_module = Keyword.fetch!(opts, :callback_module)
+    elastic_index = Keyword.fetch!(opts, :elastic_index)
+    elastic_url = Keyword.fetch!(opts, :elastic_url)
     elastic_type = Keyword.fetch!(opts, :elastic_type)
     topic = Keyword.fetch!(opts, :topic)
-    elastic_mapping = Keyword.get(opts, :elastic_mapping)
+    elastic_mapping = Keyword.fetch!(opts, :elastic_mapping)
 
     %__MODULE__{
       consumer_group: "#{topic}-elasticsearch-sink",
