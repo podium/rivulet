@@ -1,9 +1,9 @@
-defmodule Rivulet.ElasticSearchSink.Writer.Test do
+defmodule Rivulet.ElasticSearchSink.FiltererTest do
   use ExUnit.Case
 
   alias Rivulet.Kafka.Publisher.Message
 
-  @test_module Rivulet.Kafka.Publisher
+  @test_module Rivulet.ElasticSearchSink.Filterer
 
   setup do
     records = [

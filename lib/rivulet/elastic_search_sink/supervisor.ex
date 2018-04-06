@@ -20,14 +20,18 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
 
         {:ok, _} = Application.ensure_all_started(:httpoison)
 
-        count = 1
+        count = Keyword.get(consumer_opts, :writer_count, 1)
 
         children =
           [
             worker(Rivulet.ElasticSearchSink.Writer.Manager, [self(), count], id: :manager),
             worker(Rivulet.ElasticSearchSink.Consumer, [config, self()], id: :consumer),
-            worker(Rivulet.ElasticSearchSink.Writer, [config], id: "writer_1"),
           ]
+
+        children =
+          Enum.reduce(1..count, children, fn(n, acc) ->
+            [worker(Rivulet.ElasticSearchSink.Writer, [config], id: "writer_#{n}") | acc]
+          end)
 
         opts = [strategy: :rest_for_one]
 
