@@ -3,6 +3,7 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
   use Supervisor
 
   alias Rivulet.ElasticSearchSink.Config
+  alias Rivulet.ElasticSearchSink
 
   @defaults []
 
@@ -17,6 +18,8 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
     case runtime_config(:supervisor, caller, otp_app, opts) do
       {:ok, consumer_opts} ->
         %Config{} = config = Config.from_sink_opts(consumer_opts)
+
+        ElasticSearchSink.ensure_index_and_mapping_created!(config)
 
         {:ok, _} = Application.ensure_all_started(:httpoison)
 

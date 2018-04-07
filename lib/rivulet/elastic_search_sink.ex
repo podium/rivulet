@@ -81,4 +81,30 @@ defmodule Rivulet.ElasticSearchSink do
   A callback that is invoked when a writer finishes dumping to elasticsearch
   """
   @callback on_complete(id :: term) :: nil | no_return
+
+  alias Rivulet.ElasticSearchSink.Config
+  alias Rivulet.ElasticSearchSink.Database.ElasticSearchGenerator
+
+  def ensure_index_and_mapping_created!(%Config{} = config) do
+    with :ok <- ensure_index_created!(config),
+         :ok <- ensure_mapping_created!(config),
+     do: :ok
+  end
+
+  @doc """
+  Will return :ok
+  """
+  def ensure_index_created!(%Config{elastic_url: url, elastic_index: index} = config) do
+    case Elastix.Index.exists?(url, index) do
+      {:ok, false} -> ElasticSearchGenerator.create_index(config)
+      {:ok, true} -> :ok
+    end
+  end
+
+  @doc """
+  Will return :ok
+  """
+  def ensure_mapping_created!(%Config{elastic_url: url, elastic_index: index} = config) do
+    ElasticSearchGenerator.create_mapping(config)
+  end
 end
