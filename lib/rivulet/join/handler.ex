@@ -517,15 +517,53 @@ defmodule Rivulet.Join.Handler do
       "response_received_at" => #DateTime<2018-04-07 20:32:50.093000Z>
     }
   ]]
+
+  join_keys: ["a887a59c-a9ab-5da3-9d95-67ee274b2755", "a887a59c-a9ab-5da3-9d95-67ee274b2755",
+ "3171fee2-795b-5e79-a965-5128761d1319", "3171fee2-795b-5e79-a965-5128761d1319",
+ "a887a59c-a9ab-5da3-9d95-67ee274b2755", "3171fee2-795b-5e79-a965-5128761d1319",
+ "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5", "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5",
+ "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5", "ec4b15a7-e3d3-5d87-add1-f1f54d050b1a",
+ "ec4b15a7-e3d3-5d87-add1-f1f54d050b1a", "3ccb24e4-2c5c-519f-b8cd-7712f22ba62b",
+ "3ccb24e4-2c5c-519f-b8cd-7712f22ba62b", "3ccb24e4-2c5c-519f-b8cd-7712f22ba62b",
+ "ec4b15a7-e3d3-5d87-add1-f1f54d050b1a", "6ad1308c-545f-5409-9f53-7326fdd665bf",
+ "6ad1308c-545f-5409-9f53-7326fdd665bf", "0a977c05-d493-57a3-bc8a-a5a03694f7d7",
+ "0a977c05-d493-57a3-bc8a-a5a03694f7d7", "6ad1308c-545f-5409-9f53-7326fdd665bf",
+ "0a977c05-d493-57a3-bc8a-a5a03694f7d7", "d84b1cd8-e0ad-5569-9491-940f1f6bba48",
+ "d84b1cd8-e0ad-5569-9491-940f1f6bba48", "05c90083-2497-55ca-a35b-54dbe920d43a",
+ "05c90083-2497-55ca-a35b-54dbe920d43a", "d84b1cd8-e0ad-5569-9491-940f1f6bba48",
+ "2110fc9e-d610-52d5-bdf4-7ed24ccef3c6", "2110fc9e-d610-52d5-bdf4-7ed24ccef3c6",
+ "d6c5dcdb-1369-5ea0-b678-b38890ae32b9", "d6c5dcdb-1369-5ea0-b678-b38890ae32b9",
+ "d6c5dcdb-1369-5ea0-b678-b38890ae32b9", "05c90083-2497-55ca-a35b-54dbe920d43a",
+ "2110fc9e-d610-52d5-bdf4-7ed24ccef3c6", "a740884a-2f84-5b64-a14b-b2ad32253e12",
+ "a740884a-2f84-5b64-a14b-b2ad32253e12", "a740884a-2f84-5b64-a14b-b2ad32253e12",
+ "9013631e-362f-5436-8a21-50dad218bbb5", "9013631e-362f-5436-8a21-50dad218bbb5",
+ "9013631e-362f-5436-8a21-50dad218bbb5", "da98fc52-688e-5e02-a90a-ac7a02378ce0",
+ "da98fc52-688e-5e02-a90a-ac7a02378ce0", "da98fc52-688e-5e02-a90a-ac7a02378ce0",
+ "ea991aa5-aa9a-5154-8813-504dc98ea4b5", "ea991aa5-aa9a-5154-8813-504dc98ea4b5",
+ "ea991aa5-aa9a-5154-8813-504dc98ea4b5", "49683c49-d3cb-50fe-8bed-e95ee9d5cd72",
+ "49683c49-d3cb-50fe-8bed-e95ee9d5cd72", "fe30972f-b33c-5a0c-b5dd-edfe9a2c1e59",
+ "fe30972f-b33c-5a0c-b5dd-edfe9a2c1e59", "49683c49-d3cb-50fe-8bed-e95ee9d5cd72",
+ ...]
+join_id: "nps-location-join"
+docs: ["g3QAAAAKbQAAAAdhZGRyZXNzbQAAAC0zMTkwIEF1dG8gQ2VudGVyIENpciwgU3RvY2t0b24sIENBIDk1MjEyLCBVU0FtAAAACGFyY2hpdmVkZAAFZmFsc2VtAAAACmNyZWF0ZWRfYXRtAAAAGzIwMTgtMDItMjBUMjE6MzU6MTEuMDU2NDI1Wm0AAAAQbGFzdF9tb2RpZmllZF9hdG0AAAAbMjAxOC0wNC0wN1QyMDozNToxMS4wNTY5NTRabQAAAARuYW1lbQAAABpIaWNrbGUsIEdvdHRsaWViIGFuZCBEb3lsZW0AAAAQb3JnYW5pemF0aW9uX3VpZG0AAAAkYjEyY2FkZjAtOGJkZS01NTc4LTkyN2MtZTJmZjI3ZGRjMGVhbQAAAA1wb2RpdW1fbnVtYmVybQAAAAwrMTM4NTMzNjAwNjBtAAAAF3RpbWV6b25lX2lkZW50aWZpZXJfdWlkZAADbmlsbQAAAAN1aWRtAAAAJGE4ODdhNTljLWE5YWItNWRhMy05ZDk1LTY3ZWUyNzRiMjc1NW0AAAAKdXBkYXRlZF9hdG0AAAAbMjAxOC0wNC0wN1QyMDozNToxMS4wNzEwNjNa"]
+binary_to_term: %{
+  "address" => "3190 Auto Center Cir, Stockton, CA 95212, USA",
+  "archived" => false,
+  "created_at" => "2018-02-20T21:35:11.056425Z",
+  "last_modified_at" => "2018-04-07T20:35:11.056954Z",
+  "name" => "Hickle, Gottlieb and Doyle",
+  "organization_uid" => "b12cadf0-8bde-5578-927c-e2ff27ddc0ea",
+  "podium_number" => "+13853360060",
+  "timezone_identifier_uid" => nil,
+  "uid" => "a887a59c-a9ab-5da3-9d95-67ee274b2755",
+  "updated_at" => "2018-04-07T20:35:11.071063Z"
+}
   """
   def handle_call({:handle_resp, join_keys, ack_data}, from,  %State{join_id: join_id, transformers: transformers, consumer: consumer} = state) do
     GenServer.reply(from, :ok)
 
-    IO.inspect(join_keys, label: "join_keys")
-
     res =
       join_id
-      |> IO.inspect(label: "join_id")
       |> ElasticSearch.bulk_get_join_docs(join_keys)
       |> Map.get("responses")
       |> Enum.map(fn(%{"hits" => %{"hits" => hits}}) -> hits end)
