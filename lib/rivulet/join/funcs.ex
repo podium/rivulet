@@ -121,9 +121,9 @@ defmodule Rivulet.Kafka.Join.Funcs do
   @spec transforms([[term]], {module, [{Rivulet.Kafka.Partition.topic, :key | :random}]})
   :: ignored
   def transforms(join_docs, transformers) do
-    IO.inspect(join_docs, label: "join_docs")
+    # IO.inspect(join_docs, label: "join_docs")
     Enum.map(join_docs, fn(join) ->
-      IO.inspect(transformers, label: "transformers")
+      # IO.inspect(transformers, label: "transformers")
       Enum.map(transformers, fn({module, publishes}) ->
         messages = module.handle_join(join)
 
