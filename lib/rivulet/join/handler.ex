@@ -521,8 +521,11 @@ defmodule Rivulet.Join.Handler do
   def handle_call({:handle_resp, join_keys, ack_data}, from,  %State{join_id: join_id, transformers: transformers, consumer: consumer} = state) do
     GenServer.reply(from, :ok)
 
+    IO.inspect(join_keys, label: "join_keys")
+
     res =
       join_id
+      |> IO.inspect(label: "join_id")
       |> ElasticSearch.bulk_get_join_docs(join_keys)
       |> Map.get("responses")
       |> Enum.map(fn(%{"hits" => %{"hits" => hits}}) -> hits end)
