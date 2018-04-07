@@ -40,6 +40,7 @@ defmodule Rivulet.Join.Handler do
       |> Enum.map(fn (docs) ->
         Enum.map(docs, fn (doc) -> doc |> Base.decode64! |> :erlang.binary_to_term end)
       end)
+      |> IO.inspect(label: "handle_resp")
 
     Rivulet.Kafka.Join.Funcs.transforms(res, transformers)
 
