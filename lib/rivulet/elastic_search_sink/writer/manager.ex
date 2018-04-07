@@ -28,6 +28,7 @@ defmodule Rivulet.ElasticSearchSink.Writer.Manager do
       |> id
       |> hash(count)
       |> find_pid_by_id(sup_pid)
+      |> IO.inspect(label: "pid")
 
     {:reply, pid, state}
   end

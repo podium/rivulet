@@ -38,6 +38,8 @@ defmodule Rivulet.ElasticSearchSink.Writer do
   end
 
   def handle_cast({:handle_messages, partition, messages}, %Config{} = state) do
+    IO.inspect(partition, label: "partition")
+    IO.inspect(messages, label: "messages")
     Logger.debug("Handling Messages by dumping")
 
     offset = messages |> List.last |> Map.get(:offset)
