@@ -16,10 +16,6 @@ defmodule Rivulet.Join.Batcher do
   @spec batch_commands(pid, [ElasticSearch.batch], [String.t], Partition.topic, Partition.partition, non_neg_integer)
   :: :ok
   def batch_commands(batcher, cmds, join_keys, topic, partition, offset) do
-    IO.inspect(join_keys, label: "join_keys")
-    IO.inspect(topic, label: "topic")
-    IO.inspect(partition, label: "partition")
-    IO.inspect(offset, label: "offset")
     :gen_statem.call(batcher, {:add_batch, cmds, join_keys, {topic, partition, offset}})
   end
 
