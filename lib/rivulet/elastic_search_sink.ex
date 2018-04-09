@@ -1,5 +1,6 @@
 defmodule Rivulet.ElasticSearchSink do
   @type t :: module
+  @type es_dumped_messages :: [%{}]
 
   @doc false
   defmacro __using__(opts) do
@@ -80,7 +81,7 @@ defmodule Rivulet.ElasticSearchSink do
   @doc """
   A callback that is invoked when a writer finishes dumping to elasticsearch
   """
-  @callback on_complete(id :: term) :: nil | no_return
+  @callback on_complete(es_dumped_messages) :: nil | no_return
 
   alias Rivulet.ElasticSearchSink.Config
   alias Rivulet.ElasticSearchSink.Database.ElasticSearchGenerator
@@ -104,7 +105,7 @@ defmodule Rivulet.ElasticSearchSink do
   @doc """
   Will return :ok
   """
-  def ensure_mapping_created!(%Config{elastic_url: url, elastic_index: index} = config) do
+  def ensure_mapping_created!(%Config{} = config) do
     ElasticSearchGenerator.create_mapping(config)
   end
 end
