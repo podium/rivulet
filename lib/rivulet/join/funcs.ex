@@ -79,6 +79,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
       |> Enum.map(fn(message) -> message end)
       |> Enum.map(fn(message) ->
         alias Rivulet.Kafka.Consumer.Message
+
         with {:ok, key} <- deserialize_key(module, message),
              {:ok, value} <- deserialize_value(module, message),
              {:ok, object_id} <- get_object_id(module, key, value),

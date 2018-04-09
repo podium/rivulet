@@ -1,4 +1,10 @@
 defmodule Rivulet.SQLSink.Writer do
+  @moduledoc """
+  This module is an abstraction that represents the functionality
+  each separate Writer process (i.e., each process that will do some database
+  operations within BlackMamba, etc.) will need to successfully write to
+  a Postgres database.
+  """
   require Logger
   alias Rivulet.Kafka.Partition
   alias Rivulet.SQLSink.{Config, Database.Table}
