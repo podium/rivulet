@@ -98,7 +98,6 @@ defmodule Rivulet.ElasticSearchSink.Writer do
     |> Enum.flat_map(&update_line(index, type, &1))
   end
 
-  @spec update_line(index_name, type_name, any) :: upserted_record
   defp update_line(index, type, %Message{} = message) do
     document_id = message.raw_key
     {:ok, record} = JSON.decode(message.raw_value)
