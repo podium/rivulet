@@ -10,9 +10,9 @@ defmodule Rivulet.ElasticSearchSink.Writer.Manager do
   @doc """
   NOTE: signature for GenServer.call/2 is call(process_identifier, message_to_pass)
   """
-  def handle_batch(manager_pid, partition, messages) do
+  def handle_batch(manager_pid, partition, messages, consumer) do
     writer_pid = GenServer.call(manager_pid, {:get_pid, partition})
-    Rivulet.ElasticSearchSink.Writer.handle_messages(writer_pid, partition, messages)
+    Rivulet.ElasticSearchSink.Writer.handle_messages(writer_pid, partition, messages, consumer)
   end
 
   def init({sup, count}) do

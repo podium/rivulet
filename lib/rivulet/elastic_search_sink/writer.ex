@@ -33,11 +33,11 @@ defmodule Rivulet.ElasticSearchSink.Writer do
   @doc """
   The pid here is the identifier for this particular Writer process
   """
-  def handle_messages(pid, %Partition{} = partition, messages) do
-    GenServer.cast(pid, {:handle_messages, partition, messages})
+  def handle_messages(pid, %Partition{} = partition, messages, consumer) do
+    GenServer.cast(pid, {:handle_messages, partition, messages, consumer})
   end
 
-  def handle_cast({:handle_messages, partition, messages}, %Config{} = state) do
+  def handle_cast({:handle_messages, partition, messages, consumer}, %Config{} = state) do
     Logger.debug("Handling Messages by dumping")
 
     offset = messages |> List.last |> Map.get(:offset)
@@ -51,7 +51,7 @@ defmodule Rivulet.ElasticSearchSink.Writer do
 
     state.callback_module.on_complete(successfully_inserted)
 
-    Rivulet.Consumer.ack(Rivulet.client_name!, partition, offset)
+    Rivulet.Consumer.ack(consumer, partition, offset)
 
     {:noreply, state}
   end
