@@ -33,11 +33,11 @@ defmodule Rivulet.ElasticSearchSink.Writer do
   @doc """
   The pid here is the identifier for this particular Writer process
   """
-  def handle_messages(pid, %Partition{} = partition, messages) do
-    GenServer.cast(pid, {:handle_messages, partition, messages})
+  def handle_messages(writer_pid, %Partition{} = partition, messages, consumer_pid) do
+    GenServer.cast(writer_pid, {:handle_messages, partition, messages, consumer_pid})
   end
 
-  def handle_cast({:handle_messages, partition, messages}, %Config{} = state) do
+  def handle_cast({:handle_messages, partition, messages, consumer_pid}, %Config{} = state) do
     Logger.debug("Handling Messages by dumping")
 
     offset = messages |> List.last |> Map.get(:offset)
@@ -49,9 +49,10 @@ defmodule Rivulet.ElasticSearchSink.Writer do
       |> bulk_index_decoded_messages(state)
       |> Filterer.filter_for_successfully_inserted(messages)
 
+    Logger.debug("successfully dumped into Elasticsearch messages: #{inspect(successfully_inserted)}")
     state.callback_module.on_complete(successfully_inserted)
 
-    Rivulet.Consumer.ack(Rivulet.client_name!, partition, offset)
+    Rivulet.Consumer.ack(consumer_pid, partition, offset)
 
     {:noreply, state}
   end
@@ -59,7 +60,11 @@ defmodule Rivulet.ElasticSearchSink.Writer do
   def only_latest_per_key(messages) when is_list(messages) do
     messages
     |> Enum.group_by(&(&1.raw_key))
-    |> Enum.map(fn({_key, messages}) -> List.last(messages) end)
+    |> Enum.map(fn({key, messages}) ->
+      Logger.debug("For key #{key} we have a total of #{length(messages)} messages that look like: #{inspect(messages)}")
+
+      List.last(messages)
+    end)
     |> List.flatten
   end
 

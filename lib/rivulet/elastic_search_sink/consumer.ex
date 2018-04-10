@@ -49,7 +49,7 @@ defmodule Rivulet.ElasticSearchSink.Consumer do
   end
 
   def handle_messages(%Partition{} = partition, messages, %State{} = state) do
-    Rivulet.ElasticSearchSink.Writer.Manager.handle_batch(state.manager_pid, partition, messages)
+    Rivulet.ElasticSearchSink.Writer.Manager.handle_batch(state.manager_pid, partition, messages, self())
     {:ok, state}
   end
 end
