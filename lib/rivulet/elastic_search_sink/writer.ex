@@ -61,7 +61,13 @@ defmodule Rivulet.ElasticSearchSink.Writer do
   def only_latest_per_key(messages) when is_list(messages) do
     messages
     |> Enum.group_by(&(&1.raw_key))
-    |> Enum.map(fn({_key, messages}) -> List.last(messages) end)
+    |> IO.inspect(label: "grouped_by raw_key")
+    |> Enum.map(fn({key, messages}) ->
+      Logger.debug("For key #{key} we have a total of #{length(messages)} messages that look like: #{inspect(messages)}")
+
+      IO.inspect(length(messages), label: "length messages")
+      List.last(messages)
+    end)
     |> List.flatten
   end
 
