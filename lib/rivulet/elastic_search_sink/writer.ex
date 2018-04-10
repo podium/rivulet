@@ -48,10 +48,9 @@ defmodule Rivulet.ElasticSearchSink.Writer do
       messages
       |> bulk_index_decoded_messages(state)
       |> Filterer.filter_for_successfully_inserted(messages)
-      |> IO.inspect(label: "successfully_inserted")
 
-    Logger.debug("on_complete callback would be fired here")
-    # state.callback_module.on_complete(successfully_inserted)
+    Logger.debug("successfully dumped into Elasticsearch messages: #{inspect(successfully_inserted)}")
+    state.callback_module.on_complete(successfully_inserted)
 
     Rivulet.Consumer.ack(consumer_pid, partition, offset)
 
@@ -61,11 +60,9 @@ defmodule Rivulet.ElasticSearchSink.Writer do
   def only_latest_per_key(messages) when is_list(messages) do
     messages
     |> Enum.group_by(&(&1.raw_key))
-    |> IO.inspect(label: "grouped_by raw_key")
     |> Enum.map(fn({key, messages}) ->
       Logger.debug("For key #{key} we have a total of #{length(messages)} messages that look like: #{inspect(messages)}")
 
-      IO.inspect(length(messages), label: "length messages")
       List.last(messages)
     end)
     |> List.flatten
@@ -82,7 +79,7 @@ defmodule Rivulet.ElasticSearchSink.Writer do
     records = format_bulk_records(state.elastic_index, state.elastic_type, records)
     raw_data = encode_bulk_records(records)
 
-    Bulk.post_raw(state.elastic_url, raw_data, index: state.elastic_index, type: state.elastic_type) |> IO.inspect(label: "call after post_raw")
+    Bulk.post_raw(state.elastic_url, raw_data, index: state.elastic_index, type: state.elastic_type)
   end
 
   def handle_es_response({:ok, %HTTPoison.Response{body: body}}), do: body
