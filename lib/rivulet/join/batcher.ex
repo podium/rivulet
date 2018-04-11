@@ -53,6 +53,8 @@ defmodule Rivulet.Join.Batcher do
       |> Enum.reverse
       |> flush
 
+    require IEx; IEx.pry
+    
     Enum.each(resp["items"], fn(item) ->
       unless item["update"]["status"] < 300 do
         Logger.error("Elasticsearch updates failed. #{inspect item}")
@@ -64,7 +66,11 @@ defmodule Rivulet.Join.Batcher do
       |> Enum.reverse
       |> List.flatten
 
+    require IEx; IEx.pry
+
     Rivulet.Join.Handler.handle_resp(data.handler, join_keys, Enum.reverse(data.ack_data))
+
+    require IEx; IEx.pry
 
     {:next_state, @empty_state, %Data{handler: data.handler}}
   end

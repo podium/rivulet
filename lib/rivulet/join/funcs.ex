@@ -74,6 +74,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
         (_) -> false
       end)
 
+    # require IEx; IEx.pry
     bulk =
       messages
       |> Enum.map(fn(message) -> message end)
@@ -101,16 +102,19 @@ defmodule Rivulet.Kafka.Join.Funcs do
         {:put, join_key, object_id, message.decoded_value}
       end)
 
+    # require IEx; IEx.pry
     join_keys =
       Enum.map(bulk, fn({:put, join_key, _message, _object_id}) ->
         join_key
       end)
 
+    # require IEx; IEx.pry
     offset =
       messages
       |> List.last
       |> Map.get(:offset)
 
+    # require IEx; IEx.pry
     bulk_doc = ElasticSearch.bulk_put_join_doc(bulk, join_id)
 
     Rivulet.Join.Batcher.batch_commands(batcher, bulk_doc, join_keys, topic, partition, offset)
@@ -121,8 +125,14 @@ defmodule Rivulet.Kafka.Join.Funcs do
   @spec transforms([[term]], {module, [{Rivulet.Kafka.Partition.topic, :key | :random}]})
   :: ignored
   def transforms(join_docs, transformers) do
+    require IEx; IEx.pry
+
     Enum.map(join_docs, fn(join) ->
+      require IEx; IEx.pry
+
       Enum.map(transformers, fn({module, publishes}) ->
+        require IEx; IEx.pry
+
         messages = module.handle_join(join)
 
         messages =
@@ -163,7 +173,12 @@ defmodule Rivulet.Kafka.Join.Funcs do
           end)
           |> List.flatten
 
+        require IEx; IEx.pry
+
         refs = Rivulet.Kafka.Publisher.publish(publishes)
+
+        require IEx; IEx.pry
+
         Enum.map(refs, fn
           ({:ok, call_ref}) ->
             receive do
