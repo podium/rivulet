@@ -29,7 +29,8 @@ defmodule Rivulet.Join.Handler do
   end
 
   def pry_those_things(payload) do
-    require IEx; IEx.pry
+    # IO.inspect(payload, label: "payload")
+    # require IEx; IEx.pry
     payload
   end
 
@@ -39,7 +40,8 @@ defmodule Rivulet.Join.Handler do
     res =
       join_id
       |> ElasticSearch.bulk_get_join_docs(join_keys)
-      |> pry_those_things()
+      |> IO.inspect(label: "return from bulk_get_join_docs")
+      # |> pry_those_things()
       |> Map.get("responses")
       |> Enum.map(fn(%{"hits" => %{"hits" => hits}}) -> hits end)
       |> Enum.map(fn(hits) -> Enum.map(hits, fn(hit) -> hit["_source"]["document"] end) end)
@@ -51,14 +53,16 @@ defmodule Rivulet.Join.Handler do
         end)
       end)
 
-    require IEx; IEx.pry
+    IO.inspect(res, label: "res")
+    # require IEx; IEx.pry
 
     Rivulet.Kafka.Join.Funcs.transforms(res, transformers)
 
     ack_data
     |> Enum.reduce(%{}, fn
-      ({topic, partition, offset}, %{} = acks) ->
-        require IEx; IEx.pry
+      ({topic, partition, offset} = thing_again, %{} = acks) ->
+        IO.inspect(thing_again, label: "thing_again")
+        # require IEx; IEx.pry
 
         Map.update(acks, {topic, partition}, offset, fn(prev_offset) ->
           if prev_offset > offset,
@@ -66,12 +70,14 @@ defmodule Rivulet.Join.Handler do
           else: offset
         end)
     end)
-    |> Enum.each(fn({{topic, partition}, offset}) ->
-      require IEx; IEx.pry
+    |> Enum.each(fn({{topic, partition}, offset} = each_thing) ->
+      # require IEx; IEx.pry
+      IO.inspect(each_thing, label: "each_thing")
 
       partition = %Partition{topic: topic, partition: partition}
 
-      require IEx; IEx.pry
+      IO.inspect(partition, label: "partition")
+      # require IEx; IEx.pry
 
       Rivulet.Consumer.ack(consumer, partition, offset)
     end)

@@ -125,13 +125,19 @@ defmodule Rivulet.Kafka.Join.Funcs do
   @spec transforms([[term]], {module, [{Rivulet.Kafka.Partition.topic, :key | :random}]})
   :: ignored
   def transforms(join_docs, transformers) do
-    require IEx; IEx.pry
+    IO.inspect(join_docs, label: "join_docs")
+    IO.inspect(transformers, label: "transformers")
+
+    # require IEx; IEx.pry
 
     Enum.map(join_docs, fn(join) ->
-      require IEx; IEx.pry
+      # require IEx; IEx.pry
+      IO.inspect(join, label: "join")
 
-      Enum.map(transformers, fn({module, publishes}) ->
-        require IEx; IEx.pry
+      Enum.map(transformers, fn({module, publishes} = thing) ->
+        IO.inspect(thing, label: "thing")
+        IO.inspect(publishes, label: "publishes")
+        # require IEx; IEx.pry
 
         messages = module.handle_join(join)
 
@@ -140,6 +146,8 @@ defmodule Rivulet.Kafka.Join.Funcs do
             list when is_list(list) -> list
             other -> [other]
           end
+
+        IO.inspect(messages, label: "messages")
 
         publishes =
           messages
@@ -173,11 +181,13 @@ defmodule Rivulet.Kafka.Join.Funcs do
           end)
           |> List.flatten
 
-        require IEx; IEx.pry
+        IO.inspect(publishes, label: "publishes")
+        # require IEx; IEx.pry
 
         refs = Rivulet.Kafka.Publisher.publish(publishes)
 
-        require IEx; IEx.pry
+        IO.inspect(refs, label: "refs")
+        # require IEx; IEx.pry
 
         Enum.map(refs, fn
           ({:ok, call_ref}) ->
