@@ -1,5 +1,5 @@
 defmodule Rivulet.SQLSink.AvroConverter.Type do
-  alias AvroEx.Schema.{Context, Fixed, Primitive, Union}
+  alias AvroEx.Schema.{Context, Fixed, Primitive, Union, Enum}
   alias Rivulet.SQLSink.Database.Table
 
   require Logger
@@ -12,6 +12,7 @@ defmodule Rivulet.SQLSink.AvroConverter.Type do
   def column_type(%Primitive{type: :string, metadata: %{"logicalType" => "bounded"}}, _),
     do: {:varchar, 255}
   def column_type(%Primitive{type: :string}, _), do: :text
+  def column_type(%Enum{}, _), do: :text
 
   def column_type(%Primitive{type: :integer, metadata: %{"logicalType" => "date"}}, _), do: :date
   def column_type(%Primitive{type: :integer, metadata: %{"logicalType" => "time-micros"}}, _), do: :time
