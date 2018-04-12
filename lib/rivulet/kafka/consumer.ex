@@ -76,6 +76,15 @@ defmodule Rivulet.Consumer do
     {:ok, {callback_module, state}}
   end
 
+  @doc """
+  handle_message partition:
+
+  message_set:
+
+  from_wire_message:
+
+  callback_module:
+  """
   def handle_message(topic, partition, messages, {callback_module, state}) when Record.is_record(messages, :kafka_message_set) and is_binary(topic) do
     partition = %Partition{topic: topic, partition: partition}
       |> IO.inspect(label: "handle_message partition")
