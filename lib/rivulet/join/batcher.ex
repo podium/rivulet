@@ -38,6 +38,7 @@ defmodule Rivulet.Join.Batcher do
 
   def handle_event({:call, from}, {:add_batch, cmds, join_keys, {_topic, _partition, _offset} = ack_data}, @empty_state, %Data{} = data) do
     new_data = %Data{data | updates: [cmds | data.updates], ack_data: [ack_data | data.ack_data], join_keys: [join_keys | data.join_keys]}
+    |> IO.inspect(label: "a")
     {:next_state, @filling_state, new_data, [{:reply, from, :accepted}]}
   end
 
@@ -51,6 +52,8 @@ defmodule Rivulet.Join.Batcher do
 
   def handle_event({:call, from}, {:add_batch, cmds, join_keys, {_topic, _partition, _offset} = ack_data}, @filling_state, %Data{} = data) do
     new_data = %Data{data | updates: [cmds | data.updates], ack_data: [ack_data | data.ack_data], join_keys: [join_keys | data.join_keys]}
+    |> IO.inspect(label: "b")
+
     {:keep_state, new_data, [{:reply, from, :accepted}]}
   end
 
@@ -115,8 +118,12 @@ defmodule Rivulet.Join.Batcher do
   join_keys:
     ["5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5", "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5",
    "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5", "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5"]
+
+  NOTE: is it safe to assume the return value from handler query has appropriate time stamp?
+  If not, then we need to pass all of data down I believe
   """
   def handle_event(:state_timeout, :flush, @filling_state, %Data{} = data) do
+    IO.inspect(data, label: "c")
     resp =
       data.updates
       |> Enum.reverse
