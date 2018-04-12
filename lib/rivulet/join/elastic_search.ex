@@ -104,6 +104,8 @@ defmodule Rivulet.Join.ElasticSearch do
         [header, "\n", query, "\n"]
       end)
 
+    IO.inspect(body, label: "body")
+
     case request(:get, "/join_documents/_msearch", body) do
       {:error, _} = err -> raise "Calls to Elasticsearch are failing! #{inspect err}"
       {:ok, %Response{status_code: code, body: body}} when code >= 200 and code < 300 ->

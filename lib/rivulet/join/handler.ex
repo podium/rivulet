@@ -70,6 +70,7 @@ defmodule Rivulet.Join.Handler do
         end)
       end)
 
+    # NOTE: here we want to deduplicate things
     IO.inspect(res, label: "res")
     # require IEx; IEx.pry
 
