@@ -25,6 +25,13 @@ defmodule Rivulet.Join.Batcher do
 
   def callback_mode, do: [:handle_event_function, :state_enter]
 
+  @doc """
+  From join.ex:
+    {:ok, handler} = Handler.start_link(...)
+    {:ok batcher} = Batcher.start_link(handler)
+
+  handler: is the pid of the handler
+  """
   def init({handler}) do
     {:ok, @empty_state, %Data{handler: handler}}
   end

@@ -420,14 +420,27 @@ defmodule Rivulet.Kafka.Join.Funcs do
 
     # require IEx; IEx.pry
 
+    # 4 groups: [[...1...],[...2...],[...3...],[...4...]]
     Enum.map(join_docs, fn(join) ->
       # require IEx; IEx.pry
+      [
+        # ...1...
+    		%{"uid" => "a", "name" => "Some Location"},
+    		%{"uid" => "npsa", "location_uid" => "a"},
+    		%{"uid" => "npsa", "location_uid" => "a"}
+    	]
       IO.inspect(join, label: "join")
 
+      [
+        {FireHydrant.JoinTransformer.NPSLocationJoin,
+         [{"platform_nps_location_joins", :key}]}
+      ]
       Enum.map(transformers, fn({module, publishes} = thing) ->
         IO.inspect(thing, label: "thing")
         IO.inspect(publishes, label: "publishes")
         # require IEx; IEx.pry
+
+        # [{uid, encoded}, {uid, encoded_location_plus_nps_join_entity}]
 
         messages = module.handle_join(join)
 
@@ -450,7 +463,9 @@ defmodule Rivulet.Kafka.Join.Funcs do
               true
           end)
           |> Enum.map(fn({k, v}) ->
+            # {uid, encoded_location_plus_nps_join_entity}
             Enum.map(publishes, fn
+              # {"platform_nps_location_joins", :key}
               ({topic, :key}) ->
                 %Rivulet.Kafka.Publisher.Message{
                   key: k,
