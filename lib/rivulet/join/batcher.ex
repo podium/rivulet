@@ -16,6 +16,7 @@ defmodule Rivulet.Join.Batcher do
   @spec batch_commands(pid, [ElasticSearch.batch], [String.t], Partition.topic, Partition.partition, non_neg_integer)
   :: :ok
   def batch_commands(batcher, cmds, join_keys, topic, partition, offset) do
+    IO.inspect(cmds, label: "cmds")
     :gen_statem.call(batcher, {:add_batch, cmds, join_keys, {topic, partition, offset}})
   end
 
@@ -44,6 +45,8 @@ defmodule Rivulet.Join.Batcher do
 
   def handle_event({:call, from}, {:add_batch, cmds, join_keys, {_topic, _partition, _offset} = ack_data}, @filling_state, %Data{} = data) do
     new_data = %Data{data | updates: [cmds | data.updates], ack_data: [ack_data | data.ack_data], join_keys: [join_keys | data.join_keys]}
+    IO.inspect(new_data, label: "new_data")
+
     {:keep_state, new_data, [{:reply, from, :accepted}]}
   end
 

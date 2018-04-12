@@ -67,12 +67,20 @@ defmodule Rivulet.Kafka.Join.Funcs do
     end
   end
 
-  def handle_messages(%Rivulet.Kafka.Partition{topic: topic, partition: partition}, messages, stream, join_id, batcher) do
+  def handle_messages(%Rivulet.Kafka.Partition{topic: topic, partition: partition} = p, messages, stream, join_id, batcher) do
+    IO.inspect(p, label: "Rivulet.Kafka.Partition")
+    IO.inspect(messages, label: "messages")
+    IO.inspect(stream, label: "stream")
+    IO.inspect(join_id, label: "join_id")
+    IO.inspect(batcher, label: "batcher")
+
     {_, module} =
       Enum.find(stream, fn
         ({^topic, _}) -> true
         (_) -> false
       end)
+
+    IO.inspect(module, label: "module")
 
     # require IEx; IEx.pry
     bulk =
@@ -81,10 +89,10 @@ defmodule Rivulet.Kafka.Join.Funcs do
       |> Enum.map(fn(message) ->
         alias Rivulet.Kafka.Consumer.Message
 
-        with {:ok, key} <- deserialize_key(module, message),
-             {:ok, value} <- deserialize_value(module, message),
-             {:ok, object_id} <- get_object_id(module, key, value),
-             {:ok, join_key} when is_binary(join_key) <- module.join_key(key, value) do
+        with {:ok, key} <- deserialize_key(module, message) |> IO.inspect(label: "deseralize_key"),
+             {:ok, value} <- deserialize_value(module, message) |> IO.inspect(label: "deseralize_value"),
+             {:ok, object_id} <- get_object_id(module, key, value) |> IO.inspect(label: "object_id"),
+             {:ok, join_key} when is_binary(join_key) <- module.join_key(key, value) |> IO.inspect(label: "join_key") do
                message = %Message{message | decoded_key: key, decoded_value: value}
 
               {join_key, message, object_id}
@@ -101,18 +109,21 @@ defmodule Rivulet.Kafka.Join.Funcs do
       |> Enum.map(fn({join_key, message, object_id}) ->
         {:put, join_key, object_id, message.decoded_value}
       end)
+      |> IO.inspect(label: "bulk")
 
     # require IEx; IEx.pry
     join_keys =
       Enum.map(bulk, fn({:put, join_key, _message, _object_id}) ->
         join_key
       end)
+      |> IO.inspect(label: "join_keys after bulk")
 
     # require IEx; IEx.pry
     offset =
       messages
       |> List.last
       |> Map.get(:offset)
+      |> IO.inspect(label: "offset")
 
     # require IEx; IEx.pry
     bulk_doc = ElasticSearch.bulk_put_join_doc(bulk, join_id)
