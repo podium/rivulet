@@ -36,6 +36,21 @@ defmodule Rivulet.Join.Batcher do
     {:ok, @empty_state, %Data{handler: handler}}
   end
 
+  @doc """
+  a: %Rivulet.Join.Batcher.Data{
+  ack_data: [{"platform_nps_invitations", 2, 0}],
+  handler: #PID<0.559.0>,
+  join_keys: [["c0ee0235-5069-5773-b11e-280abca4bc20"]],
+  updates: [
+    [
+      ["{\"update\":{\"_type\":\"join_documents\",\"_index\":\"rivulet-joinkey-nps-join\",\"_id\":\"c0ee0235-5069-5773-b11e-280abca4bc20\"}}",
+       "\n",
+       "{\"doc_as_upsert\":true,\"doc\":{\"join_key\":\"c0ee0235-5069-5773-b11e-280abca4bc20\",\"document\":\"g3QAAAAHbQAAAApjcmVhdGVkX2F0dAAAAA1kAApfX3N0cnVjdF9fZAAPRWxpeGlyLkRhdGVUaW1lZAAIY2FsZW5kYXJkABNFbGl4aXIuQ2FsZW5kYXIuSVNPZAADZGF5YQxkAARob3VyYRVkAAttaWNyb3NlY29uZGgCYgAK7p1hBmQABm1pbnV0ZWEvZAAFbW9udGhhBGQABnNlY29uZGEBZAAKc3RkX29mZnNldGEAZAAJdGltZV96b25lbQAAAAdFdGMvVVRDZAAKdXRjX29mZnNldGEAZAAEeWVhcmIAAAfiZAAJem9uZV9hYmJybQAAAANVVENtAAAADWN1c3RvbWVyX25hbWVtAAAADkRhbiBDb25nZXIgVHdvbQAAABBsYXN0X21vZGlmaWVkX2F0dAAAAA1kAApfX3N0cnVjdF9fZAAPRWxpeGlyLkRhdGVUaW1lZAAIY2FsZW5kYXJkABNFbGl4aXIuQ2FsZW5kYXIuSVNPZAADZGF5YQxkAARob3VyYRZkAAttaWNyb3NlY29uZGgCYgAK+SFhBmQABm1pbnV0ZWEiZAAFbW9udGhhBGQABnNlY29uZGEQZAAKc3RkX29mZnNldGEAZAAJdGltZV96b25lbQAAAAdFdGMvVVRDZAAKdXRjX29mZnNldGEAZAAEeWVhcmIAAAfiZAAJem9uZV9hYmJybQAAAANVVENtAAAADGxvY2F0aW9uX3VpZG0AAAAQX9A7+JzWUgqy45CEt4ywxW0AAAAMcGhvbmVfbnVtYmVybQAAAAwrMTg1MDU4NTc2MTdtAAAAB3NlbnRfYXR0AAAADWQACl9fc3RydWN0X19kAA9FbGl4aXIuRGF0ZVRpbWVkAAhjYWxlbmRhcmQAE0VsaXhpci5DYWxlbmRhci5JU09kAANkYXlhDGQABGhvdXJhFWQAC21pY3Jvc2Vjb25kaAJiAArunWEGZAAGbWludXRlYS9kAAVtb250aGEEZAAGc2Vjb25kYQFkAApzdGRfb2Zmc2V0YQBkAAl0aW1lX3pvbmVtAAAAB0V0Yy9VVENkAAp1dGNfb2Zmc2V0YQBkAAR5ZWFyYgAAB+JkAAl6b25lX2FiYnJtAAAAA1VUQ20AAAADdWlkbQAAABDA7gI1UGlXc7EeKAq8pLwg\"}}",
+       "\n"]
+    ]
+  ]
+}
+  """
   def handle_event({:call, from}, {:add_batch, cmds, join_keys, {_topic, _partition, _offset} = ack_data}, @empty_state, %Data{} = data) do
     new_data = %Data{data | updates: [cmds | data.updates], ack_data: [ack_data | data.ack_data], join_keys: [join_keys | data.join_keys]}
     |> IO.inspect(label: "a")
@@ -50,6 +65,38 @@ defmodule Rivulet.Join.Batcher do
     :keep_state_and_data
   end
 
+  @doc """
+  b: %Rivulet.Join.Batcher.Data{
+  ack_data: [
+    {"platform_nps_responses", 7, 1},
+    {"platform_nps_invitations", 2, 0}
+  ],
+  handler: #PID<0.559.0>,
+  join_keys: [
+    ["c0ee0235-5069-5773-b11e-280abca4bc20",
+     "c0ee0235-5069-5773-b11e-280abca4bc20"],
+    ["c0ee0235-5069-5773-b11e-280abca4bc20"]
+  ],
+  updates: [
+    [
+      ["{\"update\":{\"_type\":\"join_documents\",\"_index\":\"rivulet-joinkey-nps-join\",\"_id\":\"f0315c54-b272-5e93-86f9-9897c2d860c5\"}}",
+       "\n",
+       "{\"doc_as_upsert\":true,\"doc\":{\"join_key\":\"c0ee0235-5069-5773-b11e-280abca4bc20\",\"document\":\"g3QAAAAGbQAAAAdjb21tZW50bQAAAABtAAAAC2luc2VydGVkX2F0dAAAAA1kAApfX3N0cnVjdF9fZAAPRWxpeGlyLkRhdGVUaW1lZAAIY2FsZW5kYXJkABNFbGl4aXIuQ2FsZW5kYXIuSVNPZAADZGF5YQxkAARob3VyYRVkAAttaWNyb3NlY29uZGgCYgAK7p1hBmQABm1pbnV0ZWEvZAAFbW9udGhhBGQABnNlY29uZGEBZAAKc3RkX29mZnNldGEAZAAJdGltZV96b25lbQAAAAdFdGMvVVRDZAAKdXRjX29mZnNldGEAZAAEeWVhcmIAAAfiZAAJem9uZV9hYmJybQAAAANVVENtAAAAEGxhc3RfbW9kaWZpZWRfYXR0AAAADWQACl9fc3RydWN0X19kAA9FbGl4aXIuRGF0ZVRpbWVkAAhjYWxlbmRhcmQAE0VsaXhpci5DYWxlbmRhci5JU09kAANkYXlhDGQABGhvdXJhFmQAC21pY3Jvc2Vjb25kaAJiAAxjhGEGZAAGbWludXRlYSJkAAVtb250aGEEZAAGc2Vjb25kYTBkAApzdGRfb2Zmc2V0YQBkAAl0aW1lX3pvbmVtAAAAB0V0Yy9VVENkAAp1dGNfb2Zmc2V0YQBkAAR5ZWFyYgAAB+JkAAl6b25lX2FiYnJtAAAAA1VUQ20AAAAXbGlrZWxpaG9vZF90b19yZWNvbW1lbmRhCm0AAAASbnBzX2ludml0YXRpb25fdWlkbQAAABDA7gI1UGlXc7EeKAq8pLwgbQAAAAN1aWRtAAAAEPAxXFSycl6ThvmYl8LYYMU=\"}}",
+       "\n"],
+      ["{\"update\":{\"_type\":\"join_documents\",\"_index\":\"rivulet-joinkey-nps-join\",\"_id\":\"f0315c54-b272-5e93-86f9-9897c2d860c5\"}}",
+       "\n",
+       "{\"doc_as_upsert\":true,\"doc\":{\"join_key\":\"c0ee0235-5069-5773-b11e-280abca4bc20\",\"document\":\"g3QAAAAGbQAAAAdjb21tZW50bQAAAA9Db21tZW50Mkludml0ZTJtAAAAC2luc2VydGVkX2F0dAAAAA1kAApfX3N0cnVjdF9fZAAPRWxpeGlyLkRhdGVUaW1lZAAIY2FsZW5kYXJkABNFbGl4aXIuQ2FsZW5kYXIuSVNPZAADZGF5YQxkAARob3VyYRVkAAttaWNyb3NlY29uZGgCYgAK7p1hBmQABm1pbnV0ZWEvZAAFbW9udGhhBGQABnNlY29uZGEBZAAKc3RkX29mZnNldGEAZAAJdGltZV96b25lbQAAAAdFdGMvVVRDZAAKdXRjX29mZnNldGEAZAAEeWVhcmIAAAfiZAAJem9uZV9hYmJybQAAAANVVENtAAAAEGxhc3RfbW9kaWZpZWRfYXR0AAAADWQACl9fc3RydWN0X19kAA9FbGl4aXIuRGF0ZVRpbWVkAAhjYWxlbmRhcmQAE0VsaXhpci5DYWxlbmRhci5JU09kAANkYXlhDGQABGhvdXJhFmQAC21pY3Jvc2Vjb25kaAJiAASCGWEGZAAGbWludXRlYSJkAAVtb250aGEEZAAGc2Vjb25kYTZkAApzdGRfb2Zmc2V0YQBkAAl0aW1lX3pvbmVtAAAAB0V0Yy9VVENkAAp1dGNfb2Zmc2V0YQBkAAR5ZWFyYgAAB+JkAAl6b25lX2FiYnJtAAAAA1VUQ20AAAAXbGlrZWxpaG9vZF90b19yZWNvbW1lbmRhCm0AAAASbnBzX2ludml0YXRpb25fdWlkbQAAABDA7gI1UGlXc7EeKAq8pLwgbQAAAAN1aWRtAAAAEPAxXFSycl6ThvmYl8LYYMU=\"}}",
+       "\n"]
+    ],
+    [
+      ["{\"update\":{\"_type\":\"join_documents\",\"_index\":\"rivulet-joinkey-nps-join\",\"_id\":\"c0ee0235-5069-5773-b11e-280abca4bc20\"}}",
+       "\n",
+       "{\"doc_as_upsert\":true,\"doc\":{\"join_key\":\"c0ee0235-5069-5773-b11e-280abca4bc20\",\"document\":\"g3QAAAAHbQAAAApjcmVhdGVkX2F0dAAAAA1kAApfX3N0cnVjdF9fZAAPRWxpeGlyLkRhdGVUaW1lZAAIY2FsZW5kYXJkABNFbGl4aXIuQ2FsZW5kYXIuSVNPZAADZGF5YQxkAARob3VyYRVkAAttaWNyb3NlY29uZGgCYgAK7p1hBmQABm1pbnV0ZWEvZAAFbW9udGhhBGQABnNlY29uZGEBZAAKc3RkX29mZnNldGEAZAAJdGltZV96b25lbQAAAAdFdGMvVVRDZAAKdXRjX29mZnNldGEAZAAEeWVhcmIAAAfiZAAJem9uZV9hYmJybQAAAANVVENtAAAADWN1c3RvbWVyX25hbWVtAAAADkRhbiBDb25nZXIgVHdvbQAAABBsYXN0X21vZGlmaWVkX2F0dAAAAA1kAApfX3N0cnVjdF9fZAAPRWxpeGlyLkRhdGVUaW1lZAAIY2FsZW5kYXJkABNFbGl4aXIuQ2FsZW5kYXIuSVNPZAADZGF5YQxkAARob3VyYRZkAAttaWNyb3NlY29uZGgCYgAK+SFhBmQABm1pbnV0ZWEiZAAFbW9udGhhBGQABnNlY29uZGEQZAAKc3RkX29mZnNldGEAZAAJdGltZV96b25lbQAAAAdFdGMvVVRDZAAKdXRjX29mZnNldGEAZAAEeWVhcmIAAAfiZAAJem9uZV9hYmJybQAAAANVVENtAAAADGxvY2F0aW9uX3VpZG0AAAAQX9A7+JzWUgqy45CEt4ywxW0AAAAMcGhvbmVfbnVtYmVybQAAAAwrMTg1MDU4NTc2MTdtAAAAB3NlbnRfYXR0AAAADWQACl9fc3RydWN0X19kAA9FbGl4aXIuRGF0ZVRpbWVkAAhjYWxlbmRhcmQAE0VsaXhpci5DYWxlbmRhci5JU09kAANkYXlhDGQABGhvdXJhFWQAC21pY3Jvc2Vjb25kaAJiAArunWEGZAAGbWludXRlYS9kAAVtb250aGEEZAAGc2Vjb25kYQFkAApzdGRfb2Zmc2V0YQBkAAl0aW1lX3pvbmVtAAAAB0V0Yy9VVENkAAp1dGNfb2Zmc2V0YQBkAAR5ZWFyYgAAB+JkAAl6b25lX2FiYnJtAAAAA1VUQ20AAAADdWlkbQAAABDA7gI1UGlXc7EeKAq8pLwg\"}}",
+       "\n"]
+    ]
+  ]
+}
+  """
   def handle_event({:call, from}, {:add_batch, cmds, join_keys, {_topic, _partition, _offset} = ack_data}, @filling_state, %Data{} = data) do
     new_data = %Data{data | updates: [cmds | data.updates], ack_data: [ack_data | data.ack_data], join_keys: [join_keys | data.join_keys]}
     |> IO.inspect(label: "b")
@@ -121,6 +168,37 @@ defmodule Rivulet.Join.Batcher do
 
   NOTE: is it safe to assume the return value from handler query has appropriate time stamp?
   If not, then we need to pass all of data down I believe
+
+  c: %Rivulet.Join.Batcher.Data{
+  ack_data: [
+    {"platform_nps_responses", 7, 1},
+    {"platform_nps_invitations", 2, 0}
+  ],
+  handler: #PID<0.559.0>,
+  join_keys: [
+    ["c0ee0235-5069-5773-b11e-280abca4bc20",
+     "c0ee0235-5069-5773-b11e-280abca4bc20"],
+    ["c0ee0235-5069-5773-b11e-280abca4bc20"]
+  ],
+  updates: [
+    [
+      ["{\"update\":{\"_type\":\"join_documents\",\"_index\":\"rivulet-joinkey-nps-join\",\"_id\":\"f0315c54-b272-5e93-86f9-9897c2d860c5\"}}",
+       "\n",
+       "{\"doc_as_upsert\":true,\"doc\":{\"join_key\":\"c0ee0235-5069-5773-b11e-280abca4bc20\",\"document\":\"g3QAAAAGbQAAAAdjb21tZW50bQAAAABtAAAAC2luc2VydGVkX2F0dAAAAA1kAApfX3N0cnVjdF9fZAAPRWxpeGlyLkRhdGVUaW1lZAAIY2FsZW5kYXJkABNFbGl4aXIuQ2FsZW5kYXIuSVNPZAADZGF5YQxkAARob3VyYRVkAAttaWNyb3NlY29uZGgCYgAK7p1hBmQABm1pbnV0ZWEvZAAFbW9udGhhBGQABnNlY29uZGEBZAAKc3RkX29mZnNldGEAZAAJdGltZV96b25lbQAAAAdFdGMvVVRDZAAKdXRjX29mZnNldGEAZAAEeWVhcmIAAAfiZAAJem9uZV9hYmJybQAAAANVVENtAAAAEGxhc3RfbW9kaWZpZWRfYXR0AAAADWQACl9fc3RydWN0X19kAA9FbGl4aXIuRGF0ZVRpbWVkAAhjYWxlbmRhcmQAE0VsaXhpci5DYWxlbmRhci5JU09kAANkYXlhDGQABGhvdXJhFmQAC21pY3Jvc2Vjb25kaAJiAAxjhGEGZAAGbWludXRlYSJkAAVtb250aGEEZAAGc2Vjb25kYTBkAApzdGRfb2Zmc2V0YQBkAAl0aW1lX3pvbmVtAAAAB0V0Yy9VVENkAAp1dGNfb2Zmc2V0YQBkAAR5ZWFyYgAAB+JkAAl6b25lX2FiYnJtAAAAA1VUQ20AAAAXbGlrZWxpaG9vZF90b19yZWNvbW1lbmRhCm0AAAASbnBzX2ludml0YXRpb25fdWlkbQAAABDA7gI1UGlXc7EeKAq8pLwgbQAAAAN1aWRtAAAAEPAxXFSycl6ThvmYl8LYYMU=\"}}",
+       "\n"],
+      ["{\"update\":{\"_type\":\"join_documents\",\"_index\":\"rivulet-joinkey-nps-join\",\"_id\":\"f0315c54-b272-5e93-86f9-9897c2d860c5\"}}",
+       "\n",
+       "{\"doc_as_upsert\":true,\"doc\":{\"join_key\":\"c0ee0235-5069-5773-b11e-280abca4bc20\",\"document\":\"g3QAAAAGbQAAAAdjb21tZW50bQAAAA9Db21tZW50Mkludml0ZTJtAAAAC2luc2VydGVkX2F0dAAAAA1kAApfX3N0cnVjdF9fZAAPRWxpeGlyLkRhdGVUaW1lZAAIY2FsZW5kYXJkABNFbGl4aXIuQ2FsZW5kYXIuSVNPZAADZGF5YQxkAARob3VyYRVkAAttaWNyb3NlY29uZGgCYgAK7p1hBmQABm1pbnV0ZWEvZAAFbW9udGhhBGQABnNlY29uZGEBZAAKc3RkX29mZnNldGEAZAAJdGltZV96b25lbQAAAAdFdGMvVVRDZAAKdXRjX29mZnNldGEAZAAEeWVhcmIAAAfiZAAJem9uZV9hYmJybQAAAANVVENtAAAAEGxhc3RfbW9kaWZpZWRfYXR0AAAADWQACl9fc3RydWN0X19kAA9FbGl4aXIuRGF0ZVRpbWVkAAhjYWxlbmRhcmQAE0VsaXhpci5DYWxlbmRhci5JU09kAANkYXlhDGQABGhvdXJhFmQAC21pY3Jvc2Vjb25kaAJiAASCGWEGZAAGbWludXRlYSJkAAVtb250aGEEZAAGc2Vjb25kYTZkAApzdGRfb2Zmc2V0YQBkAAl0aW1lX3pvbmVtAAAAB0V0Yy9VVENkAAp1dGNfb2Zmc2V0YQBkAAR5ZWFyYgAAB+JkAAl6b25lX2FiYnJtAAAAA1VUQ20AAAAXbGlrZWxpaG9vZF90b19yZWNvbW1lbmRhCm0AAAASbnBzX2ludml0YXRpb25fdWlkbQAAABDA7gI1UGlXc7EeKAq8pLwgbQAAAAN1aWRtAAAAEPAxXFSycl6ThvmYl8LYYMU=\"}}",
+       "\n"]
+    ],
+    [
+      ["{\"update\":{\"_type\":\"join_documents\",\"_index\":\"rivulet-joinkey-nps-join\",\"_id\":\"c0ee0235-5069-5773-b11e-280abca4bc20\"}}",
+       "\n",
+       "{\"doc_as_upsert\":true,\"doc\":{\"join_key\":\"c0ee0235-5069-5773-b11e-280abca4bc20\",\"document\":\"g3QAAAAHbQAAAApjcmVhdGVkX2F0dAAAAA1kAApfX3N0cnVjdF9fZAAPRWxpeGlyLkRhdGVUaW1lZAAIY2FsZW5kYXJkABNFbGl4aXIuQ2FsZW5kYXIuSVNPZAADZGF5YQxkAARob3VyYRVkAAttaWNyb3NlY29uZGgCYgAK7p1hBmQABm1pbnV0ZWEvZAAFbW9udGhhBGQABnNlY29uZGEBZAAKc3RkX29mZnNldGEAZAAJdGltZV96b25lbQAAAAdFdGMvVVRDZAAKdXRjX29mZnNldGEAZAAEeWVhcmIAAAfiZAAJem9uZV9hYmJybQAAAANVVENtAAAADWN1c3RvbWVyX25hbWVtAAAADkRhbiBDb25nZXIgVHdvbQAAABBsYXN0X21vZGlmaWVkX2F0dAAAAA1kAApfX3N0cnVjdF9fZAAPRWxpeGlyLkRhdGVUaW1lZAAIY2FsZW5kYXJkABNFbGl4aXIuQ2FsZW5kYXIuSVNPZAADZGF5YQxkAARob3VyYRZkAAttaWNyb3NlY29uZGgCYgAK+SFhBmQABm1pbnV0ZWEiZAAFbW9udGhhBGQABnNlY29uZGEQZAAKc3RkX29mZnNldGEAZAAJdGltZV96b25lbQAAAAdFdGMvVVRDZAAKdXRjX29mZnNldGEAZAAEeWVhcmIAAAfiZAAJem9uZV9hYmJybQAAAANVVENtAAAADGxvY2F0aW9uX3VpZG0AAAAQX9A7+JzWUgqy45CEt4ywxW0AAAAMcGhvbmVfbnVtYmVybQAAAAwrMTg1MDU4NTc2MTdtAAAAB3NlbnRfYXR0AAAADWQACl9fc3RydWN0X19kAA9FbGl4aXIuRGF0ZVRpbWVkAAhjYWxlbmRhcmQAE0VsaXhpci5DYWxlbmRhci5JU09kAANkYXlhDGQABGhvdXJhFWQAC21pY3Jvc2Vjb25kaAJiAArunWEGZAAGbWludXRlYS9kAAVtb250aGEEZAAGc2Vjb25kYQFkAApzdGRfb2Zmc2V0YQBkAAl0aW1lX3pvbmVtAAAAB0V0Yy9VVENkAAp1dGNfb2Zmc2V0YQBkAAR5ZWFyYgAAB+JkAAl6b25lX2FiYnJtAAAAA1VUQ20AAAADdWlkbQAAABDA7gI1UGlXc7EeKAq8pLwg\"}}",
+       "\n"]
+    ]
+  ]
+}
   """
   def handle_event(:state_timeout, :flush, @filling_state, %Data{} = data) do
     IO.inspect(data, label: "c")

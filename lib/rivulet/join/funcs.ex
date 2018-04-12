@@ -413,9 +413,10 @@ defmodule Rivulet.Kafka.Join.Funcs do
        #Reference<0.1270628481.3392405506.24344>}
     ]
   """
-  @spec transforms([[term]], {module, [{Rivulet.Kafka.Partition.topic, :key | :random}]})
+  @spec transforms([[term]], {module, [{Rivulet.Kafka.Partition.topic, :key | :random}]}, [{}])
   :: ignored
-  def transforms(join_docs, transformers) do
+  def transforms(join_docs, transformers, ack_data) do
+    IO.inspect(ack_data, label: "ack_data within transforms")
     IO.inspect(join_docs, label: "join_docs")
     IO.inspect(transformers, label: "transformers")
 

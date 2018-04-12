@@ -54,6 +54,8 @@ defmodule Rivulet.Join.Handler do
   partition:
     %Rivulet.Kafka.Partition{partition: 2, topic: "platform_nps_joins"}
     %Rivulet.Kafka.Partition{partition: 6, topic: "platform_nps_joins"}
+
+  [{"platform_nps_invitations", 2, 0}, {"platform_nps_responses", 7, 1}]
   """
   def handle_call({:handle_resp, join_keys, ack_data}, from,  %State{join_id: join_id, transformers: transformers, consumer: consumer} = state) do
     GenServer.reply(from, :ok)
@@ -98,7 +100,7 @@ defmodule Rivulet.Join.Handler do
     IO.inspect(res, label: "res")
     # require IEx; IEx.pry
 
-    Rivulet.Kafka.Join.Funcs.transforms(res, transformers)
+    Rivulet.Kafka.Join.Funcs.transforms(res, transformers, ack_data)
 
     ack_data
     |> Enum.reduce(%{}, fn
@@ -112,8 +114,10 @@ defmodule Rivulet.Join.Handler do
           else: offset
         end)
     end)
-    |> Enum.each(fn({{topic, partition}, offset} = each_thing) ->
+    # %{{"platform_nps_invitations", 2} => 0, {"platform_nps_responses", 7} => 1}
+    |> Enum.each(fn({{topic, partition} = _key, offset = _value} = each_thing) ->
       # require IEx; IEx.pry
+      # {{"platform_nps_invitations", 2}, 0}
       IO.inspect(each_thing, label: "each_thing")
 
       partition = %Partition{topic: topic, partition: partition}
