@@ -47,6 +47,68 @@ defmodule Rivulet.Join.Batcher do
     {:keep_state, new_data, [{:reply, from, :accepted}]}
   end
 
+  @doc """
+  resp:
+
+  %{
+    "errors" => false,
+    "items" => [
+      %{
+        "update" => %{
+          "_id" => "c0ee0235-5069-5773-b11e-280abca4bc20",
+          "_index" => "rivulet-joinkey-nps-location-join",
+          "_primary_term" => 1,
+          "_seq_no" => 6,
+          "_shards" => %{"failed" => 0, "successful" => 1, "total" => 2},
+          "_type" => "join_documents",
+          "_version" => 1,
+          "result" => "created",
+          "status" => 201
+        }
+      },
+      %{
+        "update" => %{
+          "_id" => "c0ee0235-5069-5773-b11e-280abca4bc20",
+          "_index" => "rivulet-joinkey-nps-location-join",
+          "_shards" => %{"failed" => 0, "successful" => 1, "total" => 2},
+          "_type" => "join_documents",
+          "_version" => 1,
+          "result" => "noop",
+          "status" => 200
+        }
+      },
+      %{
+        "update" => %{
+          "_id" => "789686bf-fa4d-569a-9a9f-0fd66496fa48",
+          "_index" => "rivulet-joinkey-nps-location-join",
+          "_primary_term" => 1,
+          "_seq_no" => 7,
+          "_shards" => %{"failed" => 0, "successful" => 1, "total" => 2},
+          "_type" => "join_documents",
+          "_version" => 1,
+          "result" => "created",
+          "status" => 201
+        }
+      },
+      %{
+        "update" => %{
+          "_id" => "789686bf-fa4d-569a-9a9f-0fd66496fa48",
+          "_index" => "rivulet-joinkey-nps-location-join",
+          "_shards" => %{"failed" => 0, "successful" => 1, "total" => 2},
+          "_type" => "join_documents",
+          "_version" => 1,
+          "result" => "noop",
+          "status" => 200
+        }
+      }
+    ],
+    "took" => 630
+  }
+
+  join_keys:
+    ["5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5", "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5",
+   "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5", "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5"]
+  """
   def handle_event(:state_timeout, :flush, @filling_state, %Data{} = data) do
     resp =
       data.updates

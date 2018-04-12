@@ -34,6 +34,23 @@ defmodule Rivulet.Join.Handler do
     payload
   end
 
+  @doc """
+  return from bulk_get_join_docs:
+
+  res: Same as 'join_docs' from Funcs.transform/2
+
+  thing_again:
+    {"platform_nps_joins", 2, 1}
+    {"platform_nps_joins", 6, 1}
+
+  each_thing:
+    {{"platform_nps_joins", 2}, 1}
+    {{"platform_nps_joins", 6}, 1}
+
+  partition:
+    %Rivulet.Kafka.Partition{partition: 2, topic: "platform_nps_joins"}
+    %Rivulet.Kafka.Partition{partition: 6, topic: "platform_nps_joins"}
+  """
   def handle_call({:handle_resp, join_keys, ack_data}, from,  %State{join_id: join_id, transformers: transformers, consumer: consumer} = state) do
     GenServer.reply(from, :ok)
 
