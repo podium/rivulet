@@ -42,6 +42,9 @@ defmodule Rivulet.Consumer do
 
   # Public API
 
+  @doc """
+
+  """
   @spec start_link(atom, Config.t, [term]) :: GenServer.on_start
   def start_link(callback_module, %Config{} = config, extra \\ []) do
     :brod_group_subscriber.start_link(config.client_id, config.consumer_group_name,
@@ -75,11 +78,15 @@ defmodule Rivulet.Consumer do
 
   def handle_message(topic, partition, messages, {callback_module, state}) when Record.is_record(messages, :kafka_message_set) and is_binary(topic) do
     partition = %Partition{topic: topic, partition: partition}
+      |> IO.inspect(label: "handle_message partition")
     messages =
       messages
       |> kafka_message_set(:messages)
+      |> IO.inspect(label: "message_set")
       |> Message.from_wire_message
+      |> IO.inspect(label: "from_wire_message")
 
+    IO.inspect(callback_module, label: "callback_module")
     case apply(callback_module, :handle_messages, [partition, messages, state]) do
       {:ok, state} ->
         {:ok, {callback_module, state}}

@@ -2,6 +2,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
   require Logger
   alias Rivulet.Join.ElasticSearch
   def start_link(module, consumer_group, stream_topics) do
+    IO.inspect(module, label: "module")
     config =
       %Rivulet.Consumer.Config{
         client_id: Application.get_env(:rivulet, :client_name),
@@ -423,18 +424,18 @@ defmodule Rivulet.Kafka.Join.Funcs do
     # 4 groups: [[...1...],[...2...],[...3...],[...4...]]
     Enum.map(join_docs, fn(join) ->
       # require IEx; IEx.pry
-      [
-        # ...1...
-    		%{"uid" => "a", "name" => "Some Location"},
-    		%{"uid" => "npsa", "location_uid" => "a"},
-    		%{"uid" => "npsa", "location_uid" => "a"}
-    	]
+      # [
+      #   # ...1...
+    	# 	%{"uid" => "a", "name" => "Some Location"},
+    	# 	%{"uid" => "npsa", "location_uid" => "a"},
+    	# 	%{"uid" => "npsa", "location_uid" => "a"}
+    	# ]
       IO.inspect(join, label: "join")
 
-      [
-        {FireHydrant.JoinTransformer.NPSLocationJoin,
-         [{"platform_nps_location_joins", :key}]}
-      ]
+      # [
+      #   {FireHydrant.JoinTransformer.NPSLocationJoin,
+      #    [{"platform_nps_location_joins", :key}]}
+      # ]
       Enum.map(transformers, fn({module, publishes} = thing) ->
         IO.inspect(thing, label: "thing")
         IO.inspect(publishes, label: "publishes")
