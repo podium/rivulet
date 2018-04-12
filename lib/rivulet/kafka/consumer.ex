@@ -141,6 +141,11 @@ from_wire_message: [
       |> Message.from_wire_message
       |> IO.inspect(label: "from_wire_message")
 
+    Enum.each(messages, fn (%Message{raw_key: rk, raw_value: rv}) ->
+      IO.inspect(Rivulet.Avro.decode(rk), label: "decoded raw_key")
+      IO.inspect(Rivulet.Avro.decode(rv), label: "decoded raw_value")
+    end)
+
     IO.inspect(callback_module, label: "callback_module")
     case apply(callback_module, :handle_messages, [partition, messages, state]) do
       {:ok, state} ->
