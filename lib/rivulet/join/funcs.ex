@@ -413,13 +413,47 @@ defmodule Rivulet.Kafka.Join.Funcs do
       ok: {:brod_call_ref, #PID<0.561.0>, #PID<0.798.0>,
        #Reference<0.1270628481.3392405506.24344>}
     ]
+
+
+
+
+
+  ack_data within transforms: [
+  {"platform_nps_responses", 7,
+   {"c0ee0235-5069-5773-b11e-280abca4bc20",
+    %Rivulet.Kafka.Consumer.Message{
+      attributes: 0,
+      crc: 2154720140,
+      decoded_key: <<240, 49, 92, 84, 178, 114, 94, 147, 134, 249, 152, 151,
+        194, 216, 96, 197>>,
+      decoded_value: %{
+        "comment" => "Comment2InviteTwoThree",
+        "inserted_at" => #DateTime<2018-04-12 21:47:01.716445Z>,
+        "last_modified_at" => #DateTime<2018-04-12 23:54:51.545308Z>,
+        "likelihood_to_recommend" => 9,
+        "nps_invitation_uid" => <<192, 238, 2, 53, 80, 105, 87, 115, 177, 30,
+          40, 10, 188, 164, 188, 32>>,
+        "uid" => <<240, 49, 92, 84, 178, 114, 94, 147, 134, 249, 152, 151, 194,
+          216, 96, 197>>
+      },
+      key_schema: nil,
+      offset: 4,
+      raw_key: <<0, 0, 0, 0, 1, 240, 49, 92, 84, 178, 114, 94, 147, 134, 249,
+        152, 151, 194, 216, 96, 197>>,
+      raw_value: <<0, 0, 0, 0, 13, 2, 240, 49, 92, 84, 178, 114, 94, 147, 134,
+        249, 152, 151, 194, 216, 96, 197, 192, 173, 199, 166, 174, 222, 234,
+        164, 42, 192, 238, 2, 53, 80, ...>>,
+      value_schema: nil
+    }, "f0315c54-b272-5e93-86f9-9897c2d860c5"}}
+]
+signature is [{topic, partition, {join_key, message, object_id}}]
   """
   # @spec transforms([[term]], {module, [{Rivulet.Kafka.Partition.topic, :key | :random}]}, [{}])
   # :: ignored
   def transforms(join_docs, transformers, ack_data) do
     IO.inspect(ack_data, label: "ack_data within transforms")
-    IO.inspect(join_docs, label: "join_docs")
-    IO.inspect(transformers, label: "transformers")
+    # IO.inspect(join_docs, label: "join_docs")
+    # IO.inspect(transformers, label: "transformers")
 
     # require IEx; IEx.pry
 

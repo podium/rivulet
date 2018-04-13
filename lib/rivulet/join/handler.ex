@@ -104,7 +104,7 @@ defmodule Rivulet.Join.Handler do
 
     ack_data
     |> Enum.reduce(%{}, fn
-      ({topic, partition, offset} = thing_again, %{} = acks) ->
+      ({topic, partition, {_join_key, %Message{offset: offset}, _object_id} = thing_again, %{} = acks) ->
         IO.inspect(thing_again, label: "thing_again")
         # require IEx; IEx.pry
 
@@ -118,11 +118,11 @@ defmodule Rivulet.Join.Handler do
     |> Enum.each(fn({{topic, partition} = _key, offset = _value} = each_thing) ->
       # require IEx; IEx.pry
       # {{"platform_nps_invitations", 2}, 0}
-      IO.inspect(each_thing, label: "each_thing")
+      # IO.inspect(each_thing, label: "each_thing")
 
       partition = %Partition{topic: topic, partition: partition}
 
-      IO.inspect(partition, label: "partition")
+      # IO.inspect(partition, label: "partition")
       # require IEx; IEx.pry
 
       Rivulet.Consumer.ack(consumer, partition, offset)
