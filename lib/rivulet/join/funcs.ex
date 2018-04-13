@@ -76,7 +76,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
       end)
 
     # require IEx; IEx.pry
-    bulk =
+    deserialized =
       messages
       |> Enum.map(fn(message) -> message end)
       |> Enum.map(fn(message) ->
@@ -99,26 +99,27 @@ defmodule Rivulet.Kafka.Join.Funcs do
         (nil) -> true
         (_) -> false
       end)
-      |> Enum.map(fn({join_key, message, object_id}) ->
-        {:put, join_key, object_id, message.decoded_value}
-      end)
+
+    bulk = Enum.map(deserialized, fn({join_key, message, object_id}) ->
+      {:put, join_key, object_id, message.decoded_value}
+    end)
 
     # require IEx; IEx.pry
     join_keys =
-      Enum.map(bulk, fn({:put, join_key, _message, _object_id}) ->
+      Enum.map(bulk, fn({:put, join_key, _object_id, _decoded_value}) ->
         join_key
       end)
 
     # require IEx; IEx.pry
-    offset =
-      messages
+    last_message =
+      deserialized
       |> List.last
-      |> Map.get(:offset)
+      # |> Map.get(:offset)
 
     # require IEx; IEx.pry
     bulk_doc = ElasticSearch.bulk_put_join_doc(bulk, join_id)
 
-    Rivulet.Join.Batcher.batch_commands(batcher, bulk_doc, join_keys, topic, partition, offset)
+    Rivulet.Join.Batcher.batch_commands(batcher, bulk_doc, join_keys, topic, partition, last_message)
   end
 
   @type ignored :: term
@@ -413,8 +414,8 @@ defmodule Rivulet.Kafka.Join.Funcs do
        #Reference<0.1270628481.3392405506.24344>}
     ]
   """
-  @spec transforms([[term]], {module, [{Rivulet.Kafka.Partition.topic, :key | :random}]}, [{}])
-  :: ignored
+  # @spec transforms([[term]], {module, [{Rivulet.Kafka.Partition.topic, :key | :random}]}, [{}])
+  # :: ignored
   def transforms(join_docs, transformers, ack_data) do
     IO.inspect(ack_data, label: "ack_data within transforms")
     IO.inspect(join_docs, label: "join_docs")

@@ -13,10 +13,10 @@ defmodule Rivulet.Join.Batcher do
   @flush_event :flush
 
   alias Rivulet.Kafka.Partition
-  @spec batch_commands(pid, [ElasticSearch.batch], [String.t], Partition.topic, Partition.partition, non_neg_integer)
-  :: :ok
-  def batch_commands(batcher, cmds, join_keys, topic, partition, offset) do
-    :gen_statem.call(batcher, {:add_batch, cmds, join_keys, {topic, partition, offset}})
+  # @spec batch_commands(pid, [ElasticSearch.batch], [String.t], Partition.topic, Partition.partition, non_neg_integer)
+  # :: :ok
+  def batch_commands(batcher, cmds, join_keys, topic, partition, last_message) do
+    :gen_statem.call(batcher, {:add_batch, cmds, join_keys, {topic, partition, last_message}})
   end
 
   def start_link(handler) do
@@ -51,7 +51,7 @@ defmodule Rivulet.Join.Batcher do
   ]
 }
   """
-  def handle_event({:call, from}, {:add_batch, cmds, join_keys, {_topic, _partition, _offset} = ack_data}, @empty_state, %Data{} = data) do
+  def handle_event({:call, from}, {:add_batch, cmds, join_keys, {_topic, _partition, _last_message} = ack_data}, @empty_state, %Data{} = data) do
     new_data = %Data{data | updates: [cmds | data.updates], ack_data: [ack_data | data.ack_data], join_keys: [join_keys | data.join_keys]}
     |> IO.inspect(label: "a")
     {:next_state, @filling_state, new_data, [{:reply, from, :accepted}]}
@@ -97,7 +97,7 @@ defmodule Rivulet.Join.Batcher do
   ]
 }
   """
-  def handle_event({:call, from}, {:add_batch, cmds, join_keys, {_topic, _partition, _offset} = ack_data}, @filling_state, %Data{} = data) do
+  def handle_event({:call, from}, {:add_batch, cmds, join_keys, {_topic, _partition, _last_message} = ack_data}, @filling_state, %Data{} = data) do
     new_data = %Data{data | updates: [cmds | data.updates], ack_data: [ack_data | data.ack_data], join_keys: [join_keys | data.join_keys]}
     |> IO.inspect(label: "b")
 
