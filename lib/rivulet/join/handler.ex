@@ -3,6 +3,7 @@ defmodule Rivulet.Join.Handler do
 
   alias Rivulet.Join.ElasticSearch
   alias Rivulet.Kafka.Partition
+  alias Rivulet.Kafka.Consumer.Message
 
   defmodule State do
     defstruct [:join_id, :transformers, :consumer]
@@ -104,7 +105,7 @@ defmodule Rivulet.Join.Handler do
 
     ack_data
     |> Enum.reduce(%{}, fn
-      ({topic, partition, {_join_key, %Message{offset: offset}, _object_id} = thing_again, %{} = acks) ->
+      ({topic, partition, {_join_key, %Message{offset: offset}, _object_id}} = thing_again, %{} = acks) ->
         IO.inspect(thing_again, label: "thing_again")
         # require IEx; IEx.pry
 
