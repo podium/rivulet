@@ -121,7 +121,6 @@ defmodule Rivulet.Kafka.Join.Funcs do
   def transforms(join_docs, transformers, ack_data) do
     Enum.map(join_docs, fn(join) ->
       Enum.map(transformers, fn({module, publishes} = thing) ->
-
         messages = module.handle_join(join, ack_data)
 
         messages =

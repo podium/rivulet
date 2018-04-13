@@ -39,10 +39,6 @@ defmodule Rivulet.Kafka.Publisher do
     publish(topic, partition, :raw, "", message)
   end
 
-  @doc """
-  publish signature might look like:
-  publish("topic_a", 7, :raw, "uida", %{...value...})
-  """
   def publish(topic, partition, :raw, key, message) when is_integer(partition) and is_binary(key) do
     Rivulet.client_name()
     |> :brod.produce(topic, partition, key, message)
@@ -66,41 +62,12 @@ defmodule Rivulet.Kafka.Publisher do
     end
   end
 
-  @doc """
-  message might look like:
-  %Rivulet.Kafka.Publisher.Message{
-		key: "uida",
-		value: %{"nps_invitation_uid" => "a", ...},
-		encoding_strategy: :raw,
-		topic: "topic_a",
-		partition_strategy: {:key, "uida"}
-	}
-  """
   def publish(%Message{} = message) do
     {:key, "uida"}
     partition = message.partition || message.partition_strategy
     publish(message.topic, partition, :raw, message.key, message.value)
   end
 
-  @doc """
-  messages might look like:
-  [
-		%Rivulet.Kafka.Publisher.Message{
-			key: "uida",
-			value: %{"nps_invitation_uid" => "a", ...},
-			encoding_strategy: :raw,
-			topic: "topic_a",
-			partition_strategy: {:key, "uida"}
-		},
-		%Rivulet.Kafka.Publisher.Message{
-			key: "uidb",
-			value: %{"nps_invitation_uid" => "b", ...},
-			encoding_strategy: :raw,
-			topic: "topic_a",
-			partition_strategy: {:key, "uidb"}
-		}
-  ]
-  """
   @spec publish([Message.t]) :: [{:ok, term} | {:error, term}]
   def publish(messages) do
     messages

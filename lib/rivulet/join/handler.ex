@@ -37,11 +37,7 @@ defmodule Rivulet.Join.Handler do
       |> ElasticSearch.bulk_get_join_docs(join_keys)
       |> Map.get("responses")
       |> Enum.map(fn(%{"hits" => %{"hits" => hits}}) -> hits end)
-      |> Enum.map(fn(hits) ->
-        Enum.map(hits, fn(hit) ->
-          hit["_source"]["document"]
-        end)
-      end)
+      |> Enum.map(fn(hits) -> Enum.map(hits, fn(hit) -> hit["_source"]["document"] end)
       |> Enum.map(fn (docs) ->
         Enum.map(docs, fn (doc) ->
           doc
@@ -54,7 +50,7 @@ defmodule Rivulet.Join.Handler do
 
     ack_data
     |> Enum.reduce(%{}, fn
-      ({topic, partition, {_join_key, %Message{offset: offset}, _object_id}} = _thing_again, %{} = acks) ->
+      ({topic, partition, {_join_key, %Message{offset: offset}, _object_id}}, %{} = acks) ->
 
         Map.update(acks, {topic, partition}, offset, fn(prev_offset) ->
           if prev_offset > offset,
@@ -62,7 +58,7 @@ defmodule Rivulet.Join.Handler do
           else: offset
         end)
     end)
-    |> Enum.each(fn({{topic, partition} = _key, offset = _value} = each_thing) ->
+    |> Enum.each(fn({{topic, partition} = _key, offset = _value}) ->
 
       partition = %Partition{topic: topic, partition: partition}
 

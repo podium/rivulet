@@ -13,7 +13,7 @@ defmodule Rivulet.Join.Batcher do
   @flush_event :flush
 
   alias Rivulet.Kafka.Partition
-  
+
   def batch_commands(batcher, cmds, join_keys, topic, partition, last_message) do
     :gen_statem.call(batcher, {:add_batch, cmds, join_keys, {topic, partition, last_message}})
   end
@@ -24,13 +24,6 @@ defmodule Rivulet.Join.Batcher do
 
   def callback_mode, do: [:handle_event_function, :state_enter]
 
-  @doc """
-  From join.ex:
-    {:ok, handler} = Handler.start_link(...)
-    {:ok batcher} = Batcher.start_link(handler)
-
-  handler: is the pid of the handler
-  """
   def init({handler}) do
     {:ok, @empty_state, %Data{handler: handler}}
   end

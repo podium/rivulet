@@ -42,9 +42,6 @@ defmodule Rivulet.Consumer do
 
   # Public API
 
-  @doc """
-
-  """
   @spec start_link(atom, Config.t, [term]) :: GenServer.on_start
   def start_link(callback_module, %Config{} = config, extra \\ []) do
     :brod_group_subscriber.start_link(config.client_id, config.consumer_group_name,
@@ -76,61 +73,6 @@ defmodule Rivulet.Consumer do
     {:ok, {callback_module, state}}
   end
 
-  @doc """
-  handle_message partition:
-
-  message_set:
-
-  from_wire_message:
-
-  callback_module:
-
-  handle_message partition: %Rivulet.Kafka.Partition{partition: 2, topic: "platform_locations"}
-message_set: [
-  {:kafka_message, 0, 1, 0,
-   <<0, 0, 0, 0, 1, 95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144, 132, 183,
-     140, 176, 197>>,
-   <<0, 0, 0, 0, 3, 2, 0, 208, 233, 186, 215, 241, 153, 231, 164, 42, 60, 80,
-     97, 117, 108, 32, 66, 108, 97, 110, 99, 111, 39, 115, 32, 71, 111, 111,
-     100, 32, 67, 97, 114, 32, 67, 111, 109, ...>>, 2775125410, :create, -1},
-  {:kafka_message, 1, 1, 0,
-   <<0, 0, 0, 0, 1, 95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144, 132, 183,
-     140, 176, 197>>,
-   <<0, 0, 0, 0, 3, 2, 0, 208, 233, 186, 215, 241, 153, 231, 164, 42, 60, 80,
-     97, 117, 108, 32, 66, 108, 97, 110, 99, 111, 39, 115, 32, 71, 111, 111,
-     100, 32, 67, 97, 114, 32, 67, 111, ...>>, 2889956219, :create, -1}
-]
-from_wire_message: [
-  %Rivulet.Kafka.Consumer.Message{
-    attributes: 0,
-    crc: 2775125410,
-    decoded_key: nil,
-    decoded_value: nil,
-    key_schema: nil,
-    offset: 0,
-    raw_key: <<0, 0, 0, 0, 1, 95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
-      132, 183, 140, 176, 197>>,
-    raw_value: <<0, 0, 0, 0, 3, 2, 0, 208, 233, 186, 215, 241, 153, 231, 164,
-      42, 60, 80, 97, 117, 108, 32, 66, 108, 97, 110, 99, 111, 39, 115, 32, 71,
-      111, 111, 100, 32, 67, 97, 114, 32, 67, ...>>,
-    value_schema: nil
-  },
-  %Rivulet.Kafka.Consumer.Message{
-    attributes: 0,
-    crc: 2889956219,
-    decoded_key: nil,
-    decoded_value: nil,
-    key_schema: nil,
-    offset: 1,
-    raw_key: <<0, 0, 0, 0, 1, 95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
-      132, 183, 140, 176, 197>>,
-    raw_value: <<0, 0, 0, 0, 3, 2, 0, 208, 233, 186, 215, 241, 153, 231, 164,
-      42, 60, 80, 97, 117, 108, 32, 66, 108, 97, 110, 99, 111, 39, 115, 32, 71,
-      111, 111, 100, 32, 67, 97, 114, 32, ...>>,
-    value_schema: nil
-  }
-]
-  """
   def handle_message(topic, partition, messages, {callback_module, state}) when Record.is_record(messages, :kafka_message_set) and is_binary(topic) do
     partition = %Partition{topic: topic, partition: partition}
 
