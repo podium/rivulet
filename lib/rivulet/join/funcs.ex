@@ -2,7 +2,6 @@ defmodule Rivulet.Kafka.Join.Funcs do
   require Logger
   alias Rivulet.Join.ElasticSearch
   def start_link(module, consumer_group, stream_topics) do
-    IO.inspect(module, label: "module")
     config =
       %Rivulet.Consumer.Config{
         client_id: Application.get_env(:rivulet, :client_name),
@@ -75,7 +74,6 @@ defmodule Rivulet.Kafka.Join.Funcs do
         (_) -> false
       end)
 
-    # require IEx; IEx.pry
     deserialized =
       messages
       |> Enum.map(fn(message) -> message end)
@@ -104,19 +102,15 @@ defmodule Rivulet.Kafka.Join.Funcs do
       {:put, join_key, object_id, message.decoded_value}
     end)
 
-    # require IEx; IEx.pry
     join_keys =
       Enum.map(bulk, fn({:put, join_key, _object_id, _decoded_value}) ->
         join_key
       end)
 
-    # require IEx; IEx.pry
     last_message =
       deserialized
       |> List.last
-      # |> Map.get(:offset)
 
-    # require IEx; IEx.pry
     bulk_doc = ElasticSearch.bulk_put_join_doc(bulk, join_id)
 
     Rivulet.Join.Batcher.batch_commands(batcher, bulk_doc, join_keys, topic, partition, last_message)
@@ -124,370 +118,17 @@ defmodule Rivulet.Kafka.Join.Funcs do
 
   @type ignored :: term
 
-  @doc """
-  join_docs:
-
-  [
-    [
-      %{
-        "address" => "3190 Auto Center Cir, Stockton, CA 95212, USA",
-        "archived" => false,
-        "created_at" => "2018-02-24T22:55:42.709274Z",
-        "last_modified_at" => "2018-04-11T21:55:42.709818Z",
-        "name" => "Paul Blanco's Good Car Company",
-        "organization_uid" => "f4ac4bcb-e271-5a92-8e43-1d676a8821fa",
-        "podium_number" => "+13853360060",
-        "timezone_identifier_uid" => nil,
-        "uid" => "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5",
-        "updated_at" => "2018-04-11T21:55:42.736053Z"
-      },
-      %{
-        "adjusted_score" => 100,
-        "created_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "customer_name" => "DanTwo",
-        "customer_phone" => "+18505857617",
-        "invitation_sent_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
-          132, 183, 140, 176, 197>>,
-        "nps_comment" => "CommentTwo",
-        "nps_invitation_uid" => <<192, 238, 2, 53, 80, 105, 87, 115, 177, 30, 40,
-          10, 188, 164, 188, 32>>,
-        "nps_response_uid" => <<240, 49, 92, 84, 178, 114, 94, 147, 134, 249, 152,
-          151, 194, 216, 96, 197>>,
-        "nps_score" => 10,
-        "response_received_at" => #DateTime<2018-04-11 21:54:54.808000Z>
-      },
-      %{
-        "adjusted_score" => 100,
-        "created_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "customer_name" => "Dan",
-        "customer_phone" => "+18505857616",
-        "invitation_sent_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
-          132, 183, 140, 176, 197>>,
-        "nps_comment" => "Comment",
-        "nps_invitation_uid" => <<120, 150, 134, 191, 250, 77, 86, 154, 154, 159,
-          15, 214, 100, 150, 250, 72>>,
-        "nps_response_uid" => <<99, 234, 26, 194, 40, 212, 80, 237, 131, 150, 5,
-          95, 147, 38, 179, 128>>,
-        "nps_score" => 10,
-        "response_received_at" => #DateTime<2018-04-11 21:54:54.808000Z>
-      }
-    ],
-    [
-      %{
-        "address" => "3190 Auto Center Cir, Stockton, CA 95212, USA",
-        "archived" => false,
-        "created_at" => "2018-02-24T22:55:42.709274Z",
-        "last_modified_at" => "2018-04-11T21:55:42.709818Z",
-        "name" => "Paul Blanco's Good Car Company",
-        "organization_uid" => "f4ac4bcb-e271-5a92-8e43-1d676a8821fa",
-        "podium_number" => "+13853360060",
-        "timezone_identifier_uid" => nil,
-        "uid" => "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5",
-        "updated_at" => "2018-04-11T21:55:42.736053Z"
-      },
-      %{
-        "adjusted_score" => 100,
-        "created_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "customer_name" => "DanTwo",
-        "customer_phone" => "+18505857617",
-        "invitation_sent_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
-          132, 183, 140, 176, 197>>,
-        "nps_comment" => "CommentTwo",
-        "nps_invitation_uid" => <<192, 238, 2, 53, 80, 105, 87, 115, 177, 30, 40,
-          10, 188, 164, 188, 32>>,
-        "nps_response_uid" => <<240, 49, 92, 84, 178, 114, 94, 147, 134, 249, 152,
-          151, 194, 216, 96, 197>>,
-        "nps_score" => 10,
-        "response_received_at" => #DateTime<2018-04-11 21:54:54.808000Z>
-      },
-      %{
-        "adjusted_score" => 100,
-        "created_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "customer_name" => "Dan",
-        "customer_phone" => "+18505857616",
-        "invitation_sent_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
-          132, 183, 140, 176, 197>>,
-        "nps_comment" => "Comment",
-        "nps_invitation_uid" => <<120, 150, 134, 191, 250, 77, 86, 154, 154, 159,
-          15, 214, 100, 150, 250, 72>>,
-        "nps_response_uid" => <<99, 234, 26, 194, 40, 212, 80, 237, 131, 150, 5,
-          95, 147, 38, 179, 128>>,
-        "nps_score" => 10,
-        "response_received_at" => #DateTime<2018-04-11 21:54:54.808000Z>
-      }
-    ],
-    [
-      %{
-        "address" => "3190 Auto Center Cir, Stockton, CA 95212, USA",
-        "archived" => false,
-        "created_at" => "2018-02-24T22:55:42.709274Z",
-        "last_modified_at" => "2018-04-11T21:55:42.709818Z",
-        "name" => "Paul Blanco's Good Car Company",
-        "organization_uid" => "f4ac4bcb-e271-5a92-8e43-1d676a8821fa",
-        "podium_number" => "+13853360060",
-        "timezone_identifier_uid" => nil,
-        "uid" => "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5",
-        "updated_at" => "2018-04-11T21:55:42.736053Z"
-      },
-      %{
-        "adjusted_score" => 100,
-        "created_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "customer_name" => "DanTwo",
-        "customer_phone" => "+18505857617",
-        "invitation_sent_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
-          132, 183, 140, 176, 197>>,
-        "nps_comment" => "CommentTwo",
-        "nps_invitation_uid" => <<192, 238, 2, 53, 80, 105, 87, 115, 177, 30, 40,
-          10, 188, 164, 188, 32>>,
-        "nps_response_uid" => <<240, 49, 92, 84, 178, 114, 94, 147, 134, 249, 152,
-          151, 194, 216, 96, 197>>,
-        "nps_score" => 10,
-        "response_received_at" => #DateTime<2018-04-11 21:54:54.808000Z>
-      },
-      %{
-        "adjusted_score" => 100,
-        "created_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "customer_name" => "Dan",
-        "customer_phone" => "+18505857616",
-        "invitation_sent_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
-          132, 183, 140, 176, 197>>,
-        "nps_comment" => "Comment",
-        "nps_invitation_uid" => <<120, 150, 134, 191, 250, 77, 86, 154, 154, 159,
-          15, 214, 100, 150, 250, 72>>,
-        "nps_response_uid" => <<99, 234, 26, 194, 40, 212, 80, 237, 131, 150, 5,
-          95, 147, 38, 179, 128>>,
-        "nps_score" => 10,
-        "response_received_at" => #DateTime<2018-04-11 21:54:54.808000Z>
-      }
-    ],
-    [
-      %{
-        "address" => "3190 Auto Center Cir, Stockton, CA 95212, USA",
-        "archived" => false,
-        "created_at" => "2018-02-24T22:55:42.709274Z",
-        "last_modified_at" => "2018-04-11T21:55:42.709818Z",
-        "name" => "Paul Blanco's Good Car Company",
-        "organization_uid" => "f4ac4bcb-e271-5a92-8e43-1d676a8821fa",
-        "podium_number" => "+13853360060",
-        "timezone_identifier_uid" => nil,
-        "uid" => "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5",
-        "updated_at" => "2018-04-11T21:55:42.736053Z"
-      },
-      %{
-        "adjusted_score" => 100,
-        "created_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "customer_name" => "DanTwo",
-        "customer_phone" => "+18505857617",
-        "invitation_sent_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
-          132, 183, 140, 176, 197>>,
-        "nps_comment" => "CommentTwo",
-        "nps_invitation_uid" => <<192, 238, 2, 53, 80, 105, 87, 115, 177, 30, 40,
-          10, 188, 164, 188, 32>>,
-        "nps_response_uid" => <<240, 49, 92, 84, 178, 114, 94, 147, 134, 249, 152,
-          151, 194, 216, 96, 197>>,
-        "nps_score" => 10,
-        "response_received_at" => #DateTime<2018-04-11 21:54:54.808000Z>
-      },
-      %{
-        "adjusted_score" => 100,
-        "created_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "customer_name" => "Dan",
-        "customer_phone" => "+18505857616",
-        "invitation_sent_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
-          132, 183, 140, 176, 197>>,
-        "nps_comment" => "Comment",
-        "nps_invitation_uid" => <<120, 150, 134, 191, 250, 77, 86, 154, 154, 159,
-          15, 214, 100, 150, 250, 72>>,
-        "nps_response_uid" => <<99, 234, 26, 194, 40, 212, 80, 237, 131, 150, 5,
-          95, 147, 38, 179, 128>>,
-        "nps_score" => 10,
-        "response_received_at" => #DateTime<2018-04-11 21:54:54.808000Z>
-      }
-    ]
-  ]
-
-  transformers:
-
-    [
-      {FireHydrant.JoinTransformer.NPSLocationJoin,
-       [{"platform_nps_location_joins", :key}]}
-    ]
-
-  join:
-
-    [
-      %{
-        "address" => "3190 Auto Center Cir, Stockton, CA 95212, USA",
-        "archived" => false,
-        "created_at" => "2018-02-24T22:55:42.709274Z",
-        "last_modified_at" => "2018-04-11T21:55:42.709818Z",
-        "name" => "Paul Blanco's Good Car Company",
-        "organization_uid" => "f4ac4bcb-e271-5a92-8e43-1d676a8821fa",
-        "podium_number" => "+13853360060",
-        "timezone_identifier_uid" => nil,
-        "uid" => "5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5",
-        "updated_at" => "2018-04-11T21:55:42.736053Z"
-      },
-      %{
-        "adjusted_score" => 100,
-        "created_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "customer_name" => "DanTwo",
-        "customer_phone" => "+18505857617",
-        "invitation_sent_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144, 132,
-          183, 140, 176, 197>>,
-        "nps_comment" => "CommentTwo",
-        "nps_invitation_uid" => <<192, 238, 2, 53, 80, 105, 87, 115, 177, 30, 40,
-          10, 188, 164, 188, 32>>,
-        "nps_response_uid" => <<240, 49, 92, 84, 178, 114, 94, 147, 134, 249, 152,
-          151, 194, 216, 96, 197>>,
-        "nps_score" => 10,
-        "response_received_at" => #DateTime<2018-04-11 21:54:54.808000Z>
-      },
-      %{
-        "adjusted_score" => 100,
-        "created_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "customer_name" => "Dan",
-        "customer_phone" => "+18505857616",
-        "invitation_sent_at" => #DateTime<2018-04-11 21:54:54.808000Z>,
-        "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144, 132,
-          183, 140, 176, 197>>,
-        "nps_comment" => "Comment",
-        "nps_invitation_uid" => <<120, 150, 134, 191, 250, 77, 86, 154, 154, 159,
-          15, 214, 100, 150, 250, 72>>,
-        "nps_response_uid" => <<99, 234, 26, 194, 40, 212, 80, 237, 131, 150, 5, 95,
-          147, 38, 179, 128>>,
-        "nps_score" => 10,
-        "response_received_at" => #DateTime<2018-04-11 21:54:54.808000Z>
-      }
-    ]
-
-  thing:
-    {FireHydrant.JoinTransformer.NPSLocationJoin, [{"platform_nps_location_joins", :key}]}
-
-  publishes:
-    [{"platform_nps_location_joins", :key}]
-
-  messages:
-
-    [
-      {"c0ee0235-5069-5773-b11e-280abca4bc20",
-       "{\"response_received_at\":\"2018-04-11T21:54:54.808000Z\",\"organization_uid\":\"f4ac4bcb-e271-5a92-8e43-1d676a8821fa\",\"nps_score\":10,\"nps_response_uid\":\"f0315c54-b272-5e93-86f9-9897c2d860c5\",\"nps_invitation_uid\":\"c0ee0235-5069-5773-b11e-280abca4bc20\",\"nps_comment\":\"CommentTwo\",\"location_uid\":\"5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5\",\"location_name\":\"Paul Blanco's Good Car Company\",\"location_address\":\"3190 Auto Center Cir, Stockton, CA 95212, USA\",\"invitation_sent_at\":\"2018-04-11T21:54:54.808000Z\",\"customer_phone\":\"+18505857617\",\"customer_name\":\"DanTwo\",\"created_at\":\"2018-04-11T21:54:54.808000Z\",\"adjusted_score\":100}"},
-      {"789686bf-fa4d-569a-9a9f-0fd66496fa48",
-       "{\"response_received_at\":\"2018-04-11T21:54:54.808000Z\",\"organization_uid\":\"f4ac4bcb-e271-5a92-8e43-1d676a8821fa\",\"nps_score\":10,\"nps_response_uid\":\"63ea1ac2-28d4-50ed-8396-055f9326b380\",\"nps_invitation_uid\":\"789686bf-fa4d-569a-9a9f-0fd66496fa48\",\"nps_comment\":\"Comment\",\"location_uid\":\"5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5\",\"location_name\":\"Paul Blanco's Good Car Company\",\"location_address\":\"3190 Auto Center Cir, Stockton, CA 95212, USA\",\"invitation_sent_at\":\"2018-04-11T21:54:54.808000Z\",\"customer_phone\":\"+18505857616\",\"customer_name\":\"Dan\",\"created_at\":\"2018-04-11T21:54:54.808000Z\",\"adjusted_score\":100}"}
-    ]
-
-  publishes(part2):
-
-    [
-      %Rivulet.Kafka.Publisher.Message{
-        encoding_strategy: :raw,
-        key: "c0ee0235-5069-5773-b11e-280abca4bc20",
-        partition: nil,
-        partition_strategy: {:key, "c0ee0235-5069-5773-b11e-280abca4bc20"},
-        topic: "platform_nps_location_joins",
-        value: "{\"response_received_at\":\"2018-04-11T21:54:54.808000Z\",\"organization_uid\":\"f4ac4bcb-e271-5a92-8e43-1d676a8821fa\",\"nps_score\":10,\"nps_response_uid\":\"f0315c54-b272-5e93-86f9-9897c2d860c5\",\"nps_invitation_uid\":\"c0ee0235-5069-5773-b11e-280abca4bc20\",\"nps_comment\":\"CommentTwo\",\"location_uid\":\"5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5\",\"location_name\":\"Paul Blanco's Good Car Company\",\"location_address\":\"3190 Auto Center Cir, Stockton, CA 95212, USA\",\"invitation_sent_at\":\"2018-04-11T21:54:54.808000Z\",\"customer_phone\":\"+18505857617\",\"customer_name\":\"DanTwo\",\"created_at\":\"2018-04-11T21:54:54.808000Z\",\"adjusted_score\":100}"
-      },
-      %Rivulet.Kafka.Publisher.Message{
-        encoding_strategy: :raw,
-        key: "789686bf-fa4d-569a-9a9f-0fd66496fa48",
-        partition: nil,
-        partition_strategy: {:key, "789686bf-fa4d-569a-9a9f-0fd66496fa48"},
-        topic: "platform_nps_location_joins",
-        value: "{\"response_received_at\":\"2018-04-11T21:54:54.808000Z\",\"organization_uid\":\"f4ac4bcb-e271-5a92-8e43-1d676a8821fa\",\"nps_score\":10,\"nps_response_uid\":\"63ea1ac2-28d4-50ed-8396-055f9326b380\",\"nps_invitation_uid\":\"789686bf-fa4d-569a-9a9f-0fd66496fa48\",\"nps_comment\":\"Comment\",\"location_uid\":\"5fd03bf8-9cd6-520a-b2e3-9084b78cb0c5\",\"location_name\":\"Paul Blanco's Good Car Company\",\"location_address\":\"3190 Auto Center Cir, Stockton, CA 95212, USA\",\"invitation_sent_at\":\"2018-04-11T21:54:54.808000Z\",\"customer_phone\":\"+18505857616\",\"customer_name\":\"Dan\",\"created_at\":\"2018-04-11T21:54:54.808000Z\",\"adjusted_score\":100}"
-      }
-    ]
-
-  refs:
-    [
-      ok: {:brod_call_ref, #PID<0.561.0>, #PID<0.804.0>,
-       #Reference<0.1270628481.3392405506.24342>},
-      ok: {:brod_call_ref, #PID<0.561.0>, #PID<0.798.0>,
-       #Reference<0.1270628481.3392405506.24344>}
-    ]
-
-
-
-
-
-  ack_data within transforms: [
-  {"platform_nps_responses", 7,
-   {"c0ee0235-5069-5773-b11e-280abca4bc20",
-    %Rivulet.Kafka.Consumer.Message{
-      attributes: 0,
-      crc: 2154720140,
-      decoded_key: <<240, 49, 92, 84, 178, 114, 94, 147, 134, 249, 152, 151,
-        194, 216, 96, 197>>,
-      decoded_value: %{
-        "comment" => "Comment2InviteTwoThree",
-        "inserted_at" => #DateTime<2018-04-12 21:47:01.716445Z>,
-        "last_modified_at" => #DateTime<2018-04-12 23:54:51.545308Z>,
-        "likelihood_to_recommend" => 9,
-        "nps_invitation_uid" => <<192, 238, 2, 53, 80, 105, 87, 115, 177, 30,
-          40, 10, 188, 164, 188, 32>>,
-        "uid" => <<240, 49, 92, 84, 178, 114, 94, 147, 134, 249, 152, 151, 194,
-          216, 96, 197>>
-      },
-      key_schema: nil,
-      offset: 4,
-      raw_key: <<0, 0, 0, 0, 1, 240, 49, 92, 84, 178, 114, 94, 147, 134, 249,
-        152, 151, 194, 216, 96, 197>>,
-      raw_value: <<0, 0, 0, 0, 13, 2, 240, 49, 92, 84, 178, 114, 94, 147, 134,
-        249, 152, 151, 194, 216, 96, 197, 192, 173, 199, 166, 174, 222, 234,
-        164, 42, 192, 238, 2, 53, 80, ...>>,
-      value_schema: nil
-    }, "f0315c54-b272-5e93-86f9-9897c2d860c5"}}
-]
-signature is [{topic, partition, {join_key, message, object_id}}]
-  """
-  # @spec transforms([[term]], {module, [{Rivulet.Kafka.Partition.topic, :key | :random}]}, [{}])
-  # :: ignored
   def transforms(join_docs, transformers, ack_data) do
-    IO.inspect(ack_data, label: "ack_data within transforms")
-    # IO.inspect(join_docs, label: "join_docs")
-    # IO.inspect(transformers, label: "transformers")
-
-    # require IEx; IEx.pry
-
-    # 4 groups: [[...1...],[...2...],[...3...],[...4...]]
     Enum.map(join_docs, fn(join) ->
-      # require IEx; IEx.pry
-      # [
-      #   # ...1...
-    	# 	%{"uid" => "a", "name" => "Some Location"},
-    	# 	%{"uid" => "npsa", "location_uid" => "a"},
-    	# 	%{"uid" => "npsa", "location_uid" => "a"}
-    	# ]
-      IO.inspect(join, label: "join")
-
-      # [
-      #   {FireHydrant.JoinTransformer.NPSLocationJoin,
-      #    [{"platform_nps_location_joins", :key}]}
-      # ]
       Enum.map(transformers, fn({module, publishes} = thing) ->
-        IO.inspect(thing, label: "thing")
-        IO.inspect(publishes, label: "publishes")
-        # require IEx; IEx.pry
 
-        # [{uid, encoded}, {uid, encoded_location_plus_nps_join_entity}]
-
-        messages = module.handle_join(join)
+        messages = module.handle_join(join, ack_data)
 
         messages =
           case messages do
             list when is_list(list) -> list
             other -> [other]
           end
-
-        IO.inspect(messages, label: "messages")
 
         publishes =
           messages
@@ -500,9 +141,7 @@ signature is [{topic, partition, {join_key, message, object_id}}]
               true
           end)
           |> Enum.map(fn({k, v}) ->
-            # {uid, encoded_location_plus_nps_join_entity}
             Enum.map(publishes, fn
-              # {"platform_nps_location_joins", :key}
               ({topic, :key}) ->
                 %Rivulet.Kafka.Publisher.Message{
                   key: k,
@@ -523,13 +162,7 @@ signature is [{topic, partition, {join_key, message, object_id}}]
           end)
           |> List.flatten
 
-        IO.inspect(publishes, label: "publishes")
-        # require IEx; IEx.pry
-
         refs = Rivulet.Kafka.Publisher.publish(publishes)
-
-        IO.inspect(refs, label: "refs")
-        # require IEx; IEx.pry
 
         Enum.map(refs, fn
           ({:ok, call_ref}) ->

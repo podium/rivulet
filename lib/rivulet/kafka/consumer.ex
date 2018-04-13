@@ -133,20 +133,12 @@ from_wire_message: [
   """
   def handle_message(topic, partition, messages, {callback_module, state}) when Record.is_record(messages, :kafka_message_set) and is_binary(topic) do
     partition = %Partition{topic: topic, partition: partition}
-      |> IO.inspect(label: "handle_message partition")
+
     messages =
       messages
       |> kafka_message_set(:messages)
-      |> IO.inspect(label: "message_set")
       |> Message.from_wire_message
-      |> IO.inspect(label: "from_wire_message")
 
-    Enum.each(messages, fn (%Message{raw_key: rk, raw_value: rv}) ->
-      IO.inspect(Rivulet.Avro.decode(rk), label: "decoded raw_key")
-      IO.inspect(Rivulet.Avro.decode(rv), label: "decoded raw_value")
-    end)
-
-    IO.inspect(callback_module, label: "callback_module")
     case apply(callback_module, :handle_messages, [partition, messages, state]) do
       {:ok, state} ->
         {:ok, {callback_module, state}}
