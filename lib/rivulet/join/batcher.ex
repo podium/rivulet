@@ -65,6 +65,8 @@ defmodule Rivulet.Join.Batcher do
       |> Enum.reverse
       |> List.flatten
 
+    IO.inspect(data, label: "data when it is flushed")
+    IO.inspect(join_keys, label: "join_keys in batcher")
     Rivulet.Join.Handler.handle_resp(data.handler, join_keys, Enum.reverse(data.ack_data))
 
     {:next_state, @empty_state, %Data{handler: data.handler}}

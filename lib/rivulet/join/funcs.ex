@@ -107,9 +107,14 @@ defmodule Rivulet.Kafka.Join.Funcs do
         join_key
       end)
 
-    last_message =
-      deserialized
-      |> List.last
+    last_message = List.last(deserialized)
+
+    IO.inspect(topic, label: "topic")
+    IO.inspect(partition, label: "partition")
+    IO.inspect(last_message, label: "last_message")
+    IO.inspect(join_keys, label: "join_keys")
+
+    Logger.info("Last message for #{topic} and #{partition}: #{inspect(last_message)}")
 
     bulk_doc = ElasticSearch.bulk_put_join_doc(bulk, join_id)
 
