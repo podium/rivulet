@@ -103,8 +103,8 @@ defmodule Rivulet.Kafka.Join.Funcs do
     end)
 
     join_keys =
-      Enum.map(bulk, fn({:put, join_key, _object_id, _decoded_value}) ->
-        join_key
+      Enum.map(bulk, fn({:put, join_key, object_id, _decoded_value}) ->
+        {join_key, object_id}
       end)
 
     last_message = List.last(deserialized)
@@ -112,8 +112,13 @@ defmodule Rivulet.Kafka.Join.Funcs do
     IO.inspect(topic, label: "topic")
     IO.inspect(partition, label: "partition")
     IO.inspect(last_message, label: "last_message")
-    IO.inspect(join_keys, label: "join_keys")
+    IO.inspect(join_keys, label: "join_keys now with object_id in there")
 
+    # We need to pass both the join_key and the object_id
+    # So for nps_invitation in the nps_joins topic it would be {"uida", "uida"}
+    # So for nps_response in the nps_joins topic it would be {"uida", "uidb"}
+    # So for nps_joins in the nps_location_joins topic it would be {"uidc", "uida"}
+    # So for platform_locations in the nps_location_joins topic it would be {"uidc", "uidc"}
     Logger.info("Last message for #{topic} and #{partition}: #{inspect(last_message)}")
 
     bulk_doc = ElasticSearch.bulk_put_join_doc(bulk, join_id)
@@ -124,6 +129,8 @@ defmodule Rivulet.Kafka.Join.Funcs do
   @type ignored :: term
 
   def transforms(join_docs, transformers, ack_data) do
+    IO.inspect(join_docs, label: "join_docs")
+
     Enum.map(join_docs, fn(join) ->
       Enum.map(transformers, fn({module, publishes} = thing) ->
         messages = module.handle_join(join, ack_data)

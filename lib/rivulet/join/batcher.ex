@@ -62,6 +62,7 @@ defmodule Rivulet.Join.Batcher do
 
     join_keys =
       data.join_keys
+      # |> Enum.map(fn ({join_key, _obj_id}) -> join_key end)
       |> Enum.reverse
       |> List.flatten
 
