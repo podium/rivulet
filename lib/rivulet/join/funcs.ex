@@ -74,7 +74,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
         (_) -> false
       end)
 
-    deserialized =
+    bulk =
       messages
       |> Enum.map(fn(message) -> message end)
       |> Enum.map(fn(message) ->
@@ -97,43 +97,261 @@ defmodule Rivulet.Kafka.Join.Funcs do
         (nil) -> true
         (_) -> false
       end)
+      |> Enum.map(fn({join_key, message, object_id}) ->
+        {:put, join_key, object_id, message.decoded_value}
+      end)
 
-    bulk = Enum.map(deserialized, fn({join_key, message, object_id}) ->
-      {:put, join_key, object_id, message.decoded_value}
-    end)
-
-    join_keys =
+    join_key_object_id_combo =
       Enum.map(bulk, fn({:put, join_key, object_id, _decoded_value}) ->
         {join_key, object_id}
       end)
 
-    last_message = List.last(deserialized)
-
-    IO.inspect(topic, label: "topic")
-    IO.inspect(partition, label: "partition")
-    IO.inspect(last_message, label: "last_message")
-    IO.inspect(join_keys, label: "join_keys now with object_id in there")
-
-    # We need to pass both the join_key and the object_id
-    # So for nps_invitation in the nps_joins topic it would be {"uida", "uida"}
-    # So for nps_response in the nps_joins topic it would be {"uida", "uidb"}
-    # So for nps_joins in the nps_location_joins topic it would be {"uidc", "uida"}
-    # So for platform_locations in the nps_location_joins topic it would be {"uidc", "uidc"}
-    Logger.info("Last message for #{topic} and #{partition}: #{inspect(last_message)}")
+    offset =
+      messages
+      |> List.last
+      |> Map.get(:offset)
 
     bulk_doc = ElasticSearch.bulk_put_join_doc(bulk, join_id)
 
-    Rivulet.Join.Batcher.batch_commands(batcher, bulk_doc, join_keys, topic, partition, last_message)
+    Rivulet.Join.Batcher.batch_commands(batcher, bulk_doc, join_key_object_id_combo, topic, partition, offset)
   end
 
   @type ignored :: term
 
-  def transforms(join_docs, transformers, ack_data) do
-    IO.inspect(join_docs, label: "join_docs")
+  @doc """
+  join_docs: [
+  [
+    %{
+      "created_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "customer_name" => "Dan",
+      "last_modified_at" => #DateTime<2018-04-15 19:27:23.926410Z>,
+      "location_uid" => <<60, 203, 36, 228, 44, 92, 81, 159, 184, 205, 119, 18,
+        242, 43, 166, 43>>,
+      "phone_number" => "+15555554",
+      "sent_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "uid" => <<178, 249, 191, 234, 62, 214, 89, 21, 158, 151, 96, 88, 156, 11,
+        42, 39>>
+    },
+    %{
+      "comment" => "New Comment",
+      "inserted_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "last_modified_at" => #DateTime<2018-04-15 19:28:53.457296Z>,
+      "likelihood_to_recommend" => 10,
+      "nps_invitation_uid" => <<178, 249, 191, 234, 62, 214, 89, 21, 158, 151,
+        96, 88, 156, 11, 42, 39>>,
+      "uid" => <<73, 227, 38, 147, 46, 191, 93, 97, 138, 82, 196, 167, 8, 109,
+        126, 25>>
+    }
+  ],
+  [
+    %{
+      "created_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "customer_name" => "Dan",
+      "last_modified_at" => #DateTime<2018-04-15 19:27:23.926410Z>,
+      "location_uid" => <<60, 203, 36, 228, 44, 92, 81, 159, 184, 205, 119, 18,
+        242, 43, 166, 43>>,
+      "phone_number" => "+15555558",
+      "sent_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "uid" => <<222, 204, 177, 65, 106, 58, 81, 39, 129, 17, 29, 121, 54, 249,
+        133, 223>>
+    }
+  ],
+  [
+    %{
+      "created_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "customer_name" => "Dan",
+      "last_modified_at" => #DateTime<2018-04-15 19:25:57.553577Z>,
+      "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
+        132, 183, 140, 176, 197>>,
+      "phone_number" => "+15555556",
+      "sent_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "uid" => <<192, 238, 2, 53, 80, 105, 87, 115, 177, 30, 40, 10, 188, 164,
+        188, 32>>
+    },
+    %{
+      "comment" => "Updated Comment",
+      "inserted_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "last_modified_at" => #DateTime<2018-04-15 19:28:53.457296Z>,
+      "likelihood_to_recommend" => 10,
+      "nps_invitation_uid" => <<192, 238, 2, 53, 80, 105, 87, 115, 177, 30, 40,
+        10, 188, 164, 188, 32>>,
+      "uid" => <<240, 49, 92, 84, 178, 114, 94, 147, 134, 249, 152, 151, 194,
+        216, 96, 197>>
+    }
+  ],
+  [
+    %{
+      "created_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "customer_name" => "Dan",
+      "last_modified_at" => #DateTime<2018-04-15 19:25:57.553577Z>,
+      "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
+        132, 183, 140, 176, 197>>,
+      "phone_number" => "+15555558",
+      "sent_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "uid" => <<100, 172, 15, 213, 159, 35, 93, 21, 151, 195, 93, 44, 32, 134,
+        215, 99>>
+    }
+  ],
+  [
+    %{
+      "comment" => "C",
+      "inserted_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "last_modified_at" => #DateTime<2018-04-15 19:28:25.690017Z>,
+      "likelihood_to_recommend" => 10,
+      "nps_invitation_uid" => <<120, 150, 134, 191, 250, 77, 86, 154, 154, 159,
+        15, 214, 100, 150, 250, 72>>,
+      "uid" => <<99, 234, 26, 194, 40, 212, 80, 237, 131, 150, 5, 95, 147, 38,
+        179, 128>>
+    },
+    %{
+      "created_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "customer_name" => "Dan",
+      "last_modified_at" => #DateTime<2018-04-15 19:25:57.553577Z>,
+      "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
+        132, 183, 140, 176, 197>>,
+      "phone_number" => "+15555555",
+      "sent_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "uid" => <<120, 150, 134, 191, 250, 77, 86, 154, 154, 159, 15, 214, 100,
+        150, 250, 72>>
+    }
+  ],
+  [
+    %{
+      "created_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "customer_name" => "Dan",
+      "last_modified_at" => #DateTime<2018-04-15 19:25:57.553577Z>,
+      "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
+        132, 183, 140, 176, 197>>,
+      "phone_number" => "+15555554",
+      "sent_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "uid" => <<85, 71, 26, 31, 63, 154, 85, 210, 144, 195, 142, 4, 193, 119,
+        54, 23>>
+    }
+  ],
+  [
+    %{
+      "comment" => "C",
+      "inserted_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "last_modified_at" => #DateTime<2018-04-15 19:28:25.690017Z>,
+      "likelihood_to_recommend" => 10,
+      "nps_invitation_uid" => <<120, 150, 134, 191, 250, 77, 86, 154, 154, 159,
+        15, 214, 100, 150, 250, 72>>,
+      "uid" => <<99, 234, 26, 194, 40, 212, 80, 237, 131, 150, 5, 95, 147, 38,
+        179, 128>>
+    },
+    %{
+      "created_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "customer_name" => "Dan",
+      "last_modified_at" => #DateTime<2018-04-15 19:25:57.553577Z>,
+      "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
+        132, 183, 140, 176, 197>>,
+      "phone_number" => "+15555555",
+      "sent_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "uid" => <<120, 150, 134, 191, 250, 77, 86, 154, 154, 159, 15, 214, 100,
+        150, 250, 72>>
+    }
+  ],
+  [
+    %{
+      "created_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "customer_name" => "Dan",
+      "last_modified_at" => #DateTime<2018-04-15 19:25:57.553577Z>,
+      "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
+        132, 183, 140, 176, 197>>,
+      "phone_number" => "+15555556",
+      "sent_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "uid" => <<192, 238, 2, 53, 80, 105, 87, 115, 177, 30, 40, 10, 188, 164,
+        188, 32>>
+    },
+    %{
+      "comment" => "Updated Comment",
+      "inserted_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "last_modified_at" => #DateTime<2018-04-15 19:28:53.457296Z>,
+      "likelihood_to_recommend" => 10,
+      "nps_invitation_uid" => <<192, 238, 2, 53, 80, 105, 87, 115, 177, 30, 40,
+        10, 188, 164, 188, 32>>,
+      "uid" => <<240, 49, 92, 84, 178, 114, 94, 147, 134, 249, 152, 151, 194,
+        216, 96, 197>>
+    }
+  ],
+  [
+    %{
+      "created_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "customer_name" => "Dan",
+      "last_modified_at" => #DateTime<2018-04-15 19:25:57.553577Z>,
+      "location_uid" => <<95, 208, 59, 248, 156, 214, 82, 10, 178, 227, 144,
+        132, 183, 140, 176, 197>>,
+      "phone_number" => "+15555556",
+      "sent_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "uid" => <<192, 238, 2, 53, 80, 105, 87, 115, 177, 30, 40, 10, 188, 164,
+        188, 32>>
+    },
+    %{
+      "comment" => "Updated Comment",
+      "inserted_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "last_modified_at" => #DateTime<2018-04-15 19:28:53.457296Z>,
+      "likelihood_to_recommend" => 10,
+      "nps_invitation_uid" => <<192, 238, 2, 53, 80, 105, 87, 115, 177, 30, 40,
+        10, 188, 164, 188, 32>>,
+      "uid" => <<240, 49, 92, 84, 178, 114, 94, 147, 134, 249, 152, 151, 194,
+        216, 96, 197>>
+    }
+  ],
+  [
+    %{
+      "created_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "customer_name" => "Dan",
+      "last_modified_at" => #DateTime<2018-04-15 19:27:23.926410Z>,
+      "location_uid" => <<60, 203, 36, 228, 44, 92, 81, 159, 184, 205, 119, 18,
+        242, 43, 166, 43>>,
+      "phone_number" => "+15555554",
+      "sent_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "uid" => <<178, 249, 191, 234, 62, 214, 89, 21, 158, 151, 96, 88, 156, 11,
+        42, 39>>
+    },
+    %{
+      "comment" => "New Comment",
+      "inserted_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "last_modified_at" => #DateTime<2018-04-15 19:28:53.457296Z>,
+      "likelihood_to_recommend" => 10,
+      "nps_invitation_uid" => <<178, 249, 191, 234, 62, 214, 89, 21, 158, 151,
+        96, 88, 156, 11, 42, 39>>,
+      "uid" => <<73, 227, 38, 147, 46, 191, 93, 97, 138, 82, 196, 167, 8, 109,
+        126, 25>>
+    }
+  ],
+  [
+    %{
+      "created_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "customer_name" => "Dan",
+      "last_modified_at" => #DateTime<2018-04-15 19:27:23.926410Z>,
+      "location_uid" => <<60, 203, 36, 228, 44, 92, 81, 159, 184, 205, 119, 18,
+        242, 43, 166, 43>>,
+      "phone_number" => "+15555554",
+      "sent_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "uid" => <<178, 249, 191, 234, 62, 214, 89, 21, 158, 151, 96, 88, 156, 11,
+        42, 39>>
+    },
+    %{
+      "comment" => "New Comment",
+      "inserted_at" => #DateTime<2018-04-15 18:37:05.285325Z>,
+      "last_modified_at" => #DateTime<2018-04-15 19:28:53.457296Z>,
+      "likelihood_to_recommend" => 10,
+      "nps_invitation_uid" => <<178, 249, 191, 234, 62, 214, 89, 21, 158, 151,
+        96, 88, 156, 11, 42, 39>>,
+      "uid" => <<73, 227, 38, 147, 46, 191, 93, 97, 138, 82, 196, 167, 8, 109,
+        126, 25>>
+    }
+  ]
+]
+  """
+  def transforms(join_docs, transformers, join_key_object_id_combo) do
+    IO.inspect(join_key_object_id_combo, label: "join_key_object_id_combo")
 
     Enum.map(join_docs, fn(join) ->
+      IO.inspect(join, label: "join_doc")
       Enum.map(transformers, fn({module, publishes} = thing) ->
-        messages = module.handle_join(join, ack_data)
+        messages = module.handle_join(join)
 
         messages =
           case messages do
