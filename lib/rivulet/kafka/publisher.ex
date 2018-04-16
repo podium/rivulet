@@ -63,7 +63,6 @@ defmodule Rivulet.Kafka.Publisher do
   end
 
   def publish(%Message{} = message) do
-    {:key, "uida"}
     partition = message.partition || message.partition_strategy
     publish(message.topic, partition, :raw, message.key, message.value)
   end
