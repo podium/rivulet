@@ -345,12 +345,10 @@ defmodule Rivulet.Kafka.Join.Funcs do
   ]
 ]
   """
-  def transforms(join_docs, transformers, join_key_object_id_combo) do
-    IO.inspect(join_key_object_id_combo, label: "join_key_object_id_combo")
-
+  def transforms(join_docs, transformers) do
     Enum.map(join_docs, fn(join) ->
       IO.inspect(join, label: "join_doc")
-      Enum.map(transformers, fn({module, publishes} = thing) ->
+      Enum.map(transformers, fn({module, publishes}) ->
         messages = module.handle_join(join)
 
         messages =
