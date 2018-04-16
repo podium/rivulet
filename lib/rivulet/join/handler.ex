@@ -74,14 +74,19 @@ defmodule Rivulet.Join.Handler do
 
     IO.inspect(just_join_keys, label: "just_join_keys unique")
 
-    res =
+    source_docs =
       join_id
       |> ElasticSearch.bulk_get_join_docs(just_join_keys)
       |> Map.get("responses")
       |> Enum.map(fn(%{"hits" => %{"hits" => hits}}) -> hits end)
       |> Enum.map(fn(hits) -> Enum.map(hits, fn(hit) -> hit["_source"]["document"] end) end)
+
+    IO.inspect(source_docs, label: "source_docs")
+      
+    res =
+      source_docs
       |> Enum.map(fn (docs) ->
-        Enum.map(docs, fn (doc) ->
+        decoded_docs = Enum.map(docs, fn (doc) ->
           doc
           |> Base.decode64!
           |> :erlang.binary_to_term
