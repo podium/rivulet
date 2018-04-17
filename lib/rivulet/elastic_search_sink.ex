@@ -104,7 +104,7 @@ defmodule Rivulet.ElasticSearchSink do
   @doc """
   Will return :ok
   """
-  def ensure_mapping_created!(%Config{elastic_url: url, elastic_index: index} = config) do
+  def ensure_mapping_created!(config) do
     ElasticSearchGenerator.create_mapping(config)
   end
 end

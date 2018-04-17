@@ -5,8 +5,6 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
   alias Rivulet.ElasticSearchSink.Config
   alias Rivulet.ElasticSearchSink
 
-  @defaults []
-
   @doc """
   Starts the repo supervisor.
   """

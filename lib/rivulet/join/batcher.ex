@@ -14,7 +14,10 @@ defmodule Rivulet.Join.Batcher do
 
   alias Rivulet.Kafka.Partition
 
-  @spec batch_commands(pid, [ElasticSearch.batch], [{String.t, String.t}], Partition.topic, Partition.partition, non_neg_integer) :: :ok
+  @type join_key :: String.t
+  @type object_id :: String.t
+
+  @spec batch_commands(pid, [ElasticSearch.batch], [{join_key, object_id}], Partition.topic, Partition.partition, non_neg_integer) :: :ok
   def batch_commands(batcher, cmds, join_key_object_id_combo, topic, partition, offset) do
     :gen_statem.call(batcher, {:add_batch, cmds, join_key_object_id_combo, {topic, partition, offset}})
   end

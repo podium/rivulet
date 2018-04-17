@@ -3,7 +3,6 @@ defmodule Rivulet.Join.Handler do
 
   alias Rivulet.Join.ElasticSearch
   alias Rivulet.Kafka.Partition
-  alias Rivulet.Kafka.Consumer.Message
 
   defmodule State do
     defstruct [:join_id, :transformers, :consumer]
@@ -32,8 +31,9 @@ defmodule Rivulet.Join.Handler do
   def handle_call({:handle_resp, join_key_object_id_combo, ack_data}, from,  %State{join_id: join_id, transformers: transformers, consumer: consumer} = state) do
     GenServer.reply(from, :ok)
 
-    just_join_keys = join_key_object_id_combo
-      |> Enum.map(fn ({jk, _}) -> jk end)
+    just_join_keys =
+      join_key_object_id_combo
+      |> Enum.map(fn ({join_key, _}) -> join_key end)
       |> Enum.uniq
 
     lookup_map = create_lookup_map(join_key_object_id_combo, just_join_keys)
