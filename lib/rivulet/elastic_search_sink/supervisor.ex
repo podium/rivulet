@@ -17,9 +17,9 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
       {:ok, consumer_opts} ->
         %Config{} = config = Config.from_sink_opts(consumer_opts)
 
-        ElasticSearchSink.ensure_index_and_mapping_created!(config)
-
         {:ok, _} = Application.ensure_all_started(:httpoison)
+
+        ElasticSearchSink.ensure_index_and_mapping_created!(config)
 
         count = Keyword.get(consumer_opts, :writer_count, 1)
 
