@@ -12,6 +12,26 @@ def deps do
 end
 ```
 
+And in your `config/config.exs`, add:
+
+```
+hostname = System.get_env("HOSTNAME")
+
+config :rivulet,
+  avro_schema_registry_uri: {:system, "SCHEMA_REGISTRY_URL"},
+  client_name: :"my-app-#{hostname}",
+  dynamic_hosts: true,
+  default_max_bytes: get_int_env.("MY_APP_MAX_BYTES", 100_000)
+```
+
+An example .env for such an app:
+
+```
+SCHEMA_REGISTRY_URL=http://localhost:8081
+KAFKA_HOSTS=localhost:9092
+HOSTNAME=abc123
+```
+
 ## Usage
 
 ```elixir
