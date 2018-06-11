@@ -29,6 +29,10 @@ defmodule Rivulet.Application do
     if System.get_env("MIX_ENV") != "test" do
       client_name = Rivulet.client_name
 
+      unless is_atom(client_name) do
+        raise "`config :rivulet, client_name: client_name` must be an atom, not a string"
+      end
+
       default_producer_config = [max_batch_size: 100]
 
       :ok =
