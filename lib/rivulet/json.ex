@@ -1,5 +1,5 @@
 defmodule Rivulet.JSON do
-  # jiffy throws an error in the stuff is invalid.
+  # jiffy throws an error if the stuff is invalid.
   # We handle that so other functions can branch with a case statement
   # or raise their own exception if desired.
   def encode(data) do
