@@ -1,4 +1,4 @@
-defmodule Rivulet.JSON.Jiffy do
+defmodule Rivulet.JSON.JiffyHandler do
   @behaviour Rivulet.JSON.Handler
 
   # jiffy throws an error in the stuff is invalid.

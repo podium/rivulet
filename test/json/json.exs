@@ -10,13 +10,13 @@ defmodule Rivulet.JSON.Test do
 
   describe "handler/1" do
     test "if no json_handler is set it should default to jiffy" do
-      assert @test_module.handler == Rivulet.JSON.Jiffy
+      assert @test_module.handler == Rivulet.JSON.JiffyHandler
     end
     test "should use test module to encode/decode json" do
       Application.put_env(:rivulet, :json_handler, TestJsonHandler)
       assert @test_module.encode(%{test: :test_encode}) == {:ok, :test_encode}
       assert @test_module.decode(%{test: :test_decode}) == {:ok, :test_decode}
-      Application.put_env(:rivulet, :json_handler, Rivulet.JSON.Jiffy)
+      Application.put_env(:rivulet, :json_handler, Rivulet.JSON.JiffyHandler)
     end
     test "jiffy should encode correctly" do
       assert @test_module.encode(%{test: :test_encode}) == {:ok, "{\"test\":\"test_encode\"}"}
