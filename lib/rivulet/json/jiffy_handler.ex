@@ -1,4 +1,6 @@
-defmodule Rivulet.JSON do
+defmodule Rivulet.JSON.JiffyHandler do
+  @behaviour Rivulet.JSON.Handler
+
   # jiffy throws an error in the stuff is invalid.
   # We handle that so other functions can branch with a case statement
   # or raise their own exception if desired.
