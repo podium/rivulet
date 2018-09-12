@@ -29,7 +29,7 @@ defmodule Rivulet.Application do
     if System.get_env("MIX_ENV") != "test" do
       client_name = Rivulet.client_name
 
-      default_producer_config = [max_batch_size: 100]
+      default_producer_config = []
 
       :ok =
         :brod.start_client(kafka_hosts, client_name, _client_config=[
