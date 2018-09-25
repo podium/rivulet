@@ -101,9 +101,9 @@ defmodule Rivulet.Kafka.Join.Funcs do
         {:put, join_key, object_id, message.decoded_value}
       end)
 
-    join_keys =
-      Enum.map(bulk, fn({:put, join_key, _message, _object_id}) ->
-        join_key
+    join_key_object_id_combo =
+      Enum.map(bulk, fn({:put, join_key, object_id, _decoded_value}) ->
+        {join_key, object_id}
       end)
 
     offset =
@@ -113,13 +113,11 @@ defmodule Rivulet.Kafka.Join.Funcs do
 
     bulk_doc = ElasticSearch.bulk_put_join_doc(bulk, join_id)
 
-    Rivulet.Join.Batcher.batch_commands(batcher, bulk_doc, join_keys, topic, partition, offset)
+    Rivulet.Join.Batcher.batch_commands(batcher, bulk_doc, join_key_object_id_combo, topic, partition, offset)
   end
 
   @type ignored :: term
 
-  @spec transforms([[term]], {module, [{Rivulet.Kafka.Partition.topic, :key | :random}]})
-  :: ignored
   def transforms(join_docs, transformers) do
     Enum.map(join_docs, fn(join) ->
       Enum.map(transformers, fn({module, publishes}) ->
@@ -164,6 +162,7 @@ defmodule Rivulet.Kafka.Join.Funcs do
           |> List.flatten
 
         refs = Rivulet.Kafka.Publisher.publish(publishes)
+
         Enum.map(refs, fn
           ({:ok, call_ref}) ->
             receive do
