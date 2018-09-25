@@ -33,7 +33,12 @@ defmodule Rivulet.Application do
         raise "`config :rivulet, client_name: client_name` must be an atom, not a string"
       end
 
-      default_producer_config = [max_batch_size: 100]
+      default_producer_config = [
+        required_acks: 1, # by default this is -1, meaning "all", within :brod (options are 0, 1, -1)
+        # ack_timeout: 10000, # the max number of time the producer should wait to receive a response that message was received by all required insync replicas before timing out. default is: 10000ms
+        max_retries: 30, # by default this is 3 within :brod, -1 means "retry indefinitely"
+        retry_backoff_ms: 1000 # by default this is 500ms within :brod
+      ]
 
       :ok =
         :brod.start_client(kafka_hosts, client_name, _client_config=[
