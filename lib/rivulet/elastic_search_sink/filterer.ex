@@ -5,7 +5,7 @@ defmodule Rivulet.ElasticSearchSink.Filterer do
     Enum.map(records, &(&1.raw_value))
   end
   def filter_for_successfully_inserted(%{:errors => true, "items" => es_items} = _es_response, records) do
-    ipped = Enum.zip(es_items, records)
+    zipped = Enum.zip(es_items, records)
     successful_msgs = Enum.filter(zipped, &message_successfully_inserted?/1)
     Enum.map(successful_msgs, fn ({_, %Message{raw_value: val}}) -> val end)
   end
