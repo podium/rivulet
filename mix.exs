@@ -38,11 +38,13 @@ defmodule Rivulet.Mixfile do
     [{:dialyxir, "~> 0.5.0", only: [:dev, :test], runtime: false},
      {:avro_ex, "~> 0.1.0-beta.5"},
      {:brod, "~> 3.3.1"},
+     {:ecto, "~> 3.0", override: true},
+     {:ecto_sql, "~> 3.0"},
+     {:elastix, "~> 0.5.0"},
      {:httpoison, ">= 1.0.0"},
      {:meck, "~> 0.8.7", only: [:test]},
      {:jiffy, "0.15.1"},
-     {:uuid, "~> 1.1.8"},
-     {:elastix, "~> 0.5.0"}
+     {:uuid, "~> 1.1.8"}
     ]
   end
 end
