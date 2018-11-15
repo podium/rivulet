@@ -57,9 +57,10 @@ defmodule Rivulet.SQLSink.Writer do
   def do_upsert(upserts, %Config{} = config, %Partition{} = partition) do
     config
     |> table_name(partition)
-    |> config.repo.insert_all(upserts, on_conflict: :replace_all, conflict_target: List.flatten(config.unique_constraints))
+    |> config.repo.insert_all(upserts, on_conflict: {:replace, config.whitelist}, conflict_target: List.flatten(config.unique_constraints))
   end
 
+  @spec table_name(Config.t, Partition.t) :: String.t
   def table_name(%Config{} = config, %Partition{} = partition) do
     Table.table_name(config.table_pattern, partition.topic)
   end
