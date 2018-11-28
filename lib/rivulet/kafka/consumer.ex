@@ -11,7 +11,7 @@ defmodule Rivulet.Consumer do
         offset_commit_policy: :commit_to_kafka_v2,
         offset_commit_interval_seconds: 5
       ],
-      consumer_config: [begin_offset: :earliest]
+      consumer_config: [begin_offset: :latest]
     ]
 
     @type t :: %__MODULE__{
