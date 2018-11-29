@@ -16,7 +16,7 @@ defmodule Rivulet.Kafka.Router.Funcs do
           offset_commit_interval_secons: 1
         ],
         consumer_config: [
-          begin_offset: :latest,
+          begin_offset: :earliest,
           max_bytes: Rivulet.Config.max_bytes()
         ]
       }
