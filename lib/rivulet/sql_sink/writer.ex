@@ -34,12 +34,18 @@ defmodule Rivulet.SQLSink.Writer do
 
     decoded_messages = decoded_messages(messages, partition, config.decoding_strategy)
 
-    config.repo.transaction(fn ->
+    grouped_messages =
       decoded_messages
+      |> Enum.reject(&(&1.decoded_value == nil))
+      |> Enum.map(&(&1.decoded_value))
+      |> Enum.group_by(fn msg -> Map.get(msg, "op") end)
+
+    config.repo.transaction(fn ->
+      grouped_messages
       |> upserts(config)
       |> do_upsert(config, partition)
 
-      decoded_messages
+      grouped_messages
       |> deletions
       |> do_deletes(config, partition)
     end)
@@ -60,9 +66,11 @@ defmodule Rivulet.SQLSink.Writer do
   end
 
   def do_upsert(upserts, %SQLSinkConfig{} = config, %Partition{} = partition) do
+    on_conflict_replacements = get_on_conflict_replacements(config.whitelist, hd(upserts))
+
     config
     |> table_name(partition)
-    |> config.repo.insert_all(upserts, on_conflict: {:replace, config.whitelist}, conflict_target: List.flatten(config.unique_constraints))
+    |> config.repo.insert_all(upserts, on_conflict: {:replace, on_conflict_replacements}, conflict_target: List.flatten(config.unique_constraints))
   end
 
   @spec table_name(SQLSinkConfig.t(), Partition.t()) :: String.t()
@@ -81,15 +89,8 @@ defmodule Rivulet.SQLSink.Writer do
     messages
     |> only_latest_per_key
     |> Enum.map(fn (%Message{raw_key: raw_key}) = msg ->
-      case JSON.decode(raw_key) do
-        {:ok, decoded_key} ->
-          %Message{msg | decoded_key: decoded_key, raw_key: nil}
-        {:error, reason} ->
-          Logger.error("[TOPIC: #{partition.topic}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
-          %Message{msg | decoded_key: {:error, :json_decoding_failed, msg}}
-      end
+      %Message{msg | decoded_key: raw_key, raw_key: nil}
     end)
-    |> Enum.filter(&(&1))
     |> Enum.map(fn (%Message{raw_value: raw_value}) = msg ->
       case JSON.decode(raw_value) do
         {:ok, decoded_value} ->
@@ -99,7 +100,6 @@ defmodule Rivulet.SQLSink.Writer do
           %Message{msg | decoded_value: {:error, :json_decoding_failed, msg}}
       end
     end)
-    |> Enum.filter(&(&1))
   end
 
   def decoded_messages(messages, %Partition{} = partition, :avro) when is_list(messages) do
@@ -108,21 +108,27 @@ defmodule Rivulet.SQLSink.Writer do
     |> Rivulet.Avro.bulk_decode(partition.topic)
   end
 
-  def upserts(messages, %SQLSinkConfig{} = config) when is_list(messages) do
-    messages =
-      messages
-      |> Enum.reject(&(&1.decoded_value == nil))
-      |> Enum.map(&(&1.decoded_value))
-
+  def upserts(grouped_messages, %SQLSinkConfig{} = config) when is_list(messages) do
     case config.whitelist do
-      :all -> messages
-      fields when is_list(fields) -> Enum.map(messages, &(Map.take(&1, fields)))
+      :all ->
+        grouped_messages
+        |> Map.get("u")
+        |> Enum.map(&(Map.get(&1, "after")))
+      fields when is_list(fields) ->
+        grouped_messages
+        |> Map.get("u")
+        |> Enum.map(&(Map.get(&1, "after")))
+        |> Enum.map(&(Map.take(&1, fields)))
     end
   end
 
-  def deletions(messages) when is_list(messages) do
-    messages
-    |> Enum.filter(&((&1.decoded_value) == nil))
-    |> Enum.map(&(&1.decoded_key))
+  def deletions(grouped_messages) do
+    grouped_messages
+    |> Map.get("d")
+    |> Enum.map(&(Map.get(&1, "before")))
+    |> Enum.map(&(Map.get(&1, "uid")))
   end
+
+  defp get_on_conflict_replacements(:all, payload), do: Map.keys(payload)
+  defp get_on_conflict_replacements(fields, _) when is_list(fields), do: fields
 end
