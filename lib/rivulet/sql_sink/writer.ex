@@ -5,14 +5,12 @@ defmodule Rivulet.SQLSink.Writer do
   operations within BlackMamba, etc.) will need to successfully write to
   a Postgres database.
   """
-  @type name_pattern :: String.t
-  @type table_name :: String.t
-
   require Logger
 
   alias Rivulet.JSON
   alias Rivulet.Kafka.Consumer.Message
   alias Rivulet.Kafka.Partition
+  alias Rivulet.SQLSink.Database.Table
   alias Rivulet.SQLSink.Config, as: SQLSinkConfig
 
   def start_link(%SQLSinkConfig{} = config) do
@@ -67,16 +65,9 @@ defmodule Rivulet.SQLSink.Writer do
     |> config.repo.insert_all(upserts, on_conflict: {:replace, config.whitelist}, conflict_target: List.flatten(config.unique_constraints))
   end
 
-  @spec table_name(SQLSinkConfig.t(), Partition.t()) :: table_name
+  @spec table_name(SQLSinkConfig.t(), Partition.t()) :: String.t()
   def table_name(%SQLSinkConfig{} = config, %Partition{} = partition) do
-    table_name(config.table_pattern, partition.topic)
-  end
-
-  @spec table_name(name_pattern, Partition.topic) :: table_name
-  def table_name(pattern, topic) when is_binary(pattern) do
-    pattern
-    |> String.replace(~r/\$\$/, topic)
-    |> String.replace(~r/\.|-/, "_")
+    Table.table_name(config.table_pattern, partition.topic)
   end
 
   def only_latest_per_key(messages) when is_list(messages) do
@@ -94,7 +85,7 @@ defmodule Rivulet.SQLSink.Writer do
         {:ok, decoded_key} ->
           %Message{msg | decoded_key: decoded_key, raw_key: nil}
         {:error, reason} ->
-          Logger.error("[TOPIC: #{topic}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
+          Logger.error("[TOPIC: #{partition.topic}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
           %Message{msg | decoded_key: {:error, :json_decoding_failed, msg}}
       end
     end)
@@ -104,7 +95,7 @@ defmodule Rivulet.SQLSink.Writer do
         {:ok, decoded_value} ->
           %Message{msg | decoded_value: decoded_value, raw_value: nil}
         {:error, reason} ->
-          Logger.error("[TOPIC: #{topic}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
+          Logger.error("[TOPIC: #{partition.topic}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
           %Message{msg | decoded_value: {:error, :json_decoding_failed, msg}}
       end
     end)
