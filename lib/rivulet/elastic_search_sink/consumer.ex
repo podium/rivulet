@@ -29,7 +29,7 @@ defmodule Rivulet.ElasticSearchSink.Consumer do
           offset_commit_policy: :commit_to_kafka_v2,
           offset_commit_interval_seconds: 1,
         ],
-        consumer_config: [begin_offset: :latest, max_bytes: Rivulet.Config.max_bytes]
+        consumer_config: [begin_offset: :earliest, max_bytes: Rivulet.Config.max_bytes]
       }
 
     Consumer.start_link(__MODULE__, consumer_config, {:sink_supervisor_process, sink_supervisor_process})
