@@ -26,10 +26,12 @@ defmodule Rivulet.SQLSink.Writer.Manager do
     {:reply, pid, state}
   end
 
+  @spec id(Partition.t()) :: String.t()
   defp id(%Partition{topic: topic, partition: partition}) do
     "#{topic}:#{partition}"
   end
 
+  @spec hash(String.t(), integer) :: integer
   defp hash(partition_id, count) do
     :erlang.phash2(partition_id, count) + 1
   end

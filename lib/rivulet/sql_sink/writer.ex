@@ -5,14 +5,21 @@ defmodule Rivulet.SQLSink.Writer do
   operations within BlackMamba, etc.) will need to successfully write to
   a Postgres database.
   """
-  require Logger
-  alias Rivulet.Kafka.Partition
-  alias Rivulet.SQLSink.{Config, Database.Table}
+  @type name_pattern :: String.t
+  @type table_name :: String.t
 
-  def start_link(%Config{} = config) do
+  require Logger
+
+  alias Rivulet.JSON
+  alias Rivulet.Kafka.Consumer.Message
+  alias Rivulet.Kafka.Partition
+  alias Rivulet.SQLSink.Config, as: SQLSinkConfig
+
+  def start_link(%SQLSinkConfig{} = config) do
     GenServer.start_link(__MODULE__, {config})
   end
 
+  @spec init({SQLSinkConfig.t()}) :: {:ok, SQLSinkConfig.t()}
   def init({config}) do
     {:ok, config}
   end
@@ -21,13 +28,13 @@ defmodule Rivulet.SQLSink.Writer do
     GenServer.cast(pid, {:handle_messages, partition, messages, consumer})
   end
 
-  def handle_cast({:handle_messages, partition, messages, consumer}, %Config{} = config) do
+  def handle_cast({:handle_messages, partition, messages, consumer}, %SQLSinkConfig{} = config) do
     Logger.debug("Handling Messages by dumping to #{table_name(config, partition)}")
 
     offset = messages |> List.last |> Map.get(:offset)
     Logger.debug("Should get to #{partition.topic}:#{partition.partition} - #{offset}")
 
-    decoded_messages = decoded_messages(messages, partition)
+    decoded_messages = decoded_messages(messages, partition, config.decoding_strategy)
 
     config.repo.transaction(fn ->
       decoded_messages
@@ -48,21 +55,28 @@ defmodule Rivulet.SQLSink.Writer do
     Logger.debug("No deletions")
     :ok
   end
-  def do_deletes(deletions, %Config{} = config, %Partition{} = partition) when is_list(deletions) do
+  def do_deletes(deletions, %SQLSinkConfig{} = config, %Partition{} = partition) when is_list(deletions) do
     import Ecto.Query
     delete = from t in table_name(config, partition), where: field(t, ^config.delete_key_field) in ^deletions
     config.repo.delete_all(delete)
   end
 
-  def do_upsert(upserts, %Config{} = config, %Partition{} = partition) do
+  def do_upsert(upserts, %SQLSinkConfig{} = config, %Partition{} = partition) do
     config
     |> table_name(partition)
     |> config.repo.insert_all(upserts, on_conflict: {:replace, config.whitelist}, conflict_target: List.flatten(config.unique_constraints))
   end
 
-  @spec table_name(Config.t, Partition.t) :: String.t
-  def table_name(%Config{} = config, %Partition{} = partition) do
-    Table.table_name(config.table_pattern, partition.topic)
+  @spec table_name(SQLSinkConfig.t(), Partition.t()) :: table_name
+  def table_name(%SQLSinkConfig{} = config, %Partition{} = partition) do
+    table_name(config.table_pattern, partition.topic)
+  end
+
+  @spec table_name(name_pattern, Partition.topic) :: table_name
+  def table_name(pattern, topic) when is_binary(pattern) do
+    pattern
+    |> String.replace(~r/\$\$/, topic)
+    |> String.replace(~r/\.|-/, "_")
   end
 
   def only_latest_per_key(messages) when is_list(messages) do
@@ -72,13 +86,38 @@ defmodule Rivulet.SQLSink.Writer do
     |> List.flatten
   end
 
-  def decoded_messages(messages, %Partition{} = partition) when is_list(messages) do
+  def decoded_messages(messages, %Partition{} = partition, :json) when is_list(messages) do
+    messages
+    |> only_latest_per_key
+    |> Enum.map(fn (%Message{raw_key: raw_key}) = msg ->
+      case JSON.decode(raw_key) do
+        {:ok, decoded_key} ->
+          %Message{msg | decoded_key: decoded_key, raw_key: nil}
+        {:error, reason} ->
+          Logger.error("[TOPIC: #{topic}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
+          %Message{msg | decoded_key: {:error, :json_decoding_failed, msg}}
+      end
+    end)
+    |> Enum.filter(&(&1))
+    |> Enum.map(fn (%Message{raw_value: raw_value}) = msg ->
+      case JSON.decode(raw_value) do
+        {:ok, decoded_value} ->
+          %Message{msg | decoded_value: decoded_value, raw_value: nil}
+        {:error, reason} ->
+          Logger.error("[TOPIC: #{topic}][OFFSET: #{msg.offset}] failed to decode for reason: #{inspect reason}")
+          %Message{msg | decoded_value: {:error, :json_decoding_failed, msg}}
+      end
+    end)
+    |> Enum.filter(&(&1))
+  end
+
+  def decoded_messages(messages, %Partition{} = partition, :avro) when is_list(messages) do
     messages
     |> only_latest_per_key
     |> Rivulet.Avro.bulk_decode(partition.topic)
   end
 
-  def upserts(messages, %Config{} = config) when is_list(messages) do
+  def upserts(messages, %SQLSinkConfig{} = config) when is_list(messages) do
     messages =
       messages
       |> Enum.reject(&(&1.decoded_value == nil))

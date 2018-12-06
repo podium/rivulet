@@ -12,8 +12,6 @@ defmodule Rivulet.SQLSink.Supervisor do
   def init(consumer_opts) do
     %Config{} = config = Config.from_sink_opts(consumer_opts)
 
-    Rivulet.SQLSink.ensure_table_created!(config)
-
     count = pool_size(config.repo)
 
     children =
