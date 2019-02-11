@@ -58,12 +58,8 @@ defmodule Rivulet.Application do
     ]
 
     Enum.reduce(Keyword.keys(custom_config), default_producer_config, fn k, acc ->
-      if Keyword.has_key?(acc, k) do
-        new_value = Keyword.get(custom_config, k)
-        Keyword.put(acc, k, new_value)
-      else
-        acc
-      end
+      new_value = Keyword.get(custom_config, k)
+      Keyword.put(acc, k, new_value)
     end)
   end
 
