@@ -65,9 +65,6 @@ defmodule Rivulet.Application do
         acc
       end
     end)
-    # Enum.reduce(Keyword.keys(custom_config), default_producer_config, fn x, acc ->
-    #   Keyword.replace!(acc, x, Keyword.get(custom_config, x))
-    # end)
   end
 
   def kafka_brokers do
