@@ -22,7 +22,7 @@ defmodule Rivulet.Application.Test do
     end
 
     test "falls back to defaults if custom configuration is not provided" do
-      input = []
+      input = nil
 
       expected = [
         required_acks: 1,

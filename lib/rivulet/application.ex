@@ -28,7 +28,7 @@ defmodule Rivulet.Application do
 
     producer_config =
       :rivulet
-      |> Application.get_all_env()
+      |> Application.get_env(:producer)
       |> kafka_producer_config()
 
     if System.get_env("MIX_ENV") != "test" do
@@ -47,6 +47,15 @@ defmodule Rivulet.Application do
     else
       Logger.info("Test Environment detected - not starting :brod")
     end
+  end
+
+  def kafka_producer_config(nil) do
+    [
+      required_acks: 1, # by default this is -1, meaning "all", within :brod (options are 0, 1, -1)
+      ack_timeout: 10000, # the max number of time the producer should wait to receive a response that message was received by all required insync replicas before timing out. default is: 10000ms
+      max_retries: 30, # by default this is 3 within :brod, -1 means "retry indefinitely"
+      retry_backoff_ms: 1000 # by default this is 500ms within :brod
+    ]
   end
 
   def kafka_producer_config(custom_config) do
