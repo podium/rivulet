@@ -34,6 +34,10 @@ HOSTNAME=abc123
 
 ## Usage
 
+### Tutorial
+
+For an in-depth tutorial, see https://stackoverflow.com/c/podium/a/176
+
 ### Publishing
 
 Publishing to Kafka is done using Rivulet.Kafka.Publisher.
