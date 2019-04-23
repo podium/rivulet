@@ -26,6 +26,11 @@ defmodule Rivulet.Application do
 
     kafka_hosts = kafka_brokers()
 
+    producer_config =
+      :rivulet
+      |> Application.get_env(:producer)
+      |> kafka_producer_config()
+
     if System.get_env("MIX_ENV") != "test" do
       client_name = Rivulet.client_name
 
@@ -33,22 +38,38 @@ defmodule Rivulet.Application do
         raise "`config :rivulet, client_name: client_name` must be an atom, not a string"
       end
 
-      default_producer_config = [
-        required_acks: 1, # by default this is -1, meaning "all", within :brod (options are 0, 1, -1)
-        # ack_timeout: 10000, # the max number of time the producer should wait to receive a response that message was received by all required insync replicas before timing out. default is: 10000ms
-        max_retries: 30, # by default this is 3 within :brod, -1 means "retry indefinitely"
-        retry_backoff_ms: 1000 # by default this is 500ms within :brod
-      ]
-
       :ok =
         :brod.start_client(kafka_hosts, client_name, _client_config=[
           auto_start_producers: true,
           allow_topic_auto_creation: false,
-          default_producer_config: default_producer_config
+          default_producer_config: producer_config
         ])
     else
       Logger.info("Test Environment detected - not starting :brod")
     end
+  end
+
+  def kafka_producer_config(nil) do
+    [
+      required_acks: 1, # by default this is -1, meaning "all", within :brod (options are 0, 1, -1)
+      ack_timeout: 10000, # the max number of time the producer should wait to receive a response that message was received by all required insync replicas before timing out. default is: 10000ms
+      max_retries: 30, # by default this is 3 within :brod, -1 means "retry indefinitely"
+      retry_backoff_ms: 1000 # by default this is 500ms within :brod
+    ]
+  end
+
+  def kafka_producer_config(custom_config) do
+    default_producer_config = [
+      required_acks: 1, # by default this is -1, meaning "all", within :brod (options are 0, 1, -1)
+      ack_timeout: 10000, # the max number of time the producer should wait to receive a response that message was received by all required insync replicas before timing out. default is: 10000ms
+      max_retries: 30, # by default this is 3 within :brod, -1 means "retry indefinitely"
+      retry_backoff_ms: 1000 # by default this is 500ms within :brod
+    ]
+
+    Enum.reduce(Keyword.keys(custom_config), default_producer_config, fn k, acc ->
+      new_value = Keyword.get(custom_config, k)
+      Keyword.put(acc, k, new_value)
+    end)
   end
 
   def kafka_brokers do
