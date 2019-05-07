@@ -71,7 +71,11 @@ defmodule Rivulet.ElasticSearchSink.Supervisor do
   """
   def runtime_config(type, repo, otp_app, _custom) do
     if config = Application.get_env(otp_app, repo) do
+      IO.inspect(config, label: "ElasticSearchSink.Supervisor.runtime_config.config")
+
       config = [otp_app: otp_app, callback_module: repo] ++ config
+      
+      IO.inspect(config, label: "ElasticSearchSink.Supervisor.runtime_config.new_config")
 
       case sink_module_init(type, repo, config) do
         {:ok, config} ->

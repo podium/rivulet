@@ -8,12 +8,15 @@ defmodule Rivulet.ElasticSearchSink do
       @behaviour Rivulet.ElasticSearchSink
 
       {otp_app, config} = Rivulet.ElasticSearchSink.Supervisor.compile_config(__MODULE__, opts)
+        |> IO.inspect(label: "ElasticSearchSink.Supervisor.compile_config")
 
       @otp_app otp_app
       @config  config
 
       def config do
         {:ok, config} = Rivulet.ElasticSearchSink.Supervisor.runtime_config(:dry_run, __MODULE__, @otp_app, [])
+          |> IO.inspect(label: "ElasticSearchSink.Supervisor.runtime_config")
+
         config
       end
 

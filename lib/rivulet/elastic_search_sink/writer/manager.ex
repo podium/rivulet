@@ -3,6 +3,8 @@ defmodule Rivulet.ElasticSearchSink.Writer.Manager do
 
   alias Rivulet.Kafka.Partition
 
+  require Logger
+
   def start_link(sup, count) do
     GenServer.start_link(__MODULE__, {sup, count})
   end
@@ -11,7 +13,12 @@ defmodule Rivulet.ElasticSearchSink.Writer.Manager do
   NOTE: signature for GenServer.call/2 is call(process_identifier, message_to_pass)
   """
   def handle_batch(manager_pid, partition, messages, consumer_pid) do
+    Logger.info("Called Writer.Manager.handle_batch/4 with manager_pid: #{inspect(manager_pid)} partition: #{inspect(partition)}, messages: #{inspect(messages)} and consumer_pid: #{inspect(consumer_pid)}")
+
     writer_pid = GenServer.call(manager_pid, {:get_pid, partition})
+    
+    Logger.info("Got writer_pid #{inspect(writer_pid)} within Writer.Manager.handle_batch/4")
+
     Rivulet.ElasticSearchSink.Writer.handle_messages(writer_pid, partition, messages, consumer_pid)
   end
 

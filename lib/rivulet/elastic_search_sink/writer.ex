@@ -34,15 +34,17 @@ defmodule Rivulet.ElasticSearchSink.Writer do
   The pid here is the identifier for this particular Writer process
   """
   def handle_messages(writer_pid, %Partition{} = partition, messages, consumer_pid) do
+    Logger.info("landed within ElasticSearchSink.Writer.handle_messages/4")
+
     GenServer.cast(writer_pid, {:handle_messages, partition, messages, consumer_pid})
   end
 
   def handle_cast({:handle_messages, partition, messages, consumer_pid}, %Config{} = state) do
-    Logger.debug("Handling Messages by dumping")
+    Logger.info("Handling Messages by dumping")
 
     offset = messages |> List.last |> Map.get(:offset)
 
-    Logger.debug("Should get to #{partition.topic}:#{partition.partition} - #{offset}")
+    Logger.info("Should get to #{partition.topic}:#{partition.partition} - #{offset}")
 
     successfully_inserted =
       messages
@@ -69,6 +71,8 @@ defmodule Rivulet.ElasticSearchSink.Writer do
   end
 
   def bulk_index_decoded_messages(messages, state) when is_list(messages) do
+    Logger.info("Landed within bulk_index_decoded_messages/2")
+
     messages
     |> only_latest_per_key
     |> bulk_index(state)
@@ -76,8 +80,15 @@ defmodule Rivulet.ElasticSearchSink.Writer do
   end
 
   def bulk_index(records, %Config{} = state) do
+    Logger.info("Landed within bulk_index/2 with state: #{inspect(state)}")
+
     records = format_bulk_records(state.elastic_index, state.elastic_type, records)
+
+    Logger.info("Formatted records: #{inspect(records)}")
+
     raw_data = encode_bulk_records(records)
+
+    Logger.info("Formatted records: #{inspect(records)}")
 
     Bulk.post_raw(state.elastic_url, raw_data, index: state.elastic_index, type: state.elastic_type)
   end
